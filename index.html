@@ -452,7 +452,9 @@
 
       /* LÓGICA DE PERSISTÊNCIA (FIREBASE) */
 
-// 1. Função para salvar os dados no Firebase (substitui o localStorage)
+/* LÓGICA DE PERSISTÊNCIA (FIREBASE) */
+
+// 1. Função para salvar os dados no Firebase
 function salvarDadosStorage() {
   var dados = [];
   $('#incidentes tbody tr').each(function() {
@@ -475,28 +477,43 @@ function salvarDadosStorage() {
     dados.push(item);
   });
 
-  // Salva no banco compartilhado na nuvem para todos os 8 operadores
+  // Salva no banco compartilhado para todos os operadores
   database.ref('passagens').set(dados);
   database.ref('config/idSequencial').set(idSequencial);
   database.ref('config/dadosSitios').set(dadosSitios);
 }
 
-// 2. Escuta mudanças em TEMPO REAL e renderiza a tabela automaticamente
+// 2. Escuta mudanças do Firebase sem apagar linhas não salvas/em edição
 database.ref('passagens').on('value', function(snapshot) {
   var dados = snapshot.val();
   
-  // Limpa a tabela para não duplicar linhas ao atualizar
-  $('#incidentes tbody').empty();
+  // Mapeia IDs que já estão na tela atualmente
+  var idsAtuais = [];
+  $('#incidentes tbody tr').each(function() {
+    idsAtuais.push($(this).attr('data-id'));
+  });
 
   if (dados) {
     var lista = Array.isArray(dados) ? dados : Object.values(dados);
-    lista.forEach(function(item) {
-      if (item) {
-        criarLinhaTabela(item.id, item);
-      }
-    });
-    if (typeof reordenarTabela === 'function') {
-      reordenarTabela();
+    
+    // Se a tabela estiver completamente vazia, carrega tudo do Firebase
+    if ($('#incidentes tbody tr').length === 0) {
+      lista.forEach(function(item) {
+        if (item && item.id) {
+          criarLinhaTabela(item.id, item);
+        }
+      });
+      if (typeof reordenarTabela === 'function') reordenarTabela();
+    } else {
+      // Se já houver linhas (como uma criada pelo botão Novo), atualiza apenas os valores
+      lista.forEach(function(item) {
+        if (item && item.id) {
+          var $tr = $('#incidentes tbody tr[data-id="' + item.id + '"]');
+          if ($tr.length === 0) {
+            criarLinhaTabela(item.id, item);
+          }
+        }
+      });
     }
   }
 });
@@ -507,6 +524,10 @@ database.ref('config/idSequencial').on('value', function(snapshot) {
   if (seqSalvo) idSequencial = parseInt(seqSalvo);
 });
 
+database.ref('config/dadosSitios').on('value', function(snapshot) {
+  var dadosCustom = snapshot.val();
+  if (dadosCustom) Object.assign(dadosSitios, dadosCustom);
+});
 database.ref('config/dadosSitios').on('value', function(snapshot) {
   var dadosCustom = snapshot.val();
   if (dadosCustom) Object.assign(dadosSitios, dadosCustom);
