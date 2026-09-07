@@ -214,7 +214,7 @@
     </div>
   </div>
 
-  <!-- Modal de Sítios atualizado -->
+  <!-- Modal de Sítios -->
   <div class="modal fade" id="modalNovoSitio" tabindex="-1" aria-labelledby="modalNovoSitioLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -269,7 +269,7 @@
     }
     const database = firebase.database();
 
-    // BASE DE DADOS (PMW corrigido sem Kenerson padrão)
+    // BASE DE DADOS PADRÃO
     const dadosSitiosBase = {
       "AJU": { "ATO": ["AENA", "CIRION BRASIL", "EMBRATEL", "OI"] },
       "BEL": { "ATO": ["SOCICAM", "CIRION BRASIL", "EMBRATEL", "OI"], "MNT": ["SOCICAM", "LATAM BRASIL", "VIVO", "CIRION BRASIL", "OI"] },
@@ -346,7 +346,7 @@
     };
 
     let dadosSitios = {};
-    let dadosCarregados = false; // TRAVA DE SEGURANÇA F5
+    let dadosCarregados = false; // TRAVA DE SEGURANÇA CONTRA ERROS DO F5
 
     function fn01_getOptionsSitio() {
       let options = '<option value="">Selecione...</option>';
@@ -357,16 +357,34 @@
       return options;
     }
 
+    // FUNÇÃO DE ORDENAÇÃO ATUALIZADA (Laranjas/Cinzas no topo, Verdes no final)
     function fn02_reordenarTabela() {
       var $tbody = $('#incidentes tbody');
       var $linhas = $tbody.find('tr').get();
 
+      function getGrupoFinalizacao($tr) {
+        var $tdSitio = $tr.find('td.col-sitio');
+        // Grupo 1: Em andamento (Laranjas e Cinzas juntos na ordem da janela)
+        // Grupo 2: Finalizados (Apenas os Verdes enviados para o final)
+        return $tdSitio.hasClass('sitio-verde') ? 2 : 1;
+      }
+
       $linhas.sort(function(a, b) {
+        var grupoA = getGrupoFinalizacao($(a));
+        var grupoB = getGrupoFinalizacao($(b));
+
+        // 1º Separa o que está Em Andamento (1) do que está Finalizado (2)
+        if (grupoA !== grupoB) {
+          return grupoA - grupoB;
+        }
+
+        // 2º Dentro do mesmo grupo, mantém a ordem da janela (mais recente no topo)
         var idA = parseInt($(a).attr('data-id') || 0);
         var idB = parseInt($(b).attr('data-id') || 0);
         return idB - idA;
       });
 
+      // Reorganiza as linhas na tela
       $.each($linhas, function(idx, item) {
         $tbody.append(item);
       });
@@ -444,7 +462,6 @@
     }
 
     function fn06_salvarDadosStorage() {
-      // Bloqueia gravação caso a inicialização do F5 ainda não tenha rodado
       if (!dadosCarregados) return;
 
       var dados = [];
@@ -596,14 +613,12 @@
           fn02_reordenarTabela();
         }
 
-        // Desbloqueia alterações e gravação automática
         dadosCarregados = true;
       }).catch(function(error) {
         console.error("Erro na inicialização:", error);
       });
     }
 
-    // Função de Exclusão de Tipo no Banco
     function fn10_removerTipoSitio(codigoSitio, tipoRemover) {
       if (dadosSitios[codigoSitio] && dadosSitios[codigoSitio][tipoRemover]) {
         delete dadosSitios[codigoSitio][tipoRemover];
@@ -634,10 +649,11 @@
         $tr.find('.select-sitio').focus();
       });
 
-      // Alteração nos inputs da tabela
+      // Alteração nos campos (reavalia a cor e reagrupa imediatamente)
       $('#incidentes').on('change input', 'select, input', function() {
         var $tr = $(this).closest('tr');
         fn03_avaliarStatusLinha($tr);
+        fn02_reordenarTabela(); // Reagrupa para mandar os verdes ao final
         fn06_salvarDadosStorage();
       });
 
@@ -654,7 +670,7 @@
         fn05_carregarParceirosPorTipo($tr, sitio, $(this).val());
       });
 
-      // Botão Salvar do Modal (Adicionar / Unificar)
+      // Botão Salvar do Modal
       $('#btnSalvarNovoSitio').on('click', function() {
         var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
         var tipo = $('#inputNovoTipo').val().trim();
@@ -714,7 +730,7 @@
           });
       });
 
-      // Botão Excluir do Modal (Apagar Tipo/Sítio ex: Kenerson)
+      // Botão Excluir do Modal
       $('#btnExcluirTipoModal').on('click', function() {
         var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
         var tipo = $('#inputNovoTipo').val().trim();
