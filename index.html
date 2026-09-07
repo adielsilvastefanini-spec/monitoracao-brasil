@@ -349,7 +349,12 @@
     let idSequencial = Date.now();
     let tempoEsperaSalvar;
 
-    function getOptionsSitio() {
+    // -------------------------------------------------------------
+    // FUNÇÕES DO SISTEMA (NUMERADAS)
+    // -------------------------------------------------------------
+
+    // [1] Retorna a lista formatada em HTML para o select de sítios
+    function fn01_getOptionsSitio() {
       let options = '<option value="">Selecione...</option>';
       let chavesOrdenadas = Object.keys(dadosSitios).sort();
       for (let sitio of chavesOrdenadas) {
@@ -358,7 +363,8 @@
       return options;
     }
 
-    function reordenarTabela() {
+    // [2] Organiza as linhas da tabela por ordem de prioridade visual
+    function fn02_reordenarTabela() {
       if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT')) {
         return;
       }
@@ -384,7 +390,8 @@
       $tbody.append($linhasConcluidas);
     }
 
-    function avaliarStatusLinha($tr) {
+    // [3] Avalia as condições dos campos para aplicar regras de cores nas células
+    function fn03_avaliarStatusLinha($tr) {
       var $tdSitio = $tr.find('td.col-sitio');
       var sitioVal = $tr.find('.select-sitio').val();
       var tipoVal = $tr.find('.select-tipo').val();
@@ -406,6 +413,7 @@
 
       var principalPreenchido = sitioVal && tipoVal && data1Val && hora1Val && data2Val && hora2Val && falhaVal && opcomVal && impactoVal && parceiroVal && causaVal;
 
+      // Regra 2: Causa "Atividade" mantida sempre em cinza
       if (causaVal === "Atividade") {
         $tdSitio.addClass('sitio-cinza');
         $tr.addClass('linha-atividade');
@@ -419,7 +427,8 @@
       }
     }
 
-    function carregarTiposPorSitio($tr, sitioSelecionado) {
+    // [4] Altera as opções da caixa de tipo dependendo do sítio selecionado
+    function fn04_carregarTiposPorSitio($tr, sitioSelecionado) {
       var $selectTipo = $tr.find('.select-tipo');
       var $selectParceiro = $tr.find('.select-parceiro');
       var valTipoAtual = $selectTipo.val();
@@ -439,7 +448,8 @@
       }
     }
 
-    function carregarParceirosPorTipo($tr, sitioSelecionado, tipoSelecionado) {
+    // [5] Altera as opções da caixa de parceiro dependendo do tipo selecionado
+    function fn05_carregarParceirosPorTipo($tr, sitioSelecionado, tipoSelecionado) {
       var $selectParceiro = $tr.find('.select-parceiro');
       var valParceiroAtual = $selectParceiro.val();
 
@@ -457,7 +467,8 @@
       }
     }
 
-    function salvarDadosStorage() {
+    // [6] Persiste a tabela de incidentes e os sítios no Firebase Realtime Database
+    function fn06_salvarDadosStorage() {
       var dados = [];
       $('#incidentes tbody tr').each(function() {
         var $tr = $(this);
@@ -485,18 +496,19 @@
       database.ref('config/dadosSitios').set(dadosSitios);
     }
 
-    function preencherCamposLinha($tr, dados) {
+    // [7] Preenche os campos de uma determinada linha da tabela
+    function fn07_preencherCamposLinha($tr, dados) {
       if (!dados) return;
 
       if ($tr.find(':focus').length > 0) return;
 
       if (dados.sitio) {
         $tr.find('.select-sitio').val(dados.sitio);
-        carregarTiposPorSitio($tr, dados.sitio);
+        fn04_carregarTiposPorSitio($tr, dados.sitio);
       }
       if (dados.tipo) {
         $tr.find('.select-tipo').val(dados.tipo);
-        carregarParceirosPorTipo($tr, dados.sitio, dados.tipo);
+        fn05_carregarParceirosPorTipo($tr, dados.sitio, dados.tipo);
       }
       if (dados.parceiro) {
         $tr.find('.select-parceiro').val(dados.parceiro);
@@ -513,15 +525,16 @@
       $tr.find('.input-ticket').val(dados.ticket || '');
       $tr.find('.input-status').val(dados.status || dados.obs || '');
 
-      avaliarStatusLinha($tr);
+      fn03_avaliarStatusLinha($tr);
     }
 
-    function criarLinhaTabela(id, dados = null) {
+    // [8] Constrói um novo elemento HTML TR na tabela
+    function fn08_criarLinhaTabela(id, dados = null) {
       var $tr = $(`<tr data-id="${id}">
         <td><input type="checkbox" class="check-item"></td>
         <td class="col-sitio">
           <select class="select-tabela-sm select-sitio">
-            ${getOptionsSitio()}
+            ${fn01_getOptionsSitio()}
           </select>
         </td>
         <td>
@@ -587,11 +600,15 @@
       $('#incidentes tbody').prepend($tr);
 
       if (dados) {
-        preencherCamposLinha($tr, dados);
+        fn07_preencherCamposLinha($tr, dados);
       }
     }
 
-    // Escutas do Firebase
+    // -------------------------------------------------------------
+    // LISTENERS EM TEMPO REAL (FIREBASE)
+    // -------------------------------------------------------------
+
+    // [9] Sincronização em tempo real das linhas da tabela
     database.ref('passagens').on('value', function(snapshot) {
       var dados = snapshot.val();
       if (!dados) return;
@@ -604,72 +621,83 @@
         var $trExistente = $('#incidentes tbody tr[data-id="' + item.id + '"]');
 
         if ($trExistente.length === 0) {
-          criarLinhaTabela(item.id, item);
+          fn08_criarLinhaTabela(item.id, item);
         } else {
-          preencherCamposLinha($trExistente, item);
+          fn07_preencherCamposLinha($trExistente, item);
         }
       });
 
-      reordenarTabela();
+      fn02_reordenarTabela();
     });
 
+    // [10] Sincronização do sequencial de IDs
     database.ref('config/idSequencial').on('value', function(snapshot) {
       var seqSalvo = snapshot.val();
       if (seqSalvo) idSequencial = parseInt(seqSalvo);
     });
 
+    // [11] Sincronização em tempo real da lista de Sítios
     database.ref('config/dadosSitios').on('value', function(snapshot) {
       var dadosCustom = snapshot.val();
       if (dadosCustom) {
-        Object.assign(dadosSitios, dadosCustom);
+        dadosSitios = dadosCustom;
         
         $('.select-sitio').each(function() {
           var valAtual = $(this).val();
-          $(this).html(getOptionsSitio()).val(valAtual);
+          $(this).html(fn01_getOptionsSitio());
+          if (valAtual) {
+            $(this).val(valAtual);
+          }
         });
       }
     });
 
-    // Eventos do DOM
+    // -------------------------------------------------------------
+    // INICIALIZAÇÃO E EVENTOS DO DOM
+    // -------------------------------------------------------------
     $(document).ready(function() {
 
+      // Ação de criar nova linha na tabela
       $('#btnNovoItem').on('click', function() {
         idSequencial++;
-        criarLinhaTabela(idSequencial);
-        reordenarTabela();
-        salvarDadosStorage();
+        fn08_criarLinhaTabela(idSequencial);
+        fn02_reordenarTabela();
+        fn06_salvarDadosStorage();
       });
 
+      // Detecção de mudanças em campos da tabela
       $('#incidentes').on('change input', 'select, input', function() {
         var $tr = $(this).closest('tr');
-        avaliarStatusLinha($tr);
+        fn03_avaliarStatusLinha($tr);
 
         clearTimeout(tempoEsperaSalvar);
         tempoEsperaSalvar = setTimeout(function() {
-          salvarDadosStorage();
+          fn06_salvarDadosStorage();
         }, 800);
       });
 
       $('#incidentes').on('blur', 'select, input', function() {
-        salvarDadosStorage();
-        reordenarTabela();
+        fn06_salvarDadosStorage();
+        fn02_reordenarTabela();
       });
 
+      // Atualização em cadeia dos selects da tabela
       $('#incidentes').on('change', '.select-sitio', function() {
         var $tr = $(this).closest('tr');
         var sitioSelecionado = $(this).val();
-        carregarTiposPorSitio($tr, sitioSelecionado);
-        salvarDadosStorage();
+        fn04_carregarTiposPorSitio($tr, sitioSelecionado);
+        fn06_salvarDadosStorage();
       });
 
       $('#incidentes').on('change', '.select-tipo', function() {
         var $tr = $(this).closest('tr');
         var sitioSelecionado = $tr.find('.select-sitio').val();
         var tipoSelecionado = $(this).val();
-        carregarParceirosPorTipo($tr, sitioSelecionado, tipoSelecionado);
-        salvarDadosStorage();
+        fn05_carregarParceirosPorTipo($tr, sitioSelecionado, tipoSelecionado);
+        fn06_salvarDadosStorage();
       });
 
+      // Ação de salvar novos dados no Modal de Sítios
       $('#btnSalvarNovoSitio').on('click', function() {
         var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
         var tipo = $('#inputNovoTipo').val().trim();
@@ -687,22 +715,36 @@
         }
         dadosSitios[codigo][tipo] = parceirosArr;
 
-        database.ref('config/dadosSitios').set(dadosSitios, function(error) {
-          if (error) {
-            alert('Erro ao salvar o sítio no servidor.');
-          } else {
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Salvando...');
+
+        database.ref('config/dadosSitios').set(dadosSitios)
+          .then(function() {
             $('.select-sitio').each(function() {
               var valAtual = $(this).val();
-              $(this).html(getOptionsSitio()).val(valAtual);
+              $(this).html(fn01_getOptionsSitio());
+              if (valAtual) {
+                $(this).val(valAtual);
+              }
             });
 
             $('#formNovoSitio')[0].reset();
-            bootstrap.Modal.getInstance(document.getElementById('modalNovoSitio')).hide();
+            var modalElem = document.getElementById('modalNovoSitio');
+            var modalInstance = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
+            modalInstance.hide();
+
             alert(`Sítio "${codigo}" cadastrado/atualizado com sucesso!`);
-          }
-        });
+          })
+          .catch(function(error) {
+            console.error("Erro ao salvar sítio:", error);
+            alert('Erro ao salvar no banco de dados: ' + error.message);
+          })
+          .finally(function() {
+            $btn.prop('disabled', false).text('Salvar Dados');
+          });
       });
 
+      // Busca na tabela
       $('#inputCustomSearch').on('keyup', function() {
         var termo = $(this).val().toLowerCase();
         $('#incidentes tbody tr').each(function() {
@@ -719,10 +761,12 @@
         });
       });
 
+      // Selecionar todos os checkboxes
       $('#checkAll').on('change', function() {
         $('.check-item').prop('checked', this.checked);
       });
 
+      // Exclusão de itens selecionados
       $('#btnExcluirSelecionado').on('click', function() {
         var selecionados = $('.check-item:checked');
         if (selecionados.length === 0) {
@@ -732,12 +776,13 @@
         if (confirm('Deseja excluir as linhas selecionadas?')) {
           selecionados.closest('tr').remove();
           $('#checkAll').prop('checked', false);
-          salvarDadosStorage();
+          fn06_salvarDadosStorage();
         }
       });
 
+      // Botão manual de salvamento total
       $('#btnSalvarTudo').on('click', function() {
-        salvarDadosStorage();
+        fn06_salvarDadosStorage();
         alert('Dados salvos com sucesso!');
       });
 
