@@ -7,6 +7,10 @@
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   
+  <!-- SDK do Firebase (Compatível) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
   <style>
     body {
       background-color: #f1f5f9;
@@ -271,6 +275,22 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   
   <script>
+    // Configuração do Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyC2nYXXvsZJq54tatPVVDTyecGP8VgUR3w",
+      authDomain: "passagem-de-turno-6eea4.firebaseapp.com",
+      databaseURL: "https://passagem-de-turno-6eea4-default-rtdb.firebaseio.com",
+      projectId: "passagem-de-turno-6eea4",
+      storageBucket: "passagem-de-turno-6eea4.firebasestorage.app",
+      messagingSenderId: "399308087796",
+      appId: "1:399308087796:web:18afe529724399c2e059a1"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const database = firebase.database();
+
     const dadosSitios = {
       "AJU": { "ATO": ["AENA", "CIRION BRASIL", "EMBRATEL", "OI"] },
       "BEL": { "ATO": ["SOCICAM", "CIRION BRASIL", "EMBRATEL", "OI"], "MNT": ["SOCICAM", "LATAM BRASIL", "VIVO", "CIRION BRASIL", "OI"] },
@@ -348,285 +368,271 @@
 
     let idSequencial = 0;
 
+    function getOptionsSitio() {
+      let options = '<option value="">Selecione...</option>';
+      for (let sitio in dadosSitios) {
+        options += `<option value="${sitio}">${sitio}</option>`;
+      }
+      return options;
+    }
+
+    function reordenarTabela() {
+      var $tbody = $('#incidentes tbody');
+      
+      var $linhasLaranja = $tbody.find('tr').filter(function() {
+        return !$(this).hasClass('linha-concluida') && !$(this).hasClass('linha-atividade');
+      });
+      var $linhasAtividade = $tbody.find('tr.linha-atividade');
+      var $linhasConcluidas = $tbody.find('tr.linha-concluida');
+
+      var sortDesc = function(a, b) {
+        return parseInt($(b).attr('data-id') || 0) - parseInt($(a).attr('data-id') || 0);
+      };
+
+      $linhasLaranja.sort(sortDesc);
+      $linhasAtividade.sort(sortDesc);
+      $linhasConcluidas.sort(sortDesc);
+
+      $tbody.append($linhasLaranja);
+      $tbody.append($linhasAtividade);
+      $tbody.append($linhasConcluidas);
+    }
+
+    function avaliarStatusLinha($tr) {
+      var $tdSitio = $tr.find('td.col-sitio');
+      var sitioVal = $tr.find('.select-sitio').val();
+      var tipoVal = $tr.find('.select-tipo').val();
+      var data1Val = $tr.find('.input-data1').val();
+      var hora1Val = $tr.find('.input-hora1').val();
+      var data2Val = $tr.find('.input-data2').val();
+      var hora2Val = $tr.find('.input-hora2').val();
+      var falhaVal = $tr.find('.select-falha').val();
+      var opcomVal = $tr.find('.select-opcom').val();
+      var impactoVal = $tr.find('.select-impacto').val();
+      var parceiroVal = $tr.find('.select-parceiro').val();
+      var causaVal = $tr.find('.select-causa').val();
+      var obsVal = $tr.find('.input-obs').val().trim();
+
+      $tdSitio.removeClass('sitio-laranja sitio-verde sitio-cinza');
+      $tr.removeClass('linha-concluida linha-atividade');
+
+      if (!sitioVal) return;
+
+      var principalPreenchido = sitioVal && tipoVal && data1Val && hora1Val && data2Val && hora2Val && falhaVal && opcomVal && impactoVal && parceiroVal && causaVal;
+
+      if (principalPreenchido && obsVal !== "") {
+        $tdSitio.addClass('sitio-verde');
+        $tr.addClass('linha-concluida');
+      } 
+      else if (principalPreenchido && obsVal === "" && causaVal === "Atividade") {
+        $tdSitio.addClass('sitio-cinza');
+        $tr.addClass('linha-atividade');
+      } 
+      else {
+        $tdSitio.addClass('sitio-laranja');
+      }
+    }
+
+    function carregarTiposPorSitio($tr, sitioSelecionado) {
+      var $selectTipo = $tr.find('.select-tipo');
+      var $selectParceiro = $tr.find('.select-parceiro');
+
+      $selectTipo.empty();
+      $selectParceiro.empty().append('<option value="">Select Tipo...</option>').prop('disabled', true);
+
+      if (sitioSelecionado && dadosSitios[sitioSelecionado]) {
+        $selectTipo.append('<option value="">Selecione...</option>');
+        for (let tipo in dadosSitios[sitioSelecionado]) {
+          $selectTipo.append(`<option value="${tipo}">${tipo}</option>`);
+        }
+        $selectTipo.prop('disabled', false);
+      } else {
+        $selectTipo.append('<option value="">Select Sítio...</option>').prop('disabled', true);
+      }
+    }
+
+    function carregarParceirosPorTipo($tr, sitioSelecionado, tipoSelecionado) {
+      var $selectParceiro = $tr.find('.select-parceiro');
+      $selectParceiro.empty();
+
+      if (sitioSelecionado && tipoSelecionado && dadosSitios[sitioSelecionado][tipoSelecionado]) {
+        $selectParceiro.append('<option value="">Selecione...</option>');
+        dadosSitios[sitioSelecionado][tipoSelecionado].forEach(function(parceiro) {
+          $selectParceiro.append(`<option value="${parceiro}">${parceiro}</option>`);
+        });
+        $selectParceiro.prop('disabled', false);
+      } else {
+        $selectParceiro.append('<option value="">Select Tipo...</option>').prop('disabled', true);
+      }
+    }
+
+    function salvarDadosStorage() {
+      var dados = [];
+      $('#incidentes tbody tr').each(function() {
+        var $tr = $(this);
+        var item = {
+          id: $tr.attr('data-id') || Date.now().toString(),
+          sitio: $tr.find('.select-sitio').val() || '',
+          tipo: $tr.find('.select-tipo').val() || '',
+          data1: $tr.find('.input-data1').val() || '',
+          hora1: $tr.find('.input-hora1').val() || '',
+          data2: $tr.find('.input-data2').val() || '',
+          hora2: $tr.find('.input-hora2').val() || '',
+          falha: $tr.find('.select-falha').val() || '',
+          opcom: $tr.find('.select-opcom').val() || '',
+          impacto: $tr.find('.select-impacto').val() || '',
+          parceiro: $tr.find('.select-parceiro').val() || '',
+          causa: $tr.find('.select-causa').val() || '',
+          obs: $tr.find('.input-obs').val() || ''
+        };
+        dados.push(item);
+      });
+
+      database.ref('passagens').set(dados);
+      database.ref('config/idSequencial').set(idSequencial);
+      database.ref('config/dadosSitios').set(dadosSitios);
+    }
+
+    function criarLinhaTabela(id, dados = null) {
+      var $tr = $(`<tr data-id="${id}">
+        <td><input type="checkbox" class="check-item"></td>
+        <td class="col-sitio">
+          <select class="select-tabela-sm select-sitio">
+            ${getOptionsSitio()}
+          </select>
+        </td>
+        <td>
+          <select class="select-tabela-sm select-tipo" disabled>
+            <option value="">Select Sítio...</option>
+          </select>
+        </td>
+        <td><input type="date" class="input-tabela-sm input-data input-data1"></td>
+        <td><input type="time" class="input-tabela-sm input-hora input-hora1"></td>
+        <td><input type="date" class="input-tabela-sm input-data input-data2"></td>
+        <td><input type="time" class="input-tabela-sm input-hora input-hora2"></td>
+        <td>
+          <select class="select-tabela-sm select-falha">
+            <option value="">Selecione...</option>
+            <option value="Isolado">Isolado</option>
+            <option value="Primário">Primário</option>
+            <option value="Secundário">Secundário</option>
+            <option value="Setores">Setores</option>
+            <option value="Telefonia">Telefonia</option>
+            <option value="Normalizado">Normalizado</option>
+            <option value="Intermitência">Intermitência</option>
+          </select>
+        </td>
+        <td>
+          <select class="select-tabela-sm select-opcom">
+            <option value="N/A">N/A</option>
+            <option value="OP-1">OP-1</option>
+            <option value="OP-2">OP-2</option>
+            <option value="OP-3">OP-3</option>
+          </select>
+        </td>
+        <td>
+          <select class="select-tabela-sm select-impacto">
+            <option value="N/A">N/A</option>
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+          </select>
+        </td>
+        <td>
+          <select class="select-tabela-sm select-parceiro" disabled>
+            <option value="">Select Tipo...</option>
+          </select>
+        </td>
+        <td>
+          <select class="select-tabela-sm select-causa">
+            <option value="Pendente">Pendente</option>
+            <option value="Energia">Energia</option>
+            <option value="Fusão de Fibra">Fusão de Fibra</option>
+            <option value="Massiva">Massiva</option>
+            <option value="Atividade">Atividade</option>
+            <option value="Rota Comutada">Rota Comutada</option>
+            <option value="Falha SW">Falha SW</option>
+          </select>
+        </td>
+        <td class="col-obs">
+          <input type="text" class="input-tabela-sm input-obs" placeholder="Escreva a observação completa aqui...">
+        </td>
+      </tr>`);
+
+      $('#incidentes tbody').prepend($tr);
+
+      if (dados) {
+        if (dados.sitio) {
+          $tr.find('.select-sitio').val(dados.sitio);
+          carregarTiposPorSitio($tr, dados.sitio);
+        }
+        if (dados.tipo) {
+          $tr.find('.select-tipo').val(dados.tipo);
+          carregarParceirosPorTipo($tr, dados.sitio, dados.tipo);
+        }
+        if (dados.parceiro) {
+          $tr.find('.select-parceiro').val(dados.parceiro);
+        }
+
+        $tr.find('.input-data1').val(dados.data1);
+        $tr.find('.input-hora1').val(dados.hora1);
+        $tr.find('.input-data2').val(dados.data2);
+        $tr.find('.input-hora2').val(dados.hora2);
+        $tr.find('.select-falha').val(dados.falha);
+        $tr.find('.select-opcom').val(dados.opcom);
+        $tr.find('.select-impacto').val(dados.impacto);
+        $tr.find('.select-causa').val(dados.causa);
+        $tr.find('.input-obs').val(dados.obs);
+
+        avaliarStatusLinha($tr);
+      }
+    }
+
+    // Escutas do Firebase
+    database.ref('passagens').on('value', function(snapshot) {
+      var dados = snapshot.val();
+      if (!dados) return;
+
+      var lista = Array.isArray(dados) ? dados : Object.values(dados);
+
+      lista.forEach(function(item) {
+        if (!item || !item.id) return;
+        
+        var $trExistente = $('#incidentes tbody tr[data-id="' + item.id + '"]');
+
+        if ($trExistente.length === 0) {
+          criarLinhaTabela(item.id, item);
+        } else {
+          $trExistente.find('.select-sitio').val(item.sitio);
+          $trExistente.find('.select-tipo').val(item.tipo);
+          $trExistente.find('.input-data1').val(item.data1);
+          $trExistente.find('.input-hora1').val(item.hora1);
+          $trExistente.find('.input-data2').val(item.data2);
+          $trExistente.find('.input-hora2').val(item.hora2);
+          $trExistente.find('.select-falha').val(item.falha);
+          $trExistente.find('.select-opcom').val(item.opcom);
+          $trExistente.find('.select-impacto').val(item.impacto);
+          $trExistente.find('.select-parceiro').val(item.parceiro);
+          $trExistente.find('.select-causa').val(item.causa);
+          $trExistente.find('.input-obs').val(item.obs);
+        }
+      });
+
+      reordenarTabela();
+    });
+
+    database.ref('config/idSequencial').on('value', function(snapshot) {
+      var seqSalvo = snapshot.val();
+      if (seqSalvo) idSequencial = parseInt(seqSalvo);
+    });
+
+    database.ref('config/dadosSitios').on('value', function(snapshot) {
+      var dadosCustom = snapshot.val();
+      if (dadosCustom) Object.assign(dadosSitios, dadosCustom);
+    });
+
+    // Eventos do DOM
     $(document).ready(function() {
 
-      function getOptionsSitio() {
-        let options = '<option value="">Selecione...</option>';
-        for (let sitio in dadosSitios) {
-          options += `<option value="${sitio}">${sitio}</option>`;
-        }
-        return options;
-      }
-
-      function reordenarTabela() {
-        var $tbody = $('#incidentes tbody');
-        
-        var $linhasLaranja = $tbody.find('tr').filter(function() {
-          return !$(this).hasClass('linha-concluida') && !$(this).hasClass('linha-atividade');
-        });
-        var $linhasAtividade = $tbody.find('tr.linha-atividade');
-        var $linhasConcluidas = $tbody.find('tr.linha-concluida');
-
-        var sortDesc = function(a, b) {
-          return parseInt($(b).attr('data-id') || 0) - parseInt($(a).attr('data-id') || 0);
-        };
-
-        $linhasLaranja.sort(sortDesc);
-        $linhasAtividade.sort(sortDesc);
-        $linhasConcluidas.sort(sortDesc);
-
-        $tbody.append($linhasLaranja);
-        $tbody.append($linhasAtividade);
-        $tbody.append($linhasConcluidas);
-      }
-
-      function avaliarStatusLinha($tr) {
-        var $tdSitio = $tr.find('td.col-sitio');
-        var sitioVal = $tr.find('.select-sitio').val();
-        var tipoVal = $tr.find('.select-tipo').val();
-        var data1Val = $tr.find('.input-data1').val();
-        var hora1Val = $tr.find('.input-hora1').val();
-        var data2Val = $tr.find('.input-data2').val();
-        var hora2Val = $tr.find('.input-hora2').val();
-        var falhaVal = $tr.find('.select-falha').val();
-        var opcomVal = $tr.find('.select-opcom').val();
-        var impactoVal = $tr.find('.select-impacto').val();
-        var parceiroVal = $tr.find('.select-parceiro').val();
-        var causaVal = $tr.find('.select-causa').val();
-        var obsVal = $tr.find('.input-obs').val().trim();
-
-        $tdSitio.removeClass('sitio-laranja sitio-verde sitio-cinza');
-        $tr.removeClass('linha-concluida linha-atividade');
-
-        if (!sitioVal) return;
-
-        var principalPreenchido = sitioVal && tipoVal && data1Val && hora1Val && data2Val && hora2Val && falhaVal && opcomVal && impactoVal && parceiroVal && causaVal;
-
-        if (principalPreenchido && obsVal !== "") {
-          $tdSitio.addClass('sitio-verde');
-          $tr.addClass('linha-concluida');
-        } 
-        else if (principalPreenchido && obsVal === "" && causaVal === "Atividade") {
-          $tdSitio.addClass('sitio-cinza');
-          $tr.addClass('linha-atividade');
-        } 
-        else {
-          $tdSitio.addClass('sitio-laranja');
-        }
-      }
-
-      // Preenche os Selects dinâmicos de Tipo
-      function carregarTiposPorSitio($tr, sitioSelecionado) {
-        var $selectTipo = $tr.find('.select-tipo');
-        var $selectParceiro = $tr.find('.select-parceiro');
-
-        $selectTipo.empty();
-        $selectParceiro.empty().append('<option value="">Select Tipo...</option>').prop('disabled', true);
-
-        if (sitioSelecionado && dadosSitios[sitioSelecionado]) {
-          $selectTipo.append('<option value="">Selecione...</option>');
-          for (let tipo in dadosSitios[sitioSelecionado]) {
-            $selectTipo.append(`<option value="${tipo}">${tipo}</option>`);
-          }
-          $selectTipo.prop('disabled', false);
-        } else {
-          $selectTipo.append('<option value="">Select Sítio...</option>').prop('disabled', true);
-        }
-      }
-
-      // Preenche os Selects dinâmicos de Parceiros
-      function carregarParceirosPorTipo($tr, sitioSelecionado, tipoSelecionado) {
-        var $selectParceiro = $tr.find('.select-parceiro');
-        $selectParceiro.empty();
-
-        if (sitioSelecionado && tipoSelecionado && dadosSitios[sitioSelecionado][tipoSelecionado]) {
-          $selectParceiro.append('<option value="">Selecione...</option>');
-          dadosSitios[sitioSelecionado][tipoSelecionado].forEach(function(parceiro) {
-            $selectParceiro.append(`<option value="${parceiro}">${parceiro}</option>`);
-          });
-          $selectParceiro.prop('disabled', false);
-        } else {
-          $selectParceiro.append('<option value="">Select Tipo...</option>').prop('disabled', true);
-        }
-      }
-
-      /* LÓGICA DE PERSISTÊNCIA (FIREBASE) */
-
-// 1. Salvar os dados atuais da tabela no Firebase
-function salvarDadosStorage() {
-  var dados = [];
-  $('#incidentes tbody tr').each(function() {
-    var $tr = $(this);
-    var item = {
-      id: $tr.attr('data-id') || Date.now().toString(),
-      sitio: $tr.find('.select-sitio').val() || '',
-      tipo: $tr.find('.select-tipo').val() || '',
-      data1: $tr.find('.input-data1').val() || '',
-      hora1: $tr.find('.input-hora1').val() || '',
-      data2: $tr.find('.input-data2').val() || '',
-      hora2: $tr.find('.input-hora2').val() || '',
-      falha: $tr.find('.select-falha').val() || '',
-      opcom: $tr.find('.select-opcom').val() || '',
-      impacto: $tr.find('.select-impacto').val() || '',
-      parceiro: $tr.find('.select-parceiro').val() || '',
-      causa: $tr.find('.select-causa').val() || '',
-      obs: $tr.find('.input-obs').val() || ''
-    };
-    dados.push(item);
-  });
-
-  database.ref('passagens').set(dados);
-  database.ref('config/idSequencial').set(idSequencial);
-  database.ref('config/dadosSitios').set(dadosSitios);
-}
-
-// 2. Escuta em tempo real do Firebase (substitui o antigo carregarDadosStorage)
-database.ref('passagens').on('value', function(snapshot) {
-  var dados = snapshot.val();
-  if (!dados) return;
-
-  var lista = Array.isArray(dados) ? dados : Object.values(dados);
-
-  lista.forEach(function(item) {
-    if (!item || !item.id) return;
-    
-    // Verifica se a linha já existe no HTML da tabela
-    var $trExistente = $('#incidentes tbody tr[data-id="' + item.id + '"]');
-
-    if ($trExistente.length === 0) {
-      // Se não existe na tela, cria a nova linha recebida da nuvem
-      criarLinhaTabela(item.id, item);
-    } else {
-      // Se já existe, atualiza apenas os campos sem recriar a linha toda
-      $trExistente.find('.select-sitio').val(item.sitio);
-      $trExistente.find('.select-tipo').val(item.tipo);
-      $trExistente.find('.input-data1').val(item.data1);
-      $trExistente.find('.input-hora1').val(item.hora1);
-      $trExistente.find('.input-data2').val(item.data2);
-      $trExistente.find('.input-hora2').val(item.hora2);
-      $trExistente.find('.select-falha').val(item.falha);
-      $trExistente.find('.select-opcom').val(item.opcom);
-      $trExistente.find('.select-impacto').val(item.impacto);
-      $trExistente.find('.select-parceiro').val(item.parceiro);
-      $trExistente.find('.select-causa').val(item.causa);
-      $trExistente.find('.input-obs').val(item.obs);
-    }
-  });
-
-  if (typeof reordenarTabela === 'function') {
-    reordenarTabela();
-  }
-});
-
-// 3. Sincronizar o contador do ID Sequencial
-database.ref('config/idSequencial').on('value', function(snapshot) {
-  var seqSalvo = snapshot.val();
-  if (seqSalvo) idSequencial = parseInt(seqSalvo);
-});
-
-// 4. Sincronizar dados de sítios
-database.ref('config/dadosSitios').on('value', function(snapshot) {
-  var dadosCustom = snapshot.val();
-  if (dadosCustom) Object.assign(dadosSitios, dadosCustom);
-});
-      }
-
-      function criarLinhaTabela(id, dados = null) {
-        var $tr = $(`<tr data-id="${id}">
-          <td><input type="checkbox" class="check-item"></td>
-          <td class="col-sitio">
-            <select class="select-tabela-sm select-sitio">
-              ${getOptionsSitio()}
-            </select>
-          </td>
-          <td>
-            <select class="select-tabela-sm select-tipo" disabled>
-              <option value="">Select Sítio...</option>
-            </select>
-          </td>
-          <td><input type="date" class="input-tabela-sm input-data input-data1"></td>
-          <td><input type="time" class="input-tabela-sm input-hora input-hora1"></td>
-          <td><input type="date" class="input-tabela-sm input-data input-data2"></td>
-          <td><input type="time" class="input-tabela-sm input-hora input-hora2"></td>
-          <td>
-            <select class="select-tabela-sm select-falha">
-              <option value="">Selecione...</option>
-              <option value="Isolado">Isolado</option>
-              <option value="Primário">Primário</option>
-              <option value="Secundário">Secundário</option>
-              <option value="Setores">Setores</option>
-              <option value="Telefonia">Telefonia</option>
-              <option value="Normalizado">Normalizado</option>
-              <option value="Intermitência">Intermitência</option>
-            </select>
-          </td>
-          <td>
-            <select class="select-tabela-sm select-opcom">
-              <option value="N/A">N/A</option>
-              <option value="OP-1">OP-1</option>
-              <option value="OP-2">OP-2</option>
-              <option value="OP-3">OP-3</option>
-            </select>
-          </td>
-          <td>
-            <select class="select-tabela-sm select-impacto">
-              <option value="N/A">N/A</option>
-              <option value="Sim">Sim</option>
-              <option value="Não">Não</option>
-            </select>
-          </td>
-          <td>
-            <select class="select-tabela-sm select-parceiro" disabled>
-              <option value="">Select Tipo...</option>
-            </select>
-          </td>
-          <td>
-            <select class="select-tabela-sm select-causa">
-              <option value="Pendente">Pendente</option>
-              <option value="Energia">Energia</option>
-              <option value="Fusão de Fibra">Fusão de Fibra</option>
-              <option value="Massiva">Massiva</option>
-              <option value="Atividade">Atividade</option>
-              <option value="Rota Comutada">Rota Comutada</option>
-              <option value="Falha SW">Falha SW</option>
-            </select>
-          </td>
-          <td class="col-obs">
-            <input type="text" class="input-tabela-sm input-obs" placeholder="Escreva a observação completa aqui...">
-          </td>
-        </tr>`);
-
-        $('#incidentes tbody').prepend($tr);
-
-        // Preenchimento sequencial correto garantindo a ordem dos dados
-        if (dados) {
-          if (dados.sitio) {
-            $tr.find('.select-sitio').val(dados.sitio);
-            carregarTiposPorSitio($tr, dados.sitio);
-          }
-          if (dados.tipo) {
-            $tr.find('.select-tipo').val(dados.tipo);
-            carregarParceirosPorTipo($tr, dados.sitio, dados.tipo);
-          }
-          if (dados.parceiro) {
-            $tr.find('.select-parceiro').val(dados.parceiro);
-          }
-
-          $tr.find('.input-data1').val(dados.data1);
-          $tr.find('.input-hora1').val(dados.hora1);
-          $tr.find('.input-data2').val(dados.data2);
-          $tr.find('.input-hora2').val(dados.hora2);
-          $tr.find('.select-falha').val(dados.falha);
-          $tr.find('.select-opcom').val(dados.opcom);
-          $tr.find('.select-impacto').val(dados.impacto);
-          $tr.find('.select-causa').val(dados.causa);
-          $tr.find('.input-obs').val(dados.obs);
-
-          avaliarStatusLinha($tr);
-        }
-      }
-
-      // Adicionar novo item
       $('#btnNovoItem').on('click', function() {
         idSequencial++;
         criarLinhaTabela(idSequencial);
@@ -634,7 +640,6 @@ database.ref('config/dadosSitios').on('value', function(snapshot) {
         salvarDadosStorage();
       });
 
-      // Salva automaticamente ao alterar qualquer valor nos inputs/selects
       $('#incidentes').on('change input', 'select, input', function() {
         var $tr = $(this).closest('tr');
         avaliarStatusLinha($tr);
@@ -645,7 +650,6 @@ database.ref('config/dadosSitios').on('value', function(snapshot) {
         reordenarTabela();
       });
 
-      // Evento interativo de troca manual do Sítio
       $('#incidentes').on('change', '.select-sitio', function() {
         var $tr = $(this).closest('tr');
         var sitioSelecionado = $(this).val();
@@ -653,7 +657,6 @@ database.ref('config/dadosSitios').on('value', function(snapshot) {
         salvarDadosStorage();
       });
 
-      // Evento interativo de troca manual do Tipo
       $('#incidentes').on('change', '.select-tipo', function() {
         var $tr = $(this).closest('tr');
         var sitioSelecionado = $tr.find('.select-sitio').val();
@@ -662,7 +665,6 @@ database.ref('config/dadosSitios').on('value', function(snapshot) {
         salvarDadosStorage();
       });
 
-      // Cadastrar Novo Sítio no Modal
       $('#btnSalvarNovoSitio').on('click', function() {
         var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
         var tipo = $('#inputNovoTipo').val().trim();
@@ -680,7 +682,6 @@ database.ref('config/dadosSitios').on('value', function(snapshot) {
         }
         dadosSitios[codigo][tipo] = parceirosArr;
 
-        // Atualiza as opções do Sítio em todas as linhas abertas na tela
         $('.select-sitio').each(function() {
           var valAtual = $(this).val();
           $(this).html(getOptionsSitio()).val(valAtual);
@@ -693,7 +694,6 @@ database.ref('config/dadosSitios').on('value', function(snapshot) {
         alert(`Sítio "${codigo}" cadastrado/atualizado com sucesso!`);
       });
 
-      // Busca rápida
       $('#inputCustomSearch').on('keyup', function() {
         var termo = $(this).val().toLowerCase();
         $('#incidentes tbody tr').each(function() {
@@ -710,12 +710,10 @@ database.ref('config/dadosSitios').on('value', function(snapshot) {
         });
       });
 
-      // Marcar/Desmarcar Todos
       $('#checkAll').on('change', function() {
         $('.check-item').prop('checked', this.checked);
       });
 
-      // Excluir Selecionados
       $('#btnExcluirSelecionado').on('click', function() {
         var selecionados = $('.check-item:checked');
         if (selecionados.length === 0) {
@@ -729,49 +727,12 @@ database.ref('config/dadosSitios').on('value', function(snapshot) {
         }
       });
 
-      $('#btnSalvarTudo').on('click', function() { 
+      $('#btnSalvarTudo').on('click', function() {
         salvarDadosStorage();
-        alert('Alterações salvas com sucesso!'); 
+        alert('Dados salvos com sucesso!');
       });
-      $('#btnEmail').on('click', function() { alert('E-mail enviado!'); });
-      $('#btnCheckPoint').on('click', function() { alert('Check-Point registrado!'); });
 
-      // Inicialização
-      carregarDadosStorage();
     });
   </script>
-  <!-- Scripts do Firebase (CDN) -->
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-
-<script>
-  // Configuração extraída do seu console
-  const firebaseConfig = {
-    apiKey: "AIzaSyC2nYXXvsZJq54tatPVVDTyecGP8VgUR3w",
-    authDomain: "passagem-de-turno-6eea4.firebaseapp.com",
-    databaseURL: "https://passagem-de-turno-6eea4-default-rtdb.firebaseio.com",
-    projectId: "passagem-de-turno-6eea4",
-    storageBucket: "passagem-de-turno-6eea4.firebasestorage.app",
-    messagingSenderId: "399308087796",
-    appId: "1:399308087796:web:18afe529724399c2e059a1",
-    measurementId: "G-BM3ZY4GRXW"
-  };
-
-  // Inicializa o Firebase
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
-
-  // Exemplo de escuta em tempo real para sincronizar os 8 operadores
-  database.ref('passagens').on('value', (snapshot) => {
-    const dados = snapshot.val();
-    console.log("Dados atualizados em tempo real:", dados);
-    // Aqui você chama a função que redesenha a sua tabela/lista na tela
-  });
-
-  // Função para salvar novos dados no banco compartilhado
-  function salvarPassagem(novaPassagem) {
-    database.ref('passagens').push(novaPassagem);
-  }
-</script>
 </body>
 </html>
