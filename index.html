@@ -705,5 +705,38 @@
       carregarDadosStorage();
     });
   </script>
+  <!-- Scripts do Firebase (CDN) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+<script>
+  // Configuração extraída do seu console
+  const firebaseConfig = {
+    apiKey: "AIzaSyC2nYXXvsZJq54tatPVVDTyecGP8VgUR3w",
+    authDomain: "passagem-de-turno-6eea4.firebaseapp.com",
+    databaseURL: "https://passagem-de-turno-6eea4-default-rtdb.firebaseio.com",
+    projectId: "passagem-de-turno-6eea4",
+    storageBucket: "passagem-de-turno-6eea4.firebasestorage.app",
+    messagingSenderId: "399308087796",
+    appId: "1:399308087796:web:18afe529724399c2e059a1",
+    measurementId: "G-BM3ZY4GRXW"
+  };
+
+  // Inicializa o Firebase
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
+  // Exemplo de escuta em tempo real para sincronizar os 8 operadores
+  database.ref('passagens').on('value', (snapshot) => {
+    const dados = snapshot.val();
+    console.log("Dados atualizados em tempo real:", dados);
+    // Aqui você chama a função que redesenha a sua tabela/lista na tela
+  });
+
+  // Função para salvar novos dados no banco compartilhado
+  function salvarPassagem(novaPassagem) {
+    database.ref('passagens').push(novaPassagem);
+  }
+</script>
 </body>
 </html>
