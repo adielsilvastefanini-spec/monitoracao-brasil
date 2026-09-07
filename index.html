@@ -104,7 +104,6 @@
       display: none !important;
     }
 
-    /* Cabeçalho Azul */
     #incidentes thead tr th,
     table.dataTable thead th,
     .table thead th {
@@ -141,33 +140,14 @@
       color: #334155;
     }
 
-    /* Cores personalizadas para a célula Sítio */
-    td.sitio-laranja {
-      background-color: #ffaa00 !important;
-    }
-    td.sitio-laranja select {
-      background-color: #ffaa00 !important;
-      color: #ffffff !important;
-      font-weight: bold;
-    }
+    td.sitio-laranja { background-color: #ffaa00 !important; }
+    td.sitio-laranja select { background-color: #ffaa00 !important; color: #ffffff !important; font-weight: bold; }
 
-    td.sitio-verde {
-      background-color: #22c55e !important;
-    }
-    td.sitio-verde select {
-      background-color: #22c55e !important;
-      color: #ffffff !important;
-      font-weight: bold;
-    }
+    td.sitio-verde { background-color: #22c55e !important; }
+    td.sitio-verde select { background-color: #22c55e !important; color: #ffffff !important; font-weight: bold; }
 
-    td.sitio-cinza {
-      background-color: #6b7280 !important;
-    }
-    td.sitio-cinza select {
-      background-color: #6b7280 !important;
-      color: #ffffff !important;
-      font-weight: bold;
-    }
+    td.sitio-cinza { background-color: #6b7280 !important; }
+    td.sitio-cinza select { background-color: #6b7280 !important; color: #ffffff !important; font-weight: bold; }
 
     .select-sitio { width: 75px !important; }
     .select-tipo { width: 100px !important; }
@@ -239,7 +219,6 @@
     </div>
   </div>
 
-  <!-- Modal para Agregar/Sobrescrever Sítio -->
   <div class="modal fade" id="modalNovoSitio" tabindex="-1" aria-labelledby="modalNovoSitioLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -275,7 +254,6 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   
   <script>
-    // Configuração do Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyC2nYXXvsZJq54tatPVVDTyecGP8VgUR3w",
       authDomain: "passagem-de-turno-6eea4.firebaseapp.com",
@@ -366,7 +344,7 @@
       "XAP": { "ATO": ["SOCICAM", "CIRION BRASIL", "OI"], "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"] }
     };
 
-    let idSequencial = 0;
+    let idSequencial = Date.now();
 
     function getOptionsSitio() {
       let options = '<option value="">Selecione...</option>';
@@ -493,6 +471,34 @@
       database.ref('config/dadosSitios').set(dadosSitios);
     }
 
+    function preencherCamposLinha($tr, dados) {
+      if (!dados) return;
+
+      if (dados.sitio) {
+        $tr.find('.select-sitio').val(dados.sitio);
+        carregarTiposPorSitio($tr, dados.sitio);
+      }
+      if (dados.tipo) {
+        $tr.find('.select-tipo').val(dados.tipo);
+        carregarParceirosPorTipo($tr, dados.sitio, dados.tipo);
+      }
+      if (dados.parceiro) {
+        $tr.find('.select-parceiro').val(dados.parceiro);
+      }
+
+      $tr.find('.input-data1').val(dados.data1 || '');
+      $tr.find('.input-hora1').val(dados.hora1 || '');
+      $tr.find('.input-data2').val(dados.data2 || '');
+      $tr.find('.input-hora2').val(dados.hora2 || '');
+      $tr.find('.select-falha').val(dados.falha || '');
+      $tr.find('.select-opcom').val(dados.opcom || 'N/A');
+      $tr.find('.select-impacto').val(dados.impacto || 'N/A');
+      $tr.find('.select-causa').val(dados.causa || 'Pendente');
+      $tr.find('.input-obs').val(dados.obs || '');
+
+      avaliarStatusLinha($tr);
+    }
+
     function criarLinhaTabela(id, dados = null) {
       var $tr = $(`<tr data-id="${id}">
         <td><input type="checkbox" class="check-item"></td>
@@ -561,29 +567,7 @@
       $('#incidentes tbody').prepend($tr);
 
       if (dados) {
-        if (dados.sitio) {
-          $tr.find('.select-sitio').val(dados.sitio);
-          carregarTiposPorSitio($tr, dados.sitio);
-        }
-        if (dados.tipo) {
-          $tr.find('.select-tipo').val(dados.tipo);
-          carregarParceirosPorTipo($tr, dados.sitio, dados.tipo);
-        }
-        if (dados.parceiro) {
-          $tr.find('.select-parceiro').val(dados.parceiro);
-        }
-
-        $tr.find('.input-data1').val(dados.data1);
-        $tr.find('.input-hora1').val(dados.hora1);
-        $tr.find('.input-data2').val(dados.data2);
-        $tr.find('.input-hora2').val(dados.hora2);
-        $tr.find('.select-falha').val(dados.falha);
-        $tr.find('.select-opcom').val(dados.opcom);
-        $tr.find('.select-impacto').val(dados.impacto);
-        $tr.find('.select-causa').val(dados.causa);
-        $tr.find('.input-obs').val(dados.obs);
-
-        avaliarStatusLinha($tr);
+        preencherCamposLinha($tr, dados);
       }
     }
 
@@ -602,18 +586,7 @@
         if ($trExistente.length === 0) {
           criarLinhaTabela(item.id, item);
         } else {
-          $trExistente.find('.select-sitio').val(item.sitio);
-          $trExistente.find('.select-tipo').val(item.tipo);
-          $trExistente.find('.input-data1').val(item.data1);
-          $trExistente.find('.input-hora1').val(item.hora1);
-          $trExistente.find('.input-data2').val(item.data2);
-          $trExistente.find('.input-hora2').val(item.hora2);
-          $trExistente.find('.select-falha').val(item.falha);
-          $trExistente.find('.select-opcom').val(item.opcom);
-          $trExistente.find('.select-impacto').val(item.impacto);
-          $trExistente.find('.select-parceiro').val(item.parceiro);
-          $trExistente.find('.select-causa').val(item.causa);
-          $trExistente.find('.input-obs').val(item.obs);
+          preencherCamposLinha($trExistente, item);
         }
       });
 
