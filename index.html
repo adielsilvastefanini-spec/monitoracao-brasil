@@ -265,7 +265,7 @@
     }
     const database = firebase.database();
 
-    // BASE DE DADOS COMPLETA COM TODOS OS 72 SÍTIOS E SEUS TIPOS (INCLUINDO CWB: ATO, TECA, VOLVO)
+    // BASE COMPLETA DOS SÍTIOS E SEUS TIPOS
     const dadosSitiosBase = {
       "AJU": { "ATO": ["AENA", "CIRION BRASIL", "EMBRATEL", "OI"] },
       "BEL": { "ATO": ["SOCICAM", "CIRION BRASIL", "EMBRATEL", "OI"], "MNT": ["SOCICAM", "LATAM BRASIL", "VIVO", "CIRION BRASIL", "OI"] },
@@ -342,6 +342,7 @@
     };
 
     let dadosSitios = {};
+    let dadosCarregados = false; // Trava contra perda de dados no F5
 
     function fn01_getOptionsSitio() {
       let options = '<option value="">Selecione...</option>';
@@ -439,6 +440,9 @@
     }
 
     function fn06_salvarDadosStorage() {
+      // Impede sobreposição/apagar dados se o banco ainda não respondeu ao F5
+      if (!dadosCarregados) return;
+
       var dados = [];
       $('#incidentes tbody tr').each(function() {
         var $tr = $(this);
@@ -569,17 +573,10 @@
       return $tr;
     }
 
-    // CARREGAMENTO SEGURO DA BASE E PERSISTÊNCIA APÓS F5
     function fn09_inicializarDados() {
-      // 1. Carrega Sítios mantendo sempre a estrutura completa
       database.ref('config/dadosSitios').once('value').then(function(snapshot) {
         var dadosCustom = snapshot.val();
-        
-        // Garante a fusão total com a base para evitar perda dos tipos (ex: CWB -> Volvo)
         dadosSitios = $.extend(true, {}, dadosSitiosBase, dadosCustom || {});
-        database.ref('config/dadosSitios').set(dadosSitios);
-
-        // 2. Carrega a tabela preservando os dados salvos após F5
         return database.ref('passagens').once('value');
       }).then(function(snapshot) {
         var dados = snapshot.val();
@@ -594,6 +591,9 @@
           });
           fn02_reordenarTabela();
         }
+
+        // Libera a escrita na tabela somente após carregar tudo
+        dadosCarregados = true;
       }).catch(function(error) {
         console.error("Erro no carregamento inicial:", error);
       });
@@ -601,10 +601,9 @@
 
     $(document).ready(function() {
 
-      // Inicializa os dados
       fn09_inicializarDados();
 
-      // Adicionar nova linha
+      // Botão Novo
       $('#btnNovoItem').on('click', function() {
         var novoId = Date.now().toString();
         var $tr = fn08_criarLinhaTabela(novoId);
@@ -613,27 +612,27 @@
         $tr.find('.select-sitio').focus();
       });
 
-      // Salva alterações nos campos da tabela
+      // Mudança nos campos
       $('#incidentes').on('change input', 'select, input', function() {
         var $tr = $(this).closest('tr');
         fn03_avaliarStatusLinha($tr);
         fn06_salvarDadosStorage();
       });
 
-      // Atualiza Selects ao alterar o Sítio
+      // Seleção de Sítio
       $('#incidentes').on('change', '.select-sitio', function() {
         var $tr = $(this).closest('tr');
         fn04_carregarTiposPorSitio($tr, $(this).val());
       });
 
-      // Atualiza Selects ao alterar o Tipo
+      // Seleção de Tipo
       $('#incidentes').on('change', '.select-tipo', function() {
         var $tr = $(this).closest('tr');
         var sitio = $tr.find('.select-sitio').val();
         fn05_carregarParceirosPorTipo($tr, sitio, $(this).val());
       });
 
-      // Salvar Novo / Editar Sítio no Modal sem apagar a base
+      // Modal: Adicionar/Editar Sítio e Parceiro
       $('#btnSalvarNovoSitio').on('click', function() {
         var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
         var tipo = $('#inputNovoTipo').val().trim();
@@ -644,25 +643,34 @@
           return;
         }
 
-        var parceirosArr = parceirosStr.split(',').map(s => s.trim()).filter(s => s !== '');
+        var novosParceiros = parceirosStr.split(',').map(s => s.trim()).filter(s => s !== '');
 
-        if (dadosSitios[codigo] && dadosSitios[codigo][tipo]) {
-          var confirma = confirm(`O Sítio "${codigo}" com o tipo "${tipo}" já existe.\n\nDeseja atualizar a lista de parceiros?`);
-          if (!confirma) return;
+        if (!dadosSitios[codigo]) {
+          dadosSitios[codigo] = {};
+        }
+
+        if (!dadosSitios[codigo][tipo]) {
+          dadosSitios[codigo][tipo] = [];
+        }
+
+        let inseridos = 0;
+        novosParceiros.forEach(function(p) {
+          if (!dadosSitios[codigo][tipo].includes(p)) {
+            dadosSitios[codigo][tipo].push(p);
+            inseridos++;
+          }
+        });
+
+        if (inseridos === 0) {
+          alert(`Todos os parceiros informados já existem para o tipo "${tipo}" no sítio "${codigo}".`);
+          return;
         }
 
         var $btn = $(this);
         $btn.prop('disabled', true).text('Salvando...');
 
-        if (!dadosSitios[codigo]) {
-          dadosSitios[codigo] = {};
-        }
-        dadosSitios[codigo][tipo] = parceirosArr;
-
-        // Atualização limpa no nó específico no Firebase
-        database.ref('config/dadosSitios/' + codigo + '/' + tipo).set(parceirosArr)
+        database.ref('config/dadosSitios/' + codigo + '/' + tipo).set(dadosSitios[codigo][tipo])
           .then(function() {
-            // Atualiza os selects em tela
             $('.select-sitio').each(function() {
               var valAtual = $(this).val();
               $(this).html(fn01_getOptionsSitio());
@@ -674,7 +682,7 @@
             var modalInstance = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
             modalInstance.hide();
 
-            alert(`Sítio "${codigo}" e Tipo "${tipo}" salvos com sucesso!`);
+            alert(`Dados do sítio "${codigo}" (${tipo}) atualizados com sucesso!`);
           })
           .catch(function(err) {
             alert('Erro ao salvar no banco: ' + err.message);
@@ -704,7 +712,7 @@
         $('.check-item').prop('checked', this.checked);
       });
 
-      // Botão Excluir
+      // Excluir Selecionados
       $('#btnExcluirSelecionado').on('click', function() {
         var $selecionados = $('.check-item:checked');
         if ($selecionados.length === 0) {
@@ -718,7 +726,7 @@
         }
       });
 
-      // Botão Salvar Manual
+      // Salvar Manual
       $('#btnSalvarTudo').on('click', function() {
         fn06_salvarDadosStorage();
         alert('Tabela salva com sucesso!');
