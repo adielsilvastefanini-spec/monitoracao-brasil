@@ -450,50 +450,67 @@
         }
       }
 
-      /* LÓGICA DE PERSISTÊNCIA (LOCALSTORAGE) */
-      function salvarDadosStorage() {
-        var dados = [];
-        $('#incidentes tbody tr').each(function() {
-          var $tr = $(this);
-          var item = {
-            id: $tr.attr('data-id'),
-            sitio: $tr.find('.select-sitio').val() || '',
-            tipo: $tr.find('.select-tipo').val() || '',
-            data1: $tr.find('.input-data1').val() || '',
-            hora1: $tr.find('.input-hora1').val() || '',
-            data2: $tr.find('.input-data2').val() || '',
-            hora2: $tr.find('.input-hora2').val() || '',
-            falha: $tr.find('.select-falha').val() || '',
-            opcom: $tr.find('.select-opcom').val() || '',
-            impacto: $tr.find('.select-impacto').val() || '',
-            parceiro: $tr.find('.select-parceiro').val() || '',
-            causa: $tr.find('.select-causa').val() || '',
-            obs: $tr.find('.input-obs').val() || ''
-          };
-          dados.push(item);
-        });
-        localStorage.setItem('incidentes_monitoracao', JSON.stringify(dados));
-        localStorage.setItem('incidentes_id_seq', idSequencial);
-        localStorage.setItem('dadosSitios_custom', JSON.stringify(dadosSitios));
+      /* LÓGICA DE PERSISTÊNCIA (FIREBASE) */
+
+// 1. Função para salvar os dados no Firebase (substitui o localStorage)
+function salvarDadosStorage() {
+  var dados = [];
+  $('#incidentes tbody tr').each(function() {
+    var $tr = $(this);
+    var item = {
+      id: $tr.attr('data-id') || Date.now().toString(),
+      sitio: $tr.find('.select-sitio').val() || '',
+      tipo: $tr.find('.select-tipo').val() || '',
+      data1: $tr.find('.input-data1').val() || '',
+      hora1: $tr.find('.input-hora1').val() || '',
+      data2: $tr.find('.input-data2').val() || '',
+      hora2: $tr.find('.input-hora2').val() || '',
+      falha: $tr.find('.select-falha').val() || '',
+      opcom: $tr.find('.select-opcom').val() || '',
+      impacto: $tr.find('.select-impacto').val() || '',
+      parceiro: $tr.find('.select-parceiro').val() || '',
+      causa: $tr.find('.select-causa').val() || '',
+      obs: $tr.find('.input-obs').val() || ''
+    };
+    dados.push(item);
+  });
+
+  // Salva no banco compartilhado na nuvem para todos os 8 operadores
+  database.ref('passagens').set(dados);
+  database.ref('config/idSequencial').set(idSequencial);
+  database.ref('config/dadosSitios').set(dadosSitios);
+}
+
+// 2. Escuta mudanças em TEMPO REAL e renderiza a tabela automaticamente
+database.ref('passagens').on('value', function(snapshot) {
+  var dados = snapshot.val();
+  
+  // Limpa a tabela para não duplicar linhas ao atualizar
+  $('#incidentes tbody').empty();
+
+  if (dados) {
+    var lista = Array.isArray(dados) ? dados : Object.values(dados);
+    lista.forEach(function(item) {
+      if (item) {
+        criarLinhaTabela(item.id, item);
       }
+    });
+    if (typeof reordenarTabela === 'function') {
+      reordenarTabela();
+    }
+  }
+});
 
-      function carregarDadosStorage() {
-        var dadosCustom = localStorage.getItem('dadosSitios_custom');
-        if (dadosCustom) {
-          Object.assign(dadosSitios, JSON.parse(dadosCustom));
-        }
+// 3. Carrega sequencial e sites do Firebase
+database.ref('config/idSequencial').on('value', function(snapshot) {
+  var seqSalvo = snapshot.val();
+  if (seqSalvo) idSequencial = parseInt(seqSalvo);
+});
 
-        var seqSalvo = localStorage.getItem('incidentes_id_seq');
-        if (seqSalvo) idSequencial = parseInt(seqSalvo);
-
-        var dadosSalvos = localStorage.getItem('incidentes_monitoracao');
-        if (dadosSalvos) {
-          var lista = JSON.parse(dadosSalvos);
-          lista.forEach(function(item) {
-            criarLinhaTabela(item.id, item);
-          });
-          reordenarTabela();
-        }
+database.ref('config/dadosSitios').on('value', function(snapshot) {
+  var dadosCustom = snapshot.val();
+  if (dadosCustom) Object.assign(dadosSitios, dadosCustom);
+});
       }
 
       function criarLinhaTabela(id, dados = null) {
