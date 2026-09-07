@@ -452,9 +452,7 @@
 
       /* LÓGICA DE PERSISTÊNCIA (FIREBASE) */
 
-/* LÓGICA DE PERSISTÊNCIA (FIREBASE) */
-
-// 1. Função para salvar os dados no Firebase
+// 1. Salvar os dados atuais da tabela no Firebase
 function salvarDadosStorage() {
   var dados = [];
   $('#incidentes tbody tr').each(function() {
@@ -477,57 +475,56 @@ function salvarDadosStorage() {
     dados.push(item);
   });
 
-  // Salva no banco compartilhado para todos os operadores
   database.ref('passagens').set(dados);
   database.ref('config/idSequencial').set(idSequencial);
   database.ref('config/dadosSitios').set(dadosSitios);
 }
 
-// 2. Escuta mudanças do Firebase sem apagar linhas não salvas/em edição
+// 2. Escuta em tempo real do Firebase (substitui o antigo carregarDadosStorage)
 database.ref('passagens').on('value', function(snapshot) {
   var dados = snapshot.val();
-  
-  // Mapeia IDs que já estão na tela atualmente
-  var idsAtuais = [];
-  $('#incidentes tbody tr').each(function() {
-    idsAtuais.push($(this).attr('data-id'));
+  if (!dados) return;
+
+  var lista = Array.isArray(dados) ? dados : Object.values(dados);
+
+  lista.forEach(function(item) {
+    if (!item || !item.id) return;
+    
+    // Verifica se a linha já existe no HTML da tabela
+    var $trExistente = $('#incidentes tbody tr[data-id="' + item.id + '"]');
+
+    if ($trExistente.length === 0) {
+      // Se não existe na tela, cria a nova linha recebida da nuvem
+      criarLinhaTabela(item.id, item);
+    } else {
+      // Se já existe, atualiza apenas os campos sem recriar a linha toda
+      $trExistente.find('.select-sitio').val(item.sitio);
+      $trExistente.find('.select-tipo').val(item.tipo);
+      $trExistente.find('.input-data1').val(item.data1);
+      $trExistente.find('.input-hora1').val(item.hora1);
+      $trExistente.find('.input-data2').val(item.data2);
+      $trExistente.find('.input-hora2').val(item.hora2);
+      $trExistente.find('.select-falha').val(item.falha);
+      $trExistente.find('.select-opcom').val(item.opcom);
+      $trExistente.find('.select-impacto').val(item.impacto);
+      $trExistente.find('.select-parceiro').val(item.parceiro);
+      $trExistente.find('.select-causa').val(item.causa);
+      $trExistente.find('.input-obs').val(item.obs);
+    }
   });
 
-  if (dados) {
-    var lista = Array.isArray(dados) ? dados : Object.values(dados);
-    
-    // Se a tabela estiver completamente vazia, carrega tudo do Firebase
-    if ($('#incidentes tbody tr').length === 0) {
-      lista.forEach(function(item) {
-        if (item && item.id) {
-          criarLinhaTabela(item.id, item);
-        }
-      });
-      if (typeof reordenarTabela === 'function') reordenarTabela();
-    } else {
-      // Se já houver linhas (como uma criada pelo botão Novo), atualiza apenas os valores
-      lista.forEach(function(item) {
-        if (item && item.id) {
-          var $tr = $('#incidentes tbody tr[data-id="' + item.id + '"]');
-          if ($tr.length === 0) {
-            criarLinhaTabela(item.id, item);
-          }
-        }
-      });
-    }
+  if (typeof reordenarTabela === 'function') {
+    reordenarTabela();
   }
 });
 
-// 3. Carrega sequencial e sites do Firebase
+// 3. Sincronizar o contador do ID Sequencial
 database.ref('config/idSequencial').on('value', function(snapshot) {
   var seqSalvo = snapshot.val();
   if (seqSalvo) idSequencial = parseInt(seqSalvo);
 });
 
-database.ref('config/dadosSitios').on('value', function(snapshot) {
-  var dadosCustom = snapshot.val();
-  if (dadosCustom) Object.assign(dadosSitios, dadosCustom);
-});
+// 4. Sincronizar dados de sítios
 database.ref('config/dadosSitios').on('value', function(snapshot) {
   var dadosCustom = snapshot.val();
   if (dadosCustom) Object.assign(dadosSitios, dadosCustom);
