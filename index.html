@@ -347,6 +347,7 @@
     };
 
     let idSequencial = Date.now();
+    let tempoEsperaSalvar;
 
     function getOptionsSitio() {
       let options = '<option value="">Selecione...</option>';
@@ -357,6 +358,11 @@
     }
 
     function reordenarTabela() {
+      // Evita reordenar a tabela enquanto o usuário está interagindo com algum input
+      if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT')) {
+        return;
+      }
+
       var $tbody = $('#incidentes tbody');
       
       var $linhasLaranja = $tbody.find('tr').filter(function() {
@@ -477,28 +483,30 @@
     function preencherCamposLinha($tr, dados) {
       if (!dados) return;
 
-      if (dados.sitio) {
+      var elementoAtivo = document.activeElement;
+
+      if (dados.sitio && $tr.find('.select-sitio')[0] !== elementoAtivo) {
         $tr.find('.select-sitio').val(dados.sitio);
         carregarTiposPorSitio($tr, dados.sitio);
       }
-      if (dados.tipo) {
+      if (dados.tipo && $tr.find('.select-tipo')[0] !== elementoAtivo) {
         $tr.find('.select-tipo').val(dados.tipo);
         carregarParceirosPorTipo($tr, dados.sitio, dados.tipo);
       }
-      if (dados.parceiro) {
+      if (dados.parceiro && $tr.find('.select-parceiro')[0] !== elementoAtivo) {
         $tr.find('.select-parceiro').val(dados.parceiro);
       }
 
-      $tr.find('.input-data1').val(dados.data1 || '');
-      $tr.find('.input-hora1').val(dados.hora1 || '');
-      $tr.find('.input-data2').val(dados.data2 || '');
-      $tr.find('.input-hora2').val(dados.hora2 || '');
-      $tr.find('.select-falha').val(dados.falha || '');
-      $tr.find('.select-opcom').val(dados.opcom || 'N/A');
-      $tr.find('.select-impacto').val(dados.impacto || 'N/A');
-      $tr.find('.select-causa').val(dados.causa || 'Pendente');
-      $tr.find('.input-ticket').val(dados.ticket || '');
-      $tr.find('.input-status').val(dados.status || dados.obs || '');
+      if ($tr.find('.input-data1')[0] !== elementoAtivo) $tr.find('.input-data1').val(dados.data1 || '');
+      if ($tr.find('.input-hora1')[0] !== elementoAtivo) $tr.find('.input-hora1').val(dados.hora1 || '');
+      if ($tr.find('.input-data2')[0] !== elementoAtivo) $tr.find('.input-data2').val(dados.data2 || '');
+      if ($tr.find('.input-hora2')[0] !== elementoAtivo) $tr.find('.input-hora2').val(dados.hora2 || '');
+      if ($tr.find('.select-falha')[0] !== elementoAtivo) $tr.find('.select-falha').val(dados.falha || '');
+      if ($tr.find('.select-opcom')[0] !== elementoAtivo) $tr.find('.select-opcom').val(dados.opcom || 'N/A');
+      if ($tr.find('.select-impacto')[0] !== elementoAtivo) $tr.find('.select-impacto').val(dados.impacto || 'N/A');
+      if ($tr.find('.select-causa')[0] !== elementoAtivo) $tr.find('.select-causa').val(dados.causa || 'Pendente');
+      if ($tr.find('.input-ticket')[0] !== elementoAtivo) $tr.find('.input-ticket').val(dados.ticket || '');
+      if ($tr.find('.input-status')[0] !== elementoAtivo) $tr.find('.input-status').val(dados.status || dados.obs || '');
 
       avaliarStatusLinha($tr);
     }
@@ -623,10 +631,16 @@
       $('#incidentes').on('change input', 'select, input', function() {
         var $tr = $(this).closest('tr');
         avaliarStatusLinha($tr);
-        salvarDadosStorage();
+
+        // Agenda o salvamento no Firebase sem travar a digitação
+        clearTimeout(tempoEsperaSalvar);
+        tempoEsperaSalvar = setTimeout(function() {
+          salvarDadosStorage();
+        }, 800);
       });
 
       $('#incidentes').on('blur', 'select, input', function() {
+        salvarDadosStorage();
         reordenarTabela();
       });
 
