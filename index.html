@@ -214,33 +214,37 @@
     </div>
   </div>
 
-  <!-- Modal de Sítios -->
+  <!-- Modal de Sítios atualizado -->
   <div class="modal fade" id="modalNovoSitio" tabindex="-1" aria-labelledby="modalNovoSitioLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header bg-primary text-white py-2">
-          <h5 class="modal-title fs-6" id="modalNovoSitioLabel">Cadastrar / Editar Sítio</h5>
+          <h5 class="modal-title fs-6" id="modalNovoSitioLabel">Cadastrar / Editar / Excluir Sítio</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body fs-6">
           <form id="formNovoSitio">
             <div class="mb-3">
-              <label for="inputNovoSitio" class="form-label fw-semibold text-secondary mb-1">Código do Sítio (Ex: GIG, SSA, CWB):</label>
+              <label for="inputNovoSitio" class="form-label fw-semibold text-secondary mb-1">Código do Sítio (Ex: GIG, SSA, PMW):</label>
               <input type="text" class="form-control form-control-sm text-uppercase" id="inputNovoSitio" placeholder="DIGITE O CÓDIGO DO SÍTIO" required>
             </div>
             <div class="mb-3">
-              <label for="inputNovoTipo" class="form-label fw-semibold text-secondary mb-1">Tipo de Local (Ex: ATO, Teca, Volvo):</label>
+              <label for="inputNovoTipo" class="form-label fw-semibold text-secondary mb-1">Tipo de Local (Ex: ATO, Teca, Kenerson):</label>
               <input type="text" class="form-control form-control-sm" id="inputNovoTipo" placeholder="Digite o Tipo" required>
             </div>
             <div class="mb-3">
               <label for="inputNovosParceiros" class="form-label fw-semibold text-secondary mb-1">Parceiros (Separados por vírgula):</label>
-              <input type="text" class="form-control form-control-sm" id="inputNovosParceiros" placeholder="Ex: VIVO, CIRION BRASIL, OI" required>
+              <input type="text" class="form-control form-control-sm" id="inputNovosParceiros" placeholder="Ex: VIVO, CIRION BRASIL, OI">
+              <small class="text-muted d-block mt-1" style="font-size: 10.5px;">* Deixe em branco se seu objetivo for apenas EXCLUIR um Tipo/Sítio.</small>
             </div>
           </form>
         </div>
-        <div class="modal-footer py-2">
-          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-sm btn-primary" id="btnSalvarNovoSitio">Salvar Dados</button>
+        <div class="modal-footer py-2 d-flex justify-content-between">
+          <button type="button" class="btn btn-sm btn-outline-danger" id="btnExcluirTipoModal">Excluir Tipo</button>
+          <div>
+            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-sm btn-primary" id="btnSalvarNovoSitio">Salvar Dados</button>
+          </div>
         </div>
       </div>
     </div>
@@ -265,7 +269,7 @@
     }
     const database = firebase.database();
 
-    // BASE COMPLETA DOS SÍTIOS E SEUS TIPOS
+    // BASE DE DADOS (PMW corrigido sem Kenerson padrão)
     const dadosSitiosBase = {
       "AJU": { "ATO": ["AENA", "CIRION BRASIL", "EMBRATEL", "OI"] },
       "BEL": { "ATO": ["SOCICAM", "CIRION BRASIL", "EMBRATEL", "OI"], "MNT": ["SOCICAM", "LATAM BRASIL", "VIVO", "CIRION BRASIL", "OI"] },
@@ -314,7 +318,7 @@
       "PFB": { "ATO": ["INFRAERO", "CLARO", "CIRION BRASIL", "OI"] },
       "PHB": { "ATO": ["SBPB", "VIVO", "CIRION BRASIL"] },
       "PLU": { "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"] },
-      "PMW": { "ATO": ["CCR"], "P.A Teca": ["LATAM"], "ATO/Teca": ["CLARO", "CIRION BRASIL", "OI"], "Kenerson": ["VIVO", "CIRION BRASIL", "OI"] },
+      "PMW": { "ATO": ["CCR"], "P.A Teca": ["LATAM"], "ATO/Teca": ["CLARO", "CIRION BRASIL", "OI"] },
       "PNZ": { "ATO": ["CCR", "CLARO", "CIRION BRASIL", "OI"] },
       "POA": { "ATO": ["LATAM", "FRAPORT", "CIRION BRASIL", "EMBRATEL", "OI"], "Teca": ["LATAM", "FRAPORT", "VIVO", "CIRION BRASIL", "TIM"], "MNT": ["LATAM", "FRAPORT", "CIRION BRASIL", "OI"] },
       "POP": { "TELEFONICA BRASIL": ["TELEFÔNICA", "OI", "LATAM BRASIL", "CIRION"], "CIRION BRASIL": ["CIRION", "LATAM BRASIL", "TELEFÔNICA", "OI"] },
@@ -342,7 +346,7 @@
     };
 
     let dadosSitios = {};
-    let dadosCarregados = false; // Trava contra perda de dados no F5
+    let dadosCarregados = false; // TRAVA DE SEGURANÇA F5
 
     function fn01_getOptionsSitio() {
       let options = '<option value="">Selecione...</option>';
@@ -440,7 +444,7 @@
     }
 
     function fn06_salvarDadosStorage() {
-      // Impede sobreposição/apagar dados se o banco ainda não respondeu ao F5
+      // Bloqueia gravação caso a inicialização do F5 ainda não tenha rodado
       if (!dadosCarregados) return;
 
       var dados = [];
@@ -592,18 +596,36 @@
           fn02_reordenarTabela();
         }
 
-        // Libera a escrita na tabela somente após carregar tudo
+        // Desbloqueia alterações e gravação automática
         dadosCarregados = true;
       }).catch(function(error) {
-        console.error("Erro no carregamento inicial:", error);
+        console.error("Erro na inicialização:", error);
       });
+    }
+
+    // Função de Exclusão de Tipo no Banco
+    function fn10_removerTipoSitio(codigoSitio, tipoRemover) {
+      if (dadosSitios[codigoSitio] && dadosSitios[codigoSitio][tipoRemover]) {
+        delete dadosSitios[codigoSitio][tipoRemover];
+        
+        database.ref('config/dadosSitios/' + codigoSitio + '/' + tipoRemover).remove()
+          .then(() => {
+            alert(`O tipo "${tipoRemover}" do sítio "${codigoSitio}" foi excluído com sucesso!`);
+            location.reload();
+          })
+          .catch((err) => {
+            alert("Erro ao remover no banco de dados: " + err.message);
+          });
+      } else {
+        alert(`O tipo "${tipoRemover}" não foi encontrado dentro de "${codigoSitio}".`);
+      }
     }
 
     $(document).ready(function() {
 
       fn09_inicializarDados();
 
-      // Botão Novo
+      // Botão + Novo
       $('#btnNovoItem').on('click', function() {
         var novoId = Date.now().toString();
         var $tr = fn08_criarLinhaTabela(novoId);
@@ -612,34 +634,34 @@
         $tr.find('.select-sitio').focus();
       });
 
-      // Mudança nos campos
+      // Alteração nos inputs da tabela
       $('#incidentes').on('change input', 'select, input', function() {
         var $tr = $(this).closest('tr');
         fn03_avaliarStatusLinha($tr);
         fn06_salvarDadosStorage();
       });
 
-      // Seleção de Sítio
+      // Cascata: Sítio -> Tipo
       $('#incidentes').on('change', '.select-sitio', function() {
         var $tr = $(this).closest('tr');
         fn04_carregarTiposPorSitio($tr, $(this).val());
       });
 
-      // Seleção de Tipo
+      // Cascata: Tipo -> Parceiro
       $('#incidentes').on('change', '.select-tipo', function() {
         var $tr = $(this).closest('tr');
         var sitio = $tr.find('.select-sitio').val();
         fn05_carregarParceirosPorTipo($tr, sitio, $(this).val());
       });
 
-      // Modal: Adicionar/Editar Sítio e Parceiro
+      // Botão Salvar do Modal (Adicionar / Unificar)
       $('#btnSalvarNovoSitio').on('click', function() {
         var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
         var tipo = $('#inputNovoTipo').val().trim();
         var parceirosStr = $('#inputNovosParceiros').val().trim();
 
         if (!codigo || !tipo || !parceirosStr) {
-          alert('Preencha todos os campos do modal.');
+          alert('Por favor, preencha o Sítio, o Tipo e os Parceiros para salvar.');
           return;
         }
 
@@ -682,7 +704,7 @@
             var modalInstance = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
             modalInstance.hide();
 
-            alert(`Dados do sítio "${codigo}" (${tipo}) atualizados com sucesso!`);
+            alert(`Dados do sítio "${codigo}" (${tipo}) gravados com sucesso!`);
           })
           .catch(function(err) {
             alert('Erro ao salvar no banco: ' + err.message);
@@ -692,7 +714,22 @@
           });
       });
 
-      // Busca na Tabela
+      // Botão Excluir do Modal (Apagar Tipo/Sítio ex: Kenerson)
+      $('#btnExcluirTipoModal').on('click', function() {
+        var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
+        var tipo = $('#inputNovoTipo').val().trim();
+
+        if (!codigo || !tipo) {
+          alert('Preencha o Código do Sítio e o Tipo que você deseja excluir.');
+          return;
+        }
+
+        if (confirm(`Tem certeza que deseja apagar o tipo "${tipo}" do sítio "${codigo}"?`)) {
+          fn10_removerTipoSitio(codigo, tipo);
+        }
+      });
+
+      // Campo de Busca
       $('#inputCustomSearch').on('keyup', function() {
         var termo = $(this).val().toLowerCase();
         $('#incidentes tbody tr').each(function() {
@@ -707,29 +744,29 @@
         });
       });
 
-      // Checkbox Geral
+      // Seleção global de checkboxes
       $('#checkAll').on('change', function() {
         $('.check-item').prop('checked', this.checked);
       });
 
-      // Excluir Selecionados
+      // Botão Excluir Linha
       $('#btnExcluirSelecionado').on('click', function() {
         var $selecionados = $('.check-item:checked');
         if ($selecionados.length === 0) {
-          alert('Selecione ao menos um item para excluir.');
+          alert('Selecione ao menos um registro para excluir.');
           return;
         }
-        if (confirm('Deseja excluir as linhas selecionadas?')) {
+        if (confirm('Deseja excluir a(s) linha(s) selecionada(s)?')) {
           $selecionados.closest('tr').remove();
           $('#checkAll').prop('checked', false);
           fn06_salvarDadosStorage();
         }
       });
 
-      // Salvar Manual
+      // Botão Salvar manual
       $('#btnSalvarTudo').on('click', function() {
         fn06_salvarDadosStorage();
-        alert('Tabela salva com sucesso!');
+        alert('Dados salvos no Firebase com sucesso!');
       });
 
     });
