@@ -158,8 +158,9 @@
     .select-opcom { width: 65px !important; }
     .select-impacto { width: 60px !important; }
     .select-causa { width: 115px !important; }
-    .col-obs { width: 100% !important; }
-    .input-obs { width: 100% !important; min-width: 200px; text-align: left; }
+    .input-ticket { width: 110px !important; text-align: center; }
+    .col-status { width: 100% !important; }
+    .input-status { width: 100% !important; min-width: 200px; text-align: left; }
   </style>
 </head>
 <body>
@@ -208,7 +209,8 @@
               <th>Impacto</th>
               <th>Parceiros</th>
               <th>Causa</th>
-              <th style="width: 100%;">Observação</th>
+              <th>Ticket</th>
+              <th style="width: 100%;">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -389,7 +391,7 @@
       var impactoVal = $tr.find('.select-impacto').val();
       var parceiroVal = $tr.find('.select-parceiro').val();
       var causaVal = $tr.find('.select-causa').val();
-      var obsVal = $tr.find('.input-obs').val().trim();
+      var statusVal = $tr.find('.input-status').val().trim();
 
       $tdSitio.removeClass('sitio-laranja sitio-verde sitio-cinza');
       $tr.removeClass('linha-concluida linha-atividade');
@@ -398,11 +400,11 @@
 
       var principalPreenchido = sitioVal && tipoVal && data1Val && hora1Val && data2Val && hora2Val && falhaVal && opcomVal && impactoVal && parceiroVal && causaVal;
 
-      if (principalPreenchido && obsVal !== "") {
+      if (principalPreenchido && statusVal !== "") {
         $tdSitio.addClass('sitio-verde');
         $tr.addClass('linha-concluida');
       } 
-      else if (principalPreenchido && obsVal === "" && causaVal === "Atividade") {
+      else if (principalPreenchido && statusVal === "" && causaVal === "Atividade") {
         $tdSitio.addClass('sitio-cinza');
         $tr.addClass('linha-atividade');
       } 
@@ -461,7 +463,8 @@
           impacto: $tr.find('.select-impacto').val() || '',
           parceiro: $tr.find('.select-parceiro').val() || '',
           causa: $tr.find('.select-causa').val() || '',
-          obs: $tr.find('.input-obs').val() || ''
+          ticket: $tr.find('.input-ticket').val() || '',
+          status: $tr.find('.input-status').val() || ''
         };
         dados.push(item);
       });
@@ -494,7 +497,8 @@
       $tr.find('.select-opcom').val(dados.opcom || 'N/A');
       $tr.find('.select-impacto').val(dados.impacto || 'N/A');
       $tr.find('.select-causa').val(dados.causa || 'Pendente');
-      $tr.find('.input-obs').val(dados.obs || '');
+      $tr.find('.input-ticket').val(dados.ticket || '');
+      $tr.find('.input-status').val(dados.status || dados.obs || '');
 
       avaliarStatusLinha($tr);
     }
@@ -559,8 +563,11 @@
             <option value="Falha SW">Falha SW</option>
           </select>
         </td>
-        <td class="col-obs">
-          <input type="text" class="input-tabela-sm input-obs" placeholder="Escreva a observação completa aqui...">
+        <td>
+          <input type="text" class="input-tabela-sm input-ticket" placeholder="Nº do Ticket">
+        </td>
+        <td class="col-status">
+          <input type="text" class="input-tabela-sm input-status" placeholder="Descreva o status atual do incidente...">
         </td>
       </tr>`);
 
