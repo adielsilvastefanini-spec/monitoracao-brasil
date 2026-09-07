@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monitoração - Brasil</title>
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   
+  <!-- SDK do Firebase (Compatível) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
@@ -99,13 +99,13 @@
     .btn-email-topo { background-color: #8b5cf6 !important; color: #ffffff !important; }
     .btn-checkpoint-topo { background-color: #f59e0b !important; color: #ffffff !important; }
 
-    .dataTables_empty {
-      display: none !important;
+    table.tabela-custom {
+      width: 100% !important;
+      font-size: 11px;
+      border-collapse: collapse !important;
     }
 
-    #incidentes thead tr th,
-    table.dataTable thead th,
-    .table thead th {
+    table.tabela-custom thead tr th {
       background-color: #2563eb !important;
       color: #ffffff !important;
       border: none !important;
@@ -115,13 +115,7 @@
       vertical-align: middle;
     }
 
-    table.dataTable {
-      width: 100% !important;
-      font-size: 11px;
-      border-collapse: collapse !important;
-    }
-
-    table.dataTable tbody td {
+    table.tabela-custom tbody td {
       padding: 3px 2px !important;
       text-align: center;
       vertical-align: middle;
@@ -193,7 +187,7 @@
       </div>
 
       <div class="table-responsive">
-        <table id="incidentes" class="display table align-middle w-100">
+        <table id="incidentes" class="tabela-custom align-middle w-100">
           <thead>
             <tr>
               <th style="width: 25px;"><input type="checkbox" id="checkAll"></th>
@@ -220,6 +214,7 @@
     </div>
   </div>
 
+  <!-- Modal de Sítios -->
   <div class="modal fade" id="modalNovoSitio" tabindex="-1" aria-labelledby="modalNovoSitioLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -271,4 +266,429 @@
     const database = firebase.database();
 
     let dadosSitiosBase = {
-      "AJU": { "ATO":
+      "AJU": { "ATO": ["AENA", "CIRION BRASIL", "EMBRATEL", "OI"] },
+      "BEL": { "ATO": ["SOCICAM", "CIRION BRASIL", "EMBRATEL", "OI"], "MNT": ["SOCICAM", "LATAM BRASIL", "VIVO", "CIRION BRASIL", "OI"] },
+      "BHZ": { "Contact Center": ["OI", "AeC", "TELEFONICA BRASIL", "CIRION BRASIL"] },
+      "BSB": { "ATO": ["INFRAMERICA", "CIRION BRASIL", "EMBRATEL", "OI", "SITA"], "Loja": ["LATAM", "VIVO", "CIRION BRASIL", "OI"] },
+      "CGH": { "ATO": ["AENA", "TELEFONICA BRASIL", "OI"], "Teca": ["LATAM", "CIRION BRASIL", "OI", "EMBRATEL"] },
+      "CWB": { "ATO": ["CCR", "CIRION BRASIL", "OI", "EMBRATEL"], "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"] },
+      "FOR": { "ATO": ["FRAPORT", "CIRION BRASIL", "EMBRATEL", "OI"] },
+      "GIG": { "ATO": ["RIOGALEÃO", "CIRION BRASIL", "EMBRATEL", "OI"] },
+      "GRU": { "ATO": ["GRUAIRPORT", "LATAM", "SITA", "TELEFONICA BRASIL", "OI"] },
+      "POA": { "ATO": ["LATAM", "FRAPORT", "CIRION BRASIL", "EMBRATEL", "OI"] },
+      "REC": { "ATO": ["AENA", "CIRION BRASIL", "OI", "EMBRATEL"] },
+      "SDU": { "ATO": ["INFRAERO", "CIRION BRASIL", "EMBRATEL", "OI"] },
+      "SSA": { "ATO": ["VINCI", "CIRION BRASIL", "EMBRATEL", "OI"] },
+      "VCP": { "ATO": ["VIRACOPOS", "TIM", "CIRION BRASIL", "OI"] }
+    };
+
+    let dadosSitios = {};
+    let tempoEsperaSalvar;
+    let editandoAtivo = false;
+
+    // [1] Carrega as opções de sítio
+    function fn01_getOptionsSitio() {
+      let options = '<option value="">Selecione...</option>';
+      let chavesOrdenadas = Object.keys(dadosSitios).sort();
+      for (let sitio of chavesOrdenadas) {
+        options += `<option value="${sitio}">${sitio}</option>`;
+      }
+      return options;
+    }
+
+    // [2] Ordena linhas visualmente sem quebrar o DOM
+    function fn02_reordenarTabela() {
+      if ($(':focus').length > 0) return;
+
+      var $tbody = $('#incidentes tbody');
+      var $linhas = $tbody.find('tr').get();
+
+      $linhas.sort(function(a, b) {
+        var idA = parseInt($(a).attr('data-id') || 0);
+        var idB = parseInt($(b).attr('data-id') || 0);
+        return idB - idA;
+      });
+
+      $.each($linhas, function(idx, item) {
+        $tbody.append(item);
+      });
+    }
+
+    // [3] Avalia as cores das linhas
+    function fn03_avaliarStatusLinha($tr) {
+      var $tdSitio = $tr.find('td.col-sitio');
+      var sitioVal = $tr.find('.select-sitio').val();
+      var tipoVal = $tr.find('.select-tipo').val();
+      var data1Val = $tr.find('.input-data1').val();
+      var hora1Val = $tr.find('.input-hora1').val();
+      var data2Val = $tr.find('.input-data2').val();
+      var hora2Val = $tr.find('.input-hora2').val();
+      var falhaVal = $tr.find('.select-falha').val();
+      var opcomVal = $tr.find('.select-opcom').val();
+      var impactoVal = $tr.find('.select-impacto').val();
+      var parceiroVal = $tr.find('.select-parceiro').val();
+      var causaVal = $tr.find('.select-causa').val();
+      var statusVal = $tr.find('.input-status').val().trim();
+
+      $tdSitio.removeClass('sitio-laranja sitio-verde sitio-cinza');
+      $tr.removeClass('linha-concluida linha-atividade');
+
+      if (!sitioVal) return;
+
+      var principalPreenchido = sitioVal && tipoVal && data1Val && hora1Val && data2Val && hora2Val && falhaVal && opcomVal && impactoVal && parceiroVal && causaVal;
+
+      if (causaVal === "Atividade") {
+        $tdSitio.addClass('sitio-cinza');
+        $tr.addClass('linha-atividade');
+      } else if (principalPreenchido && statusVal !== "") {
+        $tdSitio.addClass('sitio-verde');
+        $tr.addClass('linha-concluida');
+      } else {
+        $tdSitio.addClass('sitio-laranja');
+      }
+    }
+
+    // [4] Tipos por Sítio
+    function fn04_carregarTiposPorSitio($tr, sitioSelecionado) {
+      var $selectTipo = $tr.find('.select-tipo');
+      var $selectParceiro = $tr.find('.select-parceiro');
+      var valTipoAtual = $selectTipo.val();
+
+      $selectTipo.empty();
+
+      if (sitioSelecionado && dadosSitios[sitioSelecionado]) {
+        $selectTipo.append('<option value="">Selecione...</option>');
+        for (let tipo in dadosSitios[sitioSelecionado]) {
+          $selectTipo.append(`<option value="${tipo}">${tipo}</option>`);
+        }
+        $selectTipo.prop('disabled', false);
+        if (valTipoAtual) $selectTipo.val(valTipoAtual);
+      } else {
+        $selectTipo.append('<option value="">Select Sítio...</option>').prop('disabled', true);
+        $selectParceiro.empty().append('<option value="">Select Tipo...</option>').prop('disabled', true);
+      }
+    }
+
+    // [5] Parceiros por Tipo
+    function fn05_carregarParceirosPorTipo($tr, sitioSelecionado, tipoSelecionado) {
+      var $selectParceiro = $tr.find('.select-parceiro');
+      var valParceiroAtual = $selectParceiro.val();
+
+      $selectParceiro.empty();
+
+      if (sitioSelecionado && tipoSelecionado && dadosSitios[sitioSelecionado][tipoSelecionado]) {
+        $selectParceiro.append('<option value="">Selecione...</option>');
+        dadosSitios[sitioSelecionado][tipoSelecionado].forEach(function(parceiro) {
+          $selectParceiro.append(`<option value="${parceiro}">${parceiro}</option>`);
+        });
+        $selectParceiro.prop('disabled', false);
+        if (valParceiroAtual) $selectParceiro.val(valParceiroAtual);
+      } else {
+        $selectParceiro.append('<option value="">Select Tipo...</option>').prop('disabled', true);
+      }
+    }
+
+    // [6] Salvar registros no Firebase
+    function fn06_salvarDadosStorage() {
+      var dados = [];
+      $('#incidentes tbody tr').each(function() {
+        var $tr = $(this);
+        var item = {
+          id: $tr.attr('data-id') || Date.now().toString(),
+          sitio: $tr.find('.select-sitio').val() || '',
+          tipo: $tr.find('.select-tipo').val() || '',
+          data1: $tr.find('.input-data1').val() || '',
+          hora1: $tr.find('.input-hora1').val() || '',
+          data2: $tr.find('.input-data2').val() || '',
+          hora2: $tr.find('.input-hora2').val() || '',
+          falha: $tr.find('.select-falha').val() || '',
+          opcom: $tr.find('.select-opcom').val() || '',
+          impacto: $tr.find('.select-impacto').val() || '',
+          parceiro: $tr.find('.select-parceiro').val() || '',
+          causa: $tr.find('.select-causa').val() || '',
+          ticket: $tr.find('.input-ticket').val() || '',
+          status: $tr.find('.input-status').val() || ''
+        };
+        dados.push(item);
+      });
+
+      database.ref('passagens').set(dados);
+    }
+
+    // [7] Preencher os campos da linha
+    function fn07_preencherCamposLinha($tr, dados) {
+      if (!dados) return;
+
+      if (dados.sitio) {
+        $tr.find('.select-sitio').val(dados.sitio);
+        fn04_carregarTiposPorSitio($tr, dados.sitio);
+      }
+      if (dados.tipo) {
+        $tr.find('.select-tipo').val(dados.tipo);
+        fn05_carregarParceirosPorTipo($tr, dados.sitio, dados.tipo);
+      }
+      if (dados.parceiro) {
+        $tr.find('.select-parceiro').val(dados.parceiro);
+      }
+
+      $tr.find('.input-data1').val(dados.data1 || '');
+      $tr.find('.input-hora1').val(dados.hora1 || '');
+      $tr.find('.input-data2').val(dados.data2 || '');
+      $tr.find('.input-hora2').val(dados.hora2 || '');
+      $tr.find('.select-falha').val(dados.falha || '');
+      $tr.find('.select-opcom').val(dados.opcom || 'N/A');
+      $tr.find('.select-impacto').val(dados.impacto || 'N/A');
+      $tr.find('.select-causa').val(dados.causa || 'Pendente');
+      $tr.find('.input-ticket').val(dados.ticket || '');
+      $tr.find('.input-status').val(dados.status || '');
+
+      fn03_avaliarStatusLinha($tr);
+    }
+
+    // [8] Monta a linha da tabela
+    function fn08_criarLinhaTabela(id, dados = null) {
+      var $tr = $(`<tr data-id="${id}">
+        <td><input type="checkbox" class="check-item"></td>
+        <td class="col-sitio">
+          <select class="select-tabela-sm select-sitio">
+            ${fn01_getOptionsSitio()}
+          </select>
+        </td>
+        <td>
+          <select class="select-tabela-sm select-tipo" disabled>
+            <option value="">Select Sítio...</option>
+          </select>
+        </td>
+        <td><input type="date" class="input-tabela-sm input-data input-data1"></td>
+        <td><input type="time" class="input-tabela-sm input-hora input-hora1"></td>
+        <td><input type="date" class="input-tabela-sm input-data input-data2"></td>
+        <td><input type="time" class="input-tabela-sm input-hora input-hora2"></td>
+        <td>
+          <select class="select-tabela-sm select-falha">
+            <option value="">Selecione...</option>
+            <option value="Isolado">Isolado</option>
+            <option value="Primário">Primário</option>
+            <option value="Secundário">Secundário</option>
+            <option value="Setores">Setores</option>
+            <option value="Telefonia">Telefonia</option>
+            <option value="Normalizado">Normalizado</option>
+            <option value="Intermitência">Intermitência</option>
+          </select>
+        </td>
+        <td>
+          <select class="select-tabela-sm select-opcom">
+            <option value="N/A">N/A</option>
+            <option value="OP-1">OP-1</option>
+            <option value="OP-2">OP-2</option>
+            <option value="OP-3">OP-3</option>
+          </select>
+        </td>
+        <td>
+          <select class="select-tabela-sm select-impacto">
+            <option value="N/A">N/A</option>
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+          </select>
+        </td>
+        <td>
+          <select class="select-tabela-sm select-parceiro" disabled>
+            <option value="">Select Tipo...</option>
+          </select>
+        </td>
+        <td>
+          <select class="select-tabela-sm select-causa">
+            <option value="Pendente">Pendente</option>
+            <option value="Energia">Energia</option>
+            <option value="Fusão de Fibra">Fusão de Fibra</option>
+            <option value="Massiva">Massiva</option>
+            <option value="Atividade">Atividade</option>
+            <option value="Rota Comutada">Rota Comutada</option>
+            <option value="Falha SW">Falha SW</option>
+          </select>
+        </td>
+        <td>
+          <input type="text" class="input-tabela-sm input-ticket" placeholder="Nº do Ticket">
+        </td>
+        <td class="col-status">
+          <input type="text" class="input-tabela-sm input-status" placeholder="Descreva o status atual...">
+        </td>
+      </tr>`);
+
+      $('#incidentes tbody').prepend($tr);
+
+      if (dados) {
+        fn07_preencherCamposLinha($tr, dados);
+      }
+      return $tr;
+    }
+
+    // -------------------------------------------------------------
+    // CONEXÃO DE DADOS (FIREBASE)
+    // -------------------------------------------------------------
+
+    // [9] Carrega e sincroniza Tabela
+    database.ref('passagens').on('value', function(snapshot) {
+      if (editandoAtivo) return;
+
+      var dados = snapshot.val();
+      $('#incidentes tbody').empty();
+
+      if (dados) {
+        var lista = Array.isArray(dados) ? dados : Object.values(dados);
+        lista.forEach(function(item) {
+          if (item && item.id) {
+            fn08_criarLinhaTabela(item.id, item);
+          }
+        });
+        fn02_reordenarTabela();
+      }
+    });
+
+    // [10] Carrega e sincroniza Sítios
+    database.ref('config/dadosSitios').on('value', function(snapshot) {
+      var dadosCustom = snapshot.val();
+      
+      if (!dadosCustom || Object.keys(dadosCustom).length === 0) {
+        database.ref('config/dadosSitios').set(dadosSitiosBase);
+        dadosSitios = dadosSitiosBase;
+      } else {
+        dadosSitios = dadosCustom;
+      }
+      
+      $('.select-sitio').each(function() {
+        var valAtual = $(this).val();
+        $(this).html(fn01_getOptionsSitio());
+        if (valAtual) $(this).val(valAtual);
+      });
+    });
+
+    // -------------------------------------------------------------
+    // EVENTOS DOS BOTÕES
+    // -------------------------------------------------------------
+    $(document).ready(function() {
+
+      // Adicionar novo item na tabela
+      $('#btnNovoItem').on('click', function() {
+        var novoId = Date.now().toString();
+        var $tr = fn08_criarLinhaTabela(novoId);
+        fn02_reordenarTabela();
+        fn06_salvarDadosStorage();
+        $tr.find('.select-sitio').focus();
+      });
+
+      // Detecção de Edição de Campos
+      $('#incidentes').on('focus', 'input, select', function() {
+        editandoAtivo = true;
+      });
+
+      $('#incidentes').on('change input', 'select, input', function() {
+        var $tr = $(this).closest('tr');
+        fn03_avaliarStatusLinha($tr);
+
+        clearTimeout(tempoEsperaSalvar);
+        tempoEsperaSalvar = setTimeout(function() {
+          fn06_salvarDadosStorage();
+        }, 1000);
+      });
+
+      $('#incidentes').on('blur', 'select, input', function() {
+        editandoAtivo = false;
+        fn06_salvarDadosStorage();
+      });
+
+      // Alteração Encadeada de Selects
+      $('#incidentes').on('change', '.select-sitio', function() {
+        var $tr = $(this).closest('tr');
+        fn04_carregarTiposPorSitio($tr, $(this).val());
+      });
+
+      $('#incidentes').on('change', '.select-tipo', function() {
+        var $tr = $(this).closest('tr');
+        var sitio = $tr.find('.select-sitio').val();
+        fn05_carregarParceirosPorTipo($tr, sitio, $(this).val());
+      });
+
+      // Botão do Modal de Sítios (Salva sem apagar históricos)
+      $('#btnSalvarNovoSitio').on('click', function() {
+        var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
+        var tipo = $('#inputNovoTipo').val().trim();
+        var parceirosStr = $('#inputNovosParceiros').val().trim();
+
+        if (!codigo || !tipo || !parceirosStr) {
+          alert('Preencha todos os campos do modal.');
+          return;
+        }
+
+        var parceirosArr = parceirosStr.split(',').map(s => s.trim()).filter(s => s !== '');
+
+        // Opção de substituição caso já exista
+        if (dadosSitios[codigo]) {
+          var confirma = confirm(`O Sítio "${codigo}" já existe.\n\nDeseja atualizar/adicionar o tipo "${tipo}" mantendo os demais?`);
+          if (!confirma) return;
+        }
+
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Salvando...');
+
+        // Grava no nó do Sítio Específico no Firebase
+        database.ref('config/dadosSitios/' + codigo + '/' + tipo).set(parceirosArr)
+          .then(function() {
+            $('#formNovoSitio')[0].reset();
+            var modalElem = document.getElementById('modalNovoSitio');
+            var modalInstance = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
+            modalInstance.hide();
+
+            alert(`Sítio "${codigo}" salvo com sucesso!`);
+          })
+          .catch(function(err) {
+            alert('Erro ao salvar no banco: ' + err.message);
+          })
+          .finally(function() {
+            $btn.prop('disabled', false).text('Salvar Dados');
+          });
+      });
+
+      // Filtro de Busca
+      $('#inputCustomSearch').on('keyup', function() {
+        var termo = $(this).val().toLowerCase();
+        $('#incidentes tbody tr').each(function() {
+          var texto = $(this).text().toLowerCase();
+          var inputs = $(this).find('input, select').map(function() { return $(this).val(); }).get().join(' ').toLowerCase();
+          
+          if ((texto + ' ' + inputs).indexOf(termo) !== -1) {
+            $(this).show();
+          } else {
+            $(this).hide();
+          }
+        });
+      });
+
+      // Marcar Todos
+      $('#checkAll').on('change', function() {
+        $('.check-item').prop('checked', this.checked);
+      });
+
+      // Excluir
+      $('#btnExcluirSelecionado').on('click', function() {
+        var $selecionados = $('.check-item:checked');
+        if ($selecionados.length === 0) {
+          alert('Selecione ao menos um item para excluir.');
+          return;
+        }
+        if (confirm('Deseja excluir as linhas selecionadas?')) {
+          $selecionados.closest('tr').remove();
+          $('#checkAll').prop('checked', false);
+          fn06_salvarDadosStorage();
+        }
+      });
+
+      // Salvar Manual
+      $('#btnSalvarTudo').on('click', function() {
+        fn06_salvarDadosStorage();
+        alert('Tabela salva com sucesso!');
+      });
+
+    });
+  </script>
+</body>
+</html>
