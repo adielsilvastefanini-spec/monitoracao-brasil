@@ -10,6 +10,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
+  <!-- Biblioteca html2canvas para conversão em imagem -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
   <style>
     body {
       background-color: #f1f5f9;
@@ -154,6 +157,51 @@
     .input-ticket { width: 110px !important; text-align: center; }
     .col-status { width: 100% !important; }
     .input-status { width: 100% !important; min-width: 200px; text-align: left; }
+
+    /* ESTILOS DO CHECK POINT - IMPRESSÃO / IMAGEM */
+    #containerCheckPointExport {
+      background-color: #fdf6e7;
+      padding: 0;
+      border: 1px solid #002699;
+      font-family: Arial, sans-serif;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .cp-banner-topo {
+      background-color: #0d47a1;
+      color: #ffffff;
+      text-align: center;
+      font-weight: bold;
+      font-size: 15px;
+      padding: 6px 0;
+      letter-spacing: 0.5px;
+    }
+
+    table.tabela-checkpoint {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    table.tabela-checkpoint th {
+      background-color: #cc0000;
+      color: #ffffff;
+      font-weight: bold;
+      text-align: center;
+      padding: 5px 6px;
+      border: 1px solid #b70000;
+      white-space: nowrap;
+    }
+
+    table.tabela-checkpoint td {
+      padding: 4px 6px;
+      text-align: center;
+      border: 1px solid #e2d3b4;
+      white-space: nowrap;
+      color: #000000;
+      background-color: #fef3c7;
+    }
   </style>
 </head>
 <body>
@@ -244,6 +292,53 @@
           <div>
             <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
             <button type="button" class="btn btn-sm btn-primary" id="btnSalvarNovoSitio">Salvar Dados</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal do Check-Point -->
+  <div class="modal fade" id="modalCheckPoint" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-dark text-white py-2">
+          <h5 class="modal-title fs-6">Prévia do Check-Point (Imagem)</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-3 overflow-auto" style="max-height: 75vh;">
+          
+          <div id="containerCheckPointExport">
+            <div class="cp-banner-topo">Check Point - Brasil</div>
+            <table class="tabela-checkpoint">
+              <thead>
+                <tr>
+                  <th>Sitio</th>
+                  <th>Tipo</th>
+                  <th>Data</th>
+                  <th>H.Inicio</th>
+                  <th>Data</th>
+                  <th>H.Fim</th>
+                  <th>Falha</th>
+                  <th>Opcom</th>
+                  <th>Impacto</th>
+                  <th>Parceiros</th>
+                  <th>Causa</th>
+                  <th>Ticket</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyCheckPoint">
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+        <div class="modal-footer py-2 justify-content-between">
+          <span class="text-muted" style="font-size: 11px;">* A imagem será salva no clipboard para colar (Ctrl+V) no WhatsApp.</span>
+          <div>
+            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-sm btn-success fw-bold" id="btnCopiarImagemCP">Copiar Imagem</button>
           </div>
         </div>
       </div>
@@ -346,7 +441,7 @@
     };
 
     let dadosSitios = {};
-    let dadosCarregados = false; // TRAVA DE SEGURANÇA CONTRA ERROS DO F5
+    let dadosCarregados = false;
 
     function fn01_getOptionsSitio() {
       let options = '<option value="">Selecione...</option>';
@@ -357,15 +452,13 @@
       return options;
     }
 
-    // FUNÇÃO DE ORDENAÇÃO ATUALIZADA (Laranjas/Cinzas no topo, Verdes no final)
+    // FUNÇÃO DE ORDENAÇÃO (Laranjas/Cinzas no topo, Verdes no final)
     function fn02_reordenarTabela() {
       var $tbody = $('#incidentes tbody');
       var $linhas = $tbody.find('tr').get();
 
       function getGrupoFinalizacao($tr) {
         var $tdSitio = $tr.find('td.col-sitio');
-        // Grupo 1: Em andamento (Laranjas e Cinzas juntos na ordem da janela)
-        // Grupo 2: Finalizados (Apenas os Verdes enviados para o final)
         return $tdSitio.hasClass('sitio-verde') ? 2 : 1;
       }
 
@@ -373,18 +466,15 @@
         var grupoA = getGrupoFinalizacao($(a));
         var grupoB = getGrupoFinalizacao($(b));
 
-        // 1º Separa o que está Em Andamento (1) do que está Finalizado (2)
         if (grupoA !== grupoB) {
           return grupoA - grupoB;
         }
 
-        // 2º Dentro do mesmo grupo, mantém a ordem da janela (mais recente no topo)
         var idA = parseInt($(a).attr('data-id') || 0);
         var idB = parseInt($(b).attr('data-id') || 0);
         return idB - idA;
       });
 
-      // Reorganiza as linhas na tela
       $.each($linhas, function(idx, item) {
         $tbody.append(item);
       });
@@ -636,6 +726,77 @@
       }
     }
 
+    // FUNÇÃO DO CHECK POINT (GERA E MONTA A TABELA)
+    function fn11_gerarCheckPoint() {
+      var $tbodyCP = $('#tbodyCheckPoint');
+      $tbodyCP.empty();
+
+      var hoje = new Date().toISOString().split('T')[0]; // Data de Hoje (AAAA-MM-DD)
+      var totalItens = 0;
+
+      $('#incidentes tbody tr').each(function() {
+        var $tr = $(this);
+        var $tdSitio = $tr.find('td.col-sitio');
+
+        var ehPendente = $tdSitio.hasClass('sitio-laranja');
+        var ehAtividade = $tdSitio.hasClass('sitio-cinza');
+        var data1 = $tr.find('.input-data1').val();
+
+        // Filtro: Laranjas (Todas) + Cinzas (Apenas da data atual)
+        if (ehPendente || (ehAtividade && data1 === hoje)) {
+          totalItens++;
+
+          // Formatar datas para exibição BR (DD/MM/AAAA)
+          var formatarDataBR = function(d) {
+            if (!d) return '';
+            var p = d.split('-');
+            return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+          };
+
+          var sitio = $tr.find('.select-sitio').val() || '';
+          var tipo = $tr.find('.select-tipo').val() || '';
+          var d1Formatted = formatarDataBR(data1);
+          var h1 = $tr.find('.input-hora1').val() || '';
+          var d2Formatted = formatarDataBR($tr.find('.input-data2').val());
+          var h2 = $tr.find('.input-hora2').val() || '';
+          var falha = $tr.find('.select-falha').val() || '';
+          var opcom = $tr.find('.select-opcom').val() || '';
+          var impacto = $tr.find('.select-impacto').val() || '';
+          var parceiro = $tr.find('.select-parceiro').val() || '';
+          var causa = $tr.find('.select-causa').val() || '';
+          var ticket = $tr.find('.input-ticket').val() || '';
+          var status = $tr.find('.input-status').val() || '';
+
+          var trHTML = `<tr>
+            <td><b>${sitio}</b></td>
+            <td>${tipo}</td>
+            <td>${d1Formatted}</td>
+            <td>${h1}</td>
+            <td>${d2Formatted}</td>
+            <td>${h2}</td>
+            <td>${falha}</td>
+            <td>${opcom}</td>
+            <td>${impacto}</td>
+            <td>${parceiro}</td>
+            <td>${causa}</td>
+            <td>${ticket}</td>
+            <td style="text-align: left;">${status}</td>
+          </tr>`;
+
+          $tbodyCP.append(trHTML);
+        }
+      });
+
+      if (totalItens === 0) {
+        alert("Não existem pendências ou atividades registradas para a data de hoje.");
+        return;
+      }
+
+      var modalElem = document.getElementById('modalCheckPoint');
+      var modalInstance = new bootstrap.Modal(modalElem);
+      modalInstance.show();
+    }
+
     $(document).ready(function() {
 
       fn09_inicializarDados();
@@ -653,7 +814,7 @@
       $('#incidentes').on('change input', 'select, input', function() {
         var $tr = $(this).closest('tr');
         fn03_avaliarStatusLinha($tr);
-        fn02_reordenarTabela(); // Reagrupa para mandar os verdes ao final
+        fn02_reordenarTabela();
         fn06_salvarDadosStorage();
       });
 
@@ -743,6 +904,44 @@
         if (confirm(`Tem certeza que deseja apagar o tipo "${tipo}" do sítio "${codigo}"?`)) {
           fn10_removerTipoSitio(codigo, tipo);
         }
+      });
+
+      // AÇÃO DO BOTÃO CHECK-POINT
+      $('#btnCheckPoint').on('click', function() {
+        fn11_gerarCheckPoint();
+      });
+
+      // AÇÃO DE COPIAR A IMAGEM DO CHECK-POINT
+      $('#btnCopiarImagemCP').on('click', function() {
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Gerando...');
+
+        var container = document.getElementById('containerCheckPointExport');
+
+        html2canvas(container, {
+          scale: 2, // Maior nitidez
+          useCORS: true
+        }).then(function(canvas) {
+          canvas.toBlob(function(blob) {
+            try {
+              var item = new ClipboardItem({ 'image/png': blob });
+              navigator.clipboard.write([item]).then(function() {
+                // Sucesso: Esconde o Modal automaticamente
+                var modalElem = document.getElementById('modalCheckPoint');
+                var modalInstance = bootstrap.Modal.getInstance(modalElem);
+                if (modalInstance) modalInstance.hide();
+
+                alert('Imagem do Check-Point copiada! Cole (Ctrl+V) no WhatsApp.');
+              }).catch(function(err) {
+                alert('Erro ao copiar para o Clipboard: ' + err.message);
+              });
+            } catch (err) {
+              alert('Navegador não suporta a cópia direta de imagem. Tente no Chrome/Edge.');
+            } finally {
+              $btn.prop('disabled', false).text('Copiar Imagem');
+            }
+          }, 'image/png');
+        });
       });
 
       // Campo de Busca
