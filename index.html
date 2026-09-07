@@ -271,7 +271,7 @@
     }
     const database = firebase.database();
 
-    const dadosSitios = {
+    let dadosSitios = {
       "AJU": { "ATO": ["AENA", "CIRION BRASIL", "EMBRATEL", "OI"] },
       "BEL": { "ATO": ["SOCICAM", "CIRION BRASIL", "EMBRATEL", "OI"], "MNT": ["SOCICAM", "LATAM BRASIL", "VIVO", "CIRION BRASIL", "OI"] },
       "BHZ": { "Contact Center": ["OI", "AeC", "TELEFONICA BRASIL", "CIRION BRASIL"] },
@@ -351,7 +351,8 @@
 
     function getOptionsSitio() {
       let options = '<option value="">Selecione...</option>';
-      for (let sitio in dadosSitios) {
+      let chavesOrdenadas = Object.keys(dadosSitios).sort();
+      for (let sitio of chavesOrdenadas) {
         options += `<option value="${sitio}">${sitio}</option>`;
       }
       return options;
@@ -405,13 +406,13 @@
 
       var principalPreenchido = sitioVal && tipoVal && data1Val && hora1Val && data2Val && hora2Val && falhaVal && opcomVal && impactoVal && parceiroVal && causaVal;
 
-      if (principalPreenchido && statusVal !== "") {
-        $tdSitio.addClass('sitio-verde');
-        $tr.addClass('linha-concluida');
-      } 
-      else if (principalPreenchido && statusVal === "" && causaVal === "Atividade") {
+      if (causaVal === "Atividade") {
         $tdSitio.addClass('sitio-cinza');
         $tr.addClass('linha-atividade');
+      } 
+      else if (principalPreenchido && statusVal !== "") {
+        $tdSitio.addClass('sitio-verde');
+        $tr.addClass('linha-concluida');
       } 
       else {
         $tdSitio.addClass('sitio-laranja');
@@ -487,7 +488,6 @@
     function preencherCamposLinha($tr, dados) {
       if (!dados) return;
 
-      // Se a linha ou qualquer elemento dela estiver em foco, ignora atualização do Firebase
       if ($tr.find(':focus').length > 0) return;
 
       if (dados.sitio) {
@@ -620,7 +620,14 @@
 
     database.ref('config/dadosSitios').on('value', function(snapshot) {
       var dadosCustom = snapshot.val();
-      if (dadosCustom) Object.assign(dadosSitios, dadosCustom);
+      if (dadosCustom) {
+        Object.assign(dadosSitios, dadosCustom);
+        
+        $('.select-sitio').each(function() {
+          var valAtual = $(this).val();
+          $(this).html(getOptionsSitio()).val(valAtual);
+        });
+      }
     });
 
     // Eventos do DOM
@@ -680,16 +687,20 @@
         }
         dadosSitios[codigo][tipo] = parceirosArr;
 
-        $('.select-sitio').each(function() {
-          var valAtual = $(this).val();
-          $(this).html(getOptionsSitio()).val(valAtual);
+        database.ref('config/dadosSitios').set(dadosSitios, function(error) {
+          if (error) {
+            alert('Erro ao salvar o sítio no servidor.');
+          } else {
+            $('.select-sitio').each(function() {
+              var valAtual = $(this).val();
+              $(this).html(getOptionsSitio()).val(valAtual);
+            });
+
+            $('#formNovoSitio')[0].reset();
+            bootstrap.Modal.getInstance(document.getElementById('modalNovoSitio')).hide();
+            alert(`Sítio "${codigo}" cadastrado/atualizado com sucesso!`);
+          }
         });
-
-        salvarDadosStorage();
-
-        $('#formNovoSitio')[0].reset();
-        bootstrap.Modal.getInstance(document.getElementById('modalNovoSitio')).hide();
-        alert(`Sítio "${codigo}" cadastrado/atualizado com sucesso!`);
       });
 
       $('#inputCustomSearch').on('keyup', function() {
