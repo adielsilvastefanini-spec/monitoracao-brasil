@@ -468,6 +468,7 @@
 
     let dadosSitios = {};
     let dadosCarregados = false;
+    let timerSalvarInput = null;
 
     function fn01_getOptionsSitio() {
       let options = '<option value="">Selecione...</option>';
@@ -833,14 +834,18 @@
         $tr.find('.select-sitio').focus();
       });
 
-      /* 1. APENAS SALVA ENQUANTO DIGITA (SEM PERDER FOCO DO TECLADO) */
+      /* 1. DIGITAÇÃO FLUIDA (COM DEBOUNCE PARA NÃO PERDER FOCO DO TECLADO) */
       $('#incidentes').on('input', 'input', function() {
         var $tr = $(this).closest('tr');
         fn03_avaliarStatusLinha($tr);
-        fn06_salvarDadosStorage();
+        
+        clearTimeout(timerSalvarInput);
+        timerSalvarInput = setTimeout(function() {
+          fn06_salvarDadosStorage();
+        }, 1000);
       });
 
-      /* 2. REORDENA A TABELA SOMENTE QUANDO MUDAR SELECT OU QUANDO SAIR DO CAMPO (BLUR/CHANGE) */
+      /* 2. REORDENA A TABELA SOMENTE QUANDO MUDAR SELECT OU SAIR DO CAMPO */
       $('#incidentes').on('change', 'select, input', function() {
         var $tr = $(this).closest('tr');
         fn03_avaliarStatusLinha($tr);
