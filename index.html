@@ -156,13 +156,11 @@
     .select-impacto { width: 60px !important; }
     .select-causa { width: 115px !important; }
     
-    /* TICKET: TAMANHO PADRÃO DE DADOS (ATÉ 12 CARACTERES) */
     .input-ticket { 
       width: 100px !important; 
       text-align: center; 
     }
 
-    /* STATUS: MESMO ESTILO E ALTURA DOS OUTROS INPUTS */
     .input-status { 
       width: 100% !important; 
       min-width: 250px;
@@ -835,7 +833,15 @@
         $tr.find('.select-sitio').focus();
       });
 
-      $('#incidentes').on('change input', 'select, input', function() {
+      /* 1. APENAS SALVA ENQUANTO DIGITA (SEM PERDER FOCO DO TECLADO) */
+      $('#incidentes').on('input', 'input', function() {
+        var $tr = $(this).closest('tr');
+        fn03_avaliarStatusLinha($tr);
+        fn06_salvarDadosStorage();
+      });
+
+      /* 2. REORDENA A TABELA SOMENTE QUANDO MUDAR SELECT OU QUANDO SAIR DO CAMPO (BLUR/CHANGE) */
+      $('#incidentes').on('change', 'select, input', function() {
         var $tr = $(this).closest('tr');
         fn03_avaliarStatusLinha($tr);
         fn02_reordenarTabela();
