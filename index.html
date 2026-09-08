@@ -130,7 +130,7 @@
       background-color: #f8fafc;
       border: 1px solid #cbd5e1;
       border-radius: 4px;
-      padding: 1px 2px;
+      padding: 1px 4px;
       font-size: 10.5px;
       height: 24px;
       color: #334155;
@@ -154,9 +154,9 @@
     .select-opcom { width: 65px !important; }
     .select-impacto { width: 60px !important; }
     .select-causa { width: 115px !important; }
-    .input-ticket { width: 110px !important; text-align: center; }
+    .input-ticket { width: 120px !important; text-align: center; }
     .col-status { width: 100% !important; }
-    .input-status { width: 100% !important; min-width: 200px; text-align: left; }
+    .input-status { width: 100% !important; min-width: 250px; text-align: left; }
 
     /* ESTILOS DO CHECK POINT - IMPRESSÃO / IMAGEM */
     #containerCheckPointExport {
@@ -189,18 +189,39 @@
       color: #ffffff;
       font-weight: bold;
       text-align: center;
-      padding: 5px 6px;
+      padding: 6px 8px;
       border: 1px solid #b70000;
       white-space: nowrap;
     }
 
     table.tabela-checkpoint td {
-      padding: 4px 6px;
+      padding: 5px 8px;
       text-align: center;
       border: 1px solid #e2d3b4;
-      white-space: nowrap;
       color: #000000;
       background-color: #fef3c7;
+      white-space: nowrap;
+    }
+
+    /* ESTILO PARA LINHAS DE ATIVIDADE (COR CINZA NO CHECK-POINT) */
+    table.tabela-checkpoint td.cp-row-atividade {
+      background-color: #d1d5db !important;
+      border-color: #9ca3af !important;
+      color: #1f2937 !important;
+    }
+
+    /* PERMITE TEXTO LIVRE E QUEBRA NAS COLUNAS DE TICKET E STATUS */
+    table.tabela-checkpoint td.cp-col-ticket {
+      white-space: normal !important;
+      word-break: break-word;
+      min-width: 110px;
+    }
+
+    table.tabela-checkpoint td.cp-col-status {
+      white-space: normal !important;
+      word-break: break-word;
+      text-align: left !important;
+      min-width: 220px;
     }
   </style>
 </head>
@@ -452,7 +473,6 @@
       return options;
     }
 
-    // FUNÇÃO DE ORDENAÇÃO (Laranjas/Cinzas no topo, Verdes no final)
     function fn02_reordenarTabela() {
       var $tbody = $('#incidentes tbody');
       var $linhas = $tbody.find('tr').get();
@@ -731,7 +751,7 @@
       var $tbodyCP = $('#tbodyCheckPoint');
       $tbodyCP.empty();
 
-      var hoje = new Date().toISOString().split('T')[0]; // Data de Hoje (AAAA-MM-DD)
+      var hoje = new Date().toISOString().split('T')[0];
       var totalItens = 0;
 
       $('#incidentes tbody tr').each(function() {
@@ -742,11 +762,9 @@
         var ehAtividade = $tdSitio.hasClass('sitio-cinza');
         var data1 = $tr.find('.input-data1').val();
 
-        // Filtro: Laranjas (Todas) + Cinzas (Apenas da data atual)
         if (ehPendente || (ehAtividade && data1 === hoje)) {
           totalItens++;
 
-          // Formatar datas para exibição BR (DD/MM/AAAA)
           var formatarDataBR = function(d) {
             if (!d) return '';
             var p = d.split('-');
@@ -767,20 +785,23 @@
           var ticket = $tr.find('.input-ticket').val() || '';
           var status = $tr.find('.input-status').val() || '';
 
+          // Classe CSS extra se for atividade
+          var classeAtividade = ehAtividade ? ' cp-row-atividade' : '';
+
           var trHTML = `<tr>
-            <td><b>${sitio}</b></td>
-            <td>${tipo}</td>
-            <td>${d1Formatted}</td>
-            <td>${h1}</td>
-            <td>${d2Formatted}</td>
-            <td>${h2}</td>
-            <td>${falha}</td>
-            <td>${opcom}</td>
-            <td>${impacto}</td>
-            <td>${parceiro}</td>
-            <td>${causa}</td>
-            <td>${ticket}</td>
-            <td style="text-align: left;">${status}</td>
+            <td class="${classeAtividade}"><b>${sitio}</b></td>
+            <td class="${classeAtividade}">${tipo}</td>
+            <td class="${classeAtividade}">${d1Formatted}</td>
+            <td class="${classeAtividade}">${h1}</td>
+            <td class="${classeAtividade}">${d2Formatted}</td>
+            <td class="${classeAtividade}">${h2}</td>
+            <td class="${classeAtividade}">${falha}</td>
+            <td class="${classeAtividade}">${opcom}</td>
+            <td class="${classeAtividade}">${impacto}</td>
+            <td class="${classeAtividade}">${parceiro}</td>
+            <td class="${classeAtividade}">${causa}</td>
+            <td class="cp-col-ticket${classeAtividade}">${ticket}</td>
+            <td class="cp-col-status${classeAtividade}">${status}</td>
           </tr>`;
 
           $tbodyCP.append(trHTML);
@@ -810,7 +831,7 @@
         $tr.find('.select-sitio').focus();
       });
 
-      // Alteração nos campos (reavalia a cor e reagrupa imediatamente)
+      // Alteração nos campos
       $('#incidentes').on('change input', 'select, input', function() {
         var $tr = $(this).closest('tr');
         fn03_avaliarStatusLinha($tr);
@@ -831,7 +852,7 @@
         fn05_carregarParceirosPorTipo($tr, sitio, $(this).val());
       });
 
-      // Botão Salvar do Modal
+      // Botão Salvar do Modal de Sítios
       $('#btnSalvarNovoSitio').on('click', function() {
         var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
         var tipo = $('#inputNovoTipo').val().trim();
@@ -891,7 +912,7 @@
           });
       });
 
-      // Botão Excluir do Modal
+      // Botão Excluir do Modal de Sítios
       $('#btnExcluirTipoModal').on('click', function() {
         var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
         var tipo = $('#inputNovoTipo').val().trim();
@@ -919,14 +940,13 @@
         var container = document.getElementById('containerCheckPointExport');
 
         html2canvas(container, {
-          scale: 2, // Maior nitidez
+          scale: 2,
           useCORS: true
         }).then(function(canvas) {
           canvas.toBlob(function(blob) {
             try {
               var item = new ClipboardItem({ 'image/png': blob });
               navigator.clipboard.write([item]).then(function() {
-                // Sucesso: Esconde o Modal automaticamente
                 var modalElem = document.getElementById('modalCheckPoint');
                 var modalInstance = bootstrap.Modal.getInstance(modalElem);
                 if (modalInstance) modalInstance.hide();
