@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
-  <!-- Biblioteca html2canvas para conversão em imagem -->
+  <!-- Biblioteca html2canvas -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <style>
@@ -122,7 +122,6 @@
       padding: 3px 2px !important;
       text-align: center;
       vertical-align: middle;
-      white-space: nowrap;
       border-bottom: 1px solid #f1f5f9;
     }
 
@@ -132,7 +131,7 @@
       border-radius: 4px;
       padding: 1px 4px;
       font-size: 10.5px;
-      height: 24px;
+      height: 26px;
       color: #334155;
     }
 
@@ -155,24 +154,36 @@
     .select-impacto { width: 60px !important; }
     .select-causa { width: 115px !important; }
     
-    /* LARGURA E FORMATO DOS CAMPOS TICKET E STATUS */
+    /* CAMPO TICKET (Até 12 caracteres) */
     .input-ticket { 
-      width: 140px !important; 
+      width: 110px !important; 
       text-align: center; 
     }
 
+    /* CAMPO STATUS LIVRE (TEXTAREA) */
     .col-status { 
       width: auto !important; 
-      min-width: 300px;
+      min-width: 350px;
+      white-space: normal !important;
     }
 
-    .input-status { 
+    .textarea-status { 
       width: 100% !important; 
-      min-width: 300px; 
+      min-width: 350px; 
+      height: 32px;
+      min-height: 32px;
       text-align: left; 
+      resize: vertical;
+      font-family: inherit;
+      line-height: 1.2;
+      padding: 4px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      background-color: #f8fafc;
+      font-size: 11px;
     }
 
-    /* ESTILOS DO CHECK POINT - IMPRESSÃO / IMAGEM */
+    /* ESTILOS DO CHECK POINT */
     #containerCheckPointExport {
       background-color: #fdf6e7;
       padding: 0;
@@ -214,28 +225,25 @@
       border: 1px solid #e2d3b4;
       color: #000000;
       background-color: #fef3c7;
-      white-space: nowrap;
     }
 
-    /* ESTILO PARA LINHAS DE ATIVIDADE (COR CINZA NO CHECK-POINT) */
     table.tabela-checkpoint td.cp-row-atividade {
       background-color: #d1d5db !important;
       border-color: #9ca3af !important;
       color: #1f2937 !important;
     }
 
-    /* PERMITE TEXTO LIVRE E QUEBRA NAS COLUNAS DE TICKET E STATUS */
     table.tabela-checkpoint td.cp-col-ticket {
       white-space: normal !important;
       word-break: break-word;
-      min-width: 110px;
+      min-width: 100px;
     }
 
     table.tabela-checkpoint td.cp-col-status {
       white-space: normal !important;
       word-break: break-word;
       text-align: left !important;
-      min-width: 220px;
+      min-width: 300px;
     }
   </style>
 </head>
@@ -399,7 +407,6 @@
     }
     const database = firebase.database();
 
-    // BASE DE DADOS PADRÃO
     const dadosSitiosBase = {
       "AJU": { "ATO": ["AENA", "CIRION BRASIL", "EMBRATEL", "OI"] },
       "BEL": { "ATO": ["SOCICAM", "CIRION BRASIL", "EMBRATEL", "OI"], "MNT": ["SOCICAM", "LATAM BRASIL", "VIVO", "CIRION BRASIL", "OI"] },
@@ -527,7 +534,7 @@
       var impactoVal = $tr.find('.select-impacto').val();
       var parceiroVal = $tr.find('.select-parceiro').val();
       var causaVal = $tr.find('.select-causa').val();
-      var statusVal = $tr.find('.input-status').val().trim();
+      var statusVal = $tr.find('.textarea-status').val().trim();
 
       $tdSitio.removeClass('sitio-laranja sitio-verde sitio-cinza');
       $tr.removeClass('linha-concluida linha-atividade');
@@ -605,7 +612,7 @@
           parceiro: $tr.find('.select-parceiro').val() || '',
           causa: $tr.find('.select-causa').val() || '',
           ticket: $tr.find('.input-ticket').val() || '',
-          status: $tr.find('.input-status').val() || ''
+          status: $tr.find('.textarea-status').val() || ''
         };
         dados.push(item);
       });
@@ -637,7 +644,7 @@
       $tr.find('.select-impacto').val(dados.impacto || 'N/A');
       $tr.find('.select-causa').val(dados.causa || 'Pendente');
       $tr.find('.input-ticket').val(dados.ticket || '');
-      $tr.find('.input-status').val(dados.status || '');
+      $tr.find('.textarea-status').val(dados.status || '');
 
       fn03_avaliarStatusLinha($tr);
     }
@@ -703,10 +710,10 @@
           </select>
         </td>
         <td>
-          <input type="text" class="input-tabela-sm input-ticket" placeholder="Nº do Ticket">
+          <input type="text" class="input-tabela-sm input-ticket" placeholder="Nº Chamado" maxlength="12">
         </td>
         <td class="col-status">
-          <input type="text" class="input-tabela-sm input-status" placeholder="Descreva o status atual..." maxlength="1000">
+          <textarea class="textarea-status" placeholder="Descreva as últimas ações relativas ao incidente..."></textarea>
         </td>
       </tr>`);
 
@@ -760,7 +767,6 @@
       }
     }
 
-    // FUNÇÃO DO CHECK POINT (GERA E MONTA A TABELA)
     function fn11_gerarCheckPoint() {
       var $tbodyCP = $('#tbodyCheckPoint');
       $tbodyCP.empty();
@@ -797,9 +803,8 @@
           var parceiro = $tr.find('.select-parceiro').val() || '';
           var causa = $tr.find('.select-causa').val() || '';
           var ticket = $tr.find('.input-ticket').val() || '';
-          var status = $tr.find('.input-status').val() || '';
+          var status = $tr.find('.textarea-status').val() || '';
 
-          // Classe CSS extra se for atividade
           var classeAtividade = ehAtividade ? ' cp-row-atividade' : '';
 
           var trHTML = `<tr>
@@ -836,7 +841,6 @@
 
       fn09_inicializarDados();
 
-      // Botão + Novo
       $('#btnNovoItem').on('click', function() {
         var novoId = Date.now().toString();
         var $tr = fn08_criarLinhaTabela(novoId);
@@ -845,28 +849,24 @@
         $tr.find('.select-sitio').focus();
       });
 
-      // Alteração nos campos
-      $('#incidentes').on('change input', 'select, input', function() {
+      $('#incidentes').on('change input', 'select, input, textarea', function() {
         var $tr = $(this).closest('tr');
         fn03_avaliarStatusLinha($tr);
         fn02_reordenarTabela();
         fn06_salvarDadosStorage();
       });
 
-      // Cascata: Sítio -> Tipo
       $('#incidentes').on('change', '.select-sitio', function() {
         var $tr = $(this).closest('tr');
         fn04_carregarTiposPorSitio($tr, $(this).val());
       });
 
-      // Cascata: Tipo -> Parceiro
       $('#incidentes').on('change', '.select-tipo', function() {
         var $tr = $(this).closest('tr');
         var sitio = $tr.find('.select-sitio').val();
         fn05_carregarParceirosPorTipo($tr, sitio, $(this).val());
       });
 
-      // Botão Salvar do Modal de Sítios
       $('#btnSalvarNovoSitio').on('click', function() {
         var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
         var tipo = $('#inputNovoTipo').val().trim();
@@ -926,7 +926,6 @@
           });
       });
 
-      // Botão Excluir do Modal de Sítios
       $('#btnExcluirTipoModal').on('click', function() {
         var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
         var tipo = $('#inputNovoTipo').val().trim();
@@ -941,12 +940,10 @@
         }
       });
 
-      // AÇÃO DO BOTÃO CHECK-POINT
       $('#btnCheckPoint').on('click', function() {
         fn11_gerarCheckPoint();
       });
 
-      // AÇÃO DE COPIAR A IMAGEM DO CHECK-POINT
       $('#btnCopiarImagemCP').on('click', function() {
         var $btn = $(this);
         $btn.prop('disabled', true).text('Gerando...');
@@ -978,12 +975,11 @@
         });
       });
 
-      // Campo de Busca
       $('#inputCustomSearch').on('keyup', function() {
         var termo = $(this).val().toLowerCase();
         $('#incidentes tbody tr').each(function() {
           var texto = $(this).text().toLowerCase();
-          var inputs = $(this).find('input, select').map(function() { return $(this).val(); }).get().join(' ').toLowerCase();
+          var inputs = $(this).find('input, select, textarea').map(function() { return $(this).val(); }).get().join(' ').toLowerCase();
           
           if ((texto + ' ' + inputs).indexOf(termo) !== -1) {
             $(this).show();
@@ -993,12 +989,10 @@
         });
       });
 
-      // Seleção global de checkboxes
       $('#checkAll').on('change', function() {
         $('.check-item').prop('checked', this.checked);
       });
 
-      // Botão Excluir Linha
       $('#btnExcluirSelecionado').on('click', function() {
         var $selecionados = $('.check-item:checked');
         if ($selecionados.length === 0) {
@@ -1012,7 +1006,6 @@
         }
       });
 
-      // Botão Salvar manual
       $('#btnSalvarTudo').on('click', function() {
         fn06_salvarDadosStorage();
         alert('Dados salvos no Firebase com sucesso!');
