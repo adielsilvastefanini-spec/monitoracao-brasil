@@ -154,9 +154,23 @@
     .select-opcom { width: 65px !important; }
     .select-impacto { width: 60px !important; }
     .select-causa { width: 115px !important; }
-    .input-ticket { width: 120px !important; text-align: center; }
-    .col-status { width: 100% !important; }
-    .input-status { width: 100% !important; min-width: 250px; text-align: left; }
+    
+    /* LARGURA E FORMATO DOS CAMPOS TICKET E STATUS */
+    .input-ticket { 
+      width: 140px !important; 
+      text-align: center; 
+    }
+
+    .col-status { 
+      width: auto !important; 
+      min-width: 300px;
+    }
+
+    .input-status { 
+      width: 100% !important; 
+      min-width: 300px; 
+      text-align: left; 
+    }
 
     /* ESTILOS DO CHECK POINT - IMPRESSÃO / IMAGEM */
     #containerCheckPointExport {
@@ -692,7 +706,7 @@
           <input type="text" class="input-tabela-sm input-ticket" placeholder="Nº do Ticket">
         </td>
         <td class="col-status">
-          <input type="text" class="input-tabela-sm input-status" placeholder="Descreva o status atual...">
+          <input type="text" class="input-tabela-sm input-status" placeholder="Descreva o status atual..." maxlength="1000">
         </td>
       </tr>`);
 
