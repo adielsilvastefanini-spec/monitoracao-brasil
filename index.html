@@ -125,6 +125,7 @@
       border-bottom: 1px solid #f1f5f9;
     }
 
+    /* ESTILO PADRÃO IGUAL PARA TODOS OS INPUTS */
     .input-tabela-sm, .select-tabela-sm {
       background-color: #f8fafc;
       border: 1px solid #cbd5e1;
@@ -133,6 +134,7 @@
       font-size: 10.5px;
       height: 26px;
       color: #334155;
+      box-sizing: border-box;
     }
 
     td.sitio-laranja { background-color: #ffaa00 !important; }
@@ -154,33 +156,17 @@
     .select-impacto { width: 60px !important; }
     .select-causa { width: 115px !important; }
     
-    /* CAMPO TICKET (Até 12 caracteres) */
+    /* TICKET: TAMANHO PADRÃO DE DADOS (ATÉ 12 CARACTERES) */
     .input-ticket { 
-      width: 110px !important; 
+      width: 100px !important; 
       text-align: center; 
     }
 
-    /* CAMPO STATUS LIVRE (TEXTAREA) */
-    .col-status { 
-      width: auto !important; 
-      min-width: 350px;
-      white-space: normal !important;
-    }
-
-    .textarea-status { 
+    /* STATUS: MESMO ESTILO E ALTURA DOS OUTROS INPUTS */
+    .input-status { 
       width: 100% !important; 
-      min-width: 350px; 
-      height: 32px;
-      min-height: 32px;
-      text-align: left; 
-      resize: vertical;
-      font-family: inherit;
-      line-height: 1.2;
-      padding: 4px;
-      border-radius: 4px;
-      border: 1px solid #cbd5e1;
-      background-color: #f8fafc;
-      font-size: 11px;
+      min-width: 250px;
+      text-align: left;
     }
 
     /* ESTILOS DO CHECK POINT */
@@ -243,7 +229,7 @@
       white-space: normal !important;
       word-break: break-word;
       text-align: left !important;
-      min-width: 300px;
+      min-width: 250px;
     }
   </style>
 </head>
@@ -534,7 +520,7 @@
       var impactoVal = $tr.find('.select-impacto').val();
       var parceiroVal = $tr.find('.select-parceiro').val();
       var causaVal = $tr.find('.select-causa').val();
-      var statusVal = $tr.find('.textarea-status').val().trim();
+      var statusVal = $tr.find('.input-status').val().trim();
 
       $tdSitio.removeClass('sitio-laranja sitio-verde sitio-cinza');
       $tr.removeClass('linha-concluida linha-atividade');
@@ -612,7 +598,7 @@
           parceiro: $tr.find('.select-parceiro').val() || '',
           causa: $tr.find('.select-causa').val() || '',
           ticket: $tr.find('.input-ticket').val() || '',
-          status: $tr.find('.textarea-status').val() || ''
+          status: $tr.find('.input-status').val() || ''
         };
         dados.push(item);
       });
@@ -644,7 +630,7 @@
       $tr.find('.select-impacto').val(dados.impacto || 'N/A');
       $tr.find('.select-causa').val(dados.causa || 'Pendente');
       $tr.find('.input-ticket').val(dados.ticket || '');
-      $tr.find('.textarea-status').val(dados.status || '');
+      $tr.find('.input-status').val(dados.status || '');
 
       fn03_avaliarStatusLinha($tr);
     }
@@ -712,8 +698,8 @@
         <td>
           <input type="text" class="input-tabela-sm input-ticket" placeholder="Nº Chamado" maxlength="12">
         </td>
-        <td class="col-status">
-          <textarea class="textarea-status" placeholder="Descreva as últimas ações relativas ao incidente..."></textarea>
+        <td>
+          <input type="text" class="input-tabela-sm input-status" placeholder="Descreva as últimas ações relativas ao incidente...">
         </td>
       </tr>`);
 
@@ -803,7 +789,7 @@
           var parceiro = $tr.find('.select-parceiro').val() || '';
           var causa = $tr.find('.select-causa').val() || '';
           var ticket = $tr.find('.input-ticket').val() || '';
-          var status = $tr.find('.textarea-status').val() || '';
+          var status = $tr.find('.input-status').val() || '';
 
           var classeAtividade = ehAtividade ? ' cp-row-atividade' : '';
 
@@ -849,7 +835,7 @@
         $tr.find('.select-sitio').focus();
       });
 
-      $('#incidentes').on('change input', 'select, input, textarea', function() {
+      $('#incidentes').on('change input', 'select, input', function() {
         var $tr = $(this).closest('tr');
         fn03_avaliarStatusLinha($tr);
         fn02_reordenarTabela();
@@ -979,7 +965,7 @@
         var termo = $(this).val().toLowerCase();
         $('#incidentes tbody tr').each(function() {
           var texto = $(this).text().toLowerCase();
-          var inputs = $(this).find('input, select, textarea').map(function() { return $(this).val(); }).get().join(' ').toLowerCase();
+          var inputs = $(this).find('input, select').map(function() { return $(this).val(); }).get().join(' ').toLowerCase();
           
           if ((texto + ' ' + inputs).indexOf(termo) !== -1) {
             $(this).show();
