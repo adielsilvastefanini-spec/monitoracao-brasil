@@ -1,104 +1,95 @@
 function fn12_renderizarEscalonamento(filtroEmpresa = "TODAS", termoBusca = "") {
-  var $container = $('#conteudoEscalonamento');
-  if ($container.length === 0) return;
+  // Procura o tbody da tabela dentro do modal
+  var $tbody = $('#matrizEscalonamento tbody');
+  
+  // Se não achar por ID, tenta buscar por qualquer tbody dentro da modal ativa
+  if ($tbody.length === 0) {
+    $tbody = $('.modal.show table tbody, #modalEscalonamento table tbody');
+  }
 
-  $container.html('<div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i> Carregando contatos...</div>');
+  if ($tbody.length === 0) return;
+
+  $tbody.html('<tr><td colspan="7" class="text-center"><i class="fas fa-spinner fa-spin"></i> Carregando dados...</td></tr>');
 
   firebase.database().ref("escalonamento").once("value").then(function(snapshot) {
-    $container.empty();
+    $tbody.empty();
     var dadosFirebase = snapshot.val();
 
     if (!dadosFirebase) {
-      $container.html('<div class="alert alert-warning text-center">Nenhum registro encontrado no banco de dados.</div>');
+      $tbody.html('<tr><td colspan="7" class="text-center">Nenhum registro encontrado.</td></tr>');
       return;
     }
 
     termoBusca = termoBusca.toLowerCase().trim();
 
-    // Itera pelas empresas retornadas pelo Firebase (ex: CIRION, OI, VIVO, EBT)
     Object.keys(dadosFirebase).forEach(function(key) {
       var item = dadosFirebase[key];
-      var nomeEmpresa = item.empresa || key;
+      var empresa = item.empresa || key || "-";
 
       // Filtro por Empresa
-      if (filtroEmpresa !== "TODAS" && nomeEmpresa.toUpperCase() !== filtroEmpresa.toUpperCase()) {
+      if (filtroEmpresa !== "TODAS" && empresa.toUpperCase() !== filtroEmpresa.toUpperCase()) {
         return;
       }
 
-      // Garante a leitura do array/objeto de níveis dentro da empresa
-      var listaNiveis = Array.isArray(item.niveis) ? item.niveis : (item.niveis ? Object.values(item.niveis) : []);
+      // Suporte tanto para nó estruturado por empresa quanto para lista simples de registros
+      var listaContatos = Array.isArray(item.niveis) ? item.niveis : (item.niveis ? Object.values(item.niveis) : [item]);
 
-      // Se o nó gravado for registro simples (sem array de níveis)
-      if (listaNiveis.length === 0 && (item.nivel || item.contato || item.telefone)) {
-        listaNiveis.push({
-          nivel: item.nivel || item.cargo || "N/A",
-          contato: item.contato || item.telefone || "N/A",
-          email: item.email || "N/A"
-        });
-      }
+      listaContatos.forEach(function(c) {
+        var nivel = c.nivel || c.cargo || "-";
+        var gestor = c.gestor || "-";
+        var cargo = c.cargo || "-";
+        var atendimento = c.atendimento || c.time || "-";
+        var telefone = c.telefone || c.contato || "-";
+        var email = c.email || "-";
 
-      // Filtro por Busca de Texto
-      var niveisFiltrados = listaNiveis.filter(function(n) {
-        if (!termoBusca) return true;
-        return (n.nivel && n.nivel.toLowerCase().includes(termoBusca)) ||
-               (n.contato && n.contato.toLowerCase().includes(termoBusca)) ||
-               (n.email && n.email.toLowerCase().includes(termoBusca)) ||
-               nomeEmpresa.toLowerCase().includes(termoBusca);
-      });
+        // Aplica filtro de busca por texto
+        if (termoBusca) {
+          var textoLinha = (empresa + nivel + gestor + cargo + atendimento + telefone + email).toLowerCase();
+          if (!textoLinha.includes(termoBusca)) return;
+        }
 
-      if (niveisFiltrados.length === 0) return;
-
-      var htmlCard = `
-        <div class="card mb-3 shadow-sm border-0">
-          <div class="card-header bg-dark text-white font-weight-bold d-flex justify-content-between align-items-center">
-            <span><i class="fas fa-building mr-2"></i> ${nomeEmpresa}</span>
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover table-striped mb-0 text-sm">
-                <thead class="thead-light">
-                  <tr>
-                    <th style="width: 30%;">Nível / Cargo</th>
-                    <th style="width: 35%;">Contato / Telefone</th>
-                    <th style="width: 35%;">E-mail</th>
-                  </tr>
-                </thead>
-                <tbody>
-      `;
-
-      niveisFiltrados.forEach(function(n) {
-        htmlCard += `
+        var linhaHtml = `
           <tr>
-            <td class="align-middle"><b>${n.nivel || '-'}</b></td>
-            <td class="align-middle">${n.contato || '-'}</td>
-            <td class="align-middle">${n.email ? `<a href="mailto:${n.email}">${n.email}</a>` : '-'}</td>
+            <td><b>${empresa}</b></td>
+            <td>${nivel}</td>
+            <td>${gestor}</td>
+            <td>${cargo}</td>
+            <td>${atendimento}</td>
+            <td>${telefone}</td>
+            <td>${email !== '-' ? `<a href="mailto:${email}">${email}</a>` : '-'}</td>
           </tr>
         `;
+
+        $tbody.append(linhaHtml);
       });
-
-      htmlCard += `
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-
-      $container.append(htmlCard);
     });
 
-    if ($container.is(':empty')) {
-      $container.html('<div class="alert alert-warning text-center">Nenhum contato encontrado para os filtros selecionados.</div>');
+    if ($tbody.is(':empty')) {
+      $tbody.html('<tr><td colspan="7" class="text-center">Nenhum contato encontrado para os filtros selecionados.</td></tr>');
     }
   }).catch(function(error) {
     console.error("Erro ao carregar escalonamento:", error);
-    $container.html('<div class="alert alert-danger text-center">Erro ao carregar dados do Firebase.</div>');
+    $tbody.html('<tr><td colspan="7" class="text-center text-danger">Erro ao carregar dados do Firebase.</td></tr>');
   });
 }
 
-// Dispara a renderização automaticamente quando a Modal for aberta
-$(document).on('shown.bs.modal', '#modalEscalonamento', function () {
+// Escuta a abertura de qualquer modal na página para disparar a renderização
+$(document).on('shown.bs.modal', function () {
   fn12_renderizarEscalonamento();
+});
+
+// Vincula o campo de busca em tempo real
+$(document).on('input', 'input[placeholder*="Buscar"]', function() {
+  var termo = $(this).val();
+  fn12_renderizarEscalonamento("TODAS", termo);
+});
+
+// Vincula os botões de filtro de Empresa (EBT, Oi, Vivo, Cirion, SITA, Todas)
+$(document).on('click', '.modal-body button, .modal button', function() {
+  var textoBotao = $(this).text().trim().toUpperCase();
+  if (["TODAS", "EBT", "OI", "VIVO", "CIRION", "SITA"].includes(textoBotao)) {
+    fn12_renderizarEscalonamento(textoBotao);
+  }
 });
 
 $(document).ready(function() {
