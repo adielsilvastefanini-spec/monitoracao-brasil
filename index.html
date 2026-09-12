@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monitoração - Brasil</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Biblioteca html2canvas -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -97,6 +98,7 @@
     .btn-excluir-topo { background-color: #ef4444 !important; color: #ffffff !important; }
     .btn-email-topo { background-color: #8b5cf6 !important; color: #ffffff !important; }
     .btn-checkpoint-topo { background-color: #f59e0b !important; color: #ffffff !important; }
+    .btn-escalonamento-topo { background-color: #0f172a !important; color: #ffffff !important; }
 
     table.tabela-custom {
       width: 100% !important;
@@ -121,7 +123,6 @@
       border-bottom: 1px solid #f1f5f9;
     }
 
-    /* ESTILO PADRÃO IGUAL PARA TODOS OS INPUTS */
     .input-tabela-sm, .select-tabela-sm {
       background-color: #f8fafc;
       border: 1px solid #cbd5e1;
@@ -225,8 +226,6 @@
       text-align: left !important;
       min-width: 250px;
     }
-    /* BOTÃO ESCALONAMENTO TOP BAR */
-    .btn-escalonamento-topo { background-color: #0f172a !important; color: #ffffff !important; }
 
     /* ESTILOS DA TABELA DE ESCALONAMENTO */
     table.tabela-escalonamento {
@@ -427,16 +426,20 @@
         <div class="modal-body p-3">
           
           <div class="row g-2 mb-3 align-items-center">
-            <div class="col-md-5">
-              <input type="search" id="inputSearchEscalonamento" class="form-control form-control-sm" placeholder="🔍 Buscar por Nome, Empresa, Telefone, E-mail...">
+            <div class="col-md-4">
+              <input type="search" id="inputSearchEscalonamento" class="form-control form-control-sm" placeholder="🔍 Buscar por Nome, Empresa, Telefone...">
             </div>
-            <div class="col-md-7 d-flex justify-content-end gap-1 flex-wrap" id="filtrosEmpresaEscalonamento">
+            <div class="col-md-8 d-flex justify-content-end gap-1 flex-wrap align-items-center" id="filtrosEmpresaEscalonamento">
               <button class="btn btn-sm btn-outline-dark active" data-emp="TODAS">Todas</button>
               <button class="btn btn-sm btn-outline-primary" data-emp="EBT">EBT</button>
               <button class="btn btn-sm btn-outline-warning" data-emp="Oi">Oi</button>
               <button class="btn btn-sm btn-outline-purple" style="border-color:#8b5cf6; color:#8b5cf6;" data-emp="Vivo">Vivo</button>
               <button class="btn btn-sm btn-outline-success" data-emp="Cirion">Cirion</button>
               <button class="btn btn-sm btn-outline-danger" data-emp="SITA">SITA</button>
+              <!-- BOTÃO DE CADASTRO ADICIONADO -->
+              <button class="btn btn-sm btn-success fw-bold ms-2" type="button" onclick="abrirModalFormEscalonamento()">
+                <i class="fas fa-plus-circle me-1"></i> + Contato
+              </button>
             </div>
           </div>
 
@@ -452,6 +455,7 @@
                   <th>Telefone</th>
                   <th>Celular</th>
                   <th>Email / Link</th>
+                  <th class="text-center">Ações</th>
                 </tr>
               </thead>
               <tbody id="tbodyEscalonamento">
@@ -467,6 +471,78 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal Formulário: Cadastrar / Editar Contato no Escalonamento -->
+  <div class="modal fade" id="modalFormEscalonamento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-dark text-white py-2">
+          <h5 class="modal-title fs-6" id="tituloFormEscalonamento">Cadastrar Contato</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-3">
+          <form id="formEscalonamento">
+            <input type="hidden" id="esc_empresa_origem">
+            <input type="hidden" id="esc_index">
+
+            <div class="mb-2">
+              <label class="form-label mb-1 fs-6 fw-semibold">Empresa</label>
+              <select class="form-select form-select-sm" id="esc_empresa" required>
+                <option value="EBT">EBT</option>
+                <option value="OI">OI</option>
+                <option value="VIVO">VIVO</option>
+                <option value="CIRION">CIRION</option>
+                <option value="SITA">SITA</option>
+              </select>
+            </div>
+
+            <div class="row g-2 mb-2">
+              <div class="col-md-6">
+                <label class="form-label mb-1 fs-6 fw-semibold">Nível / Turno</label>
+                <input type="text" class="form-control form-control-sm" id="esc_nivel" placeholder="Ex: 0, 1, 2, Plantão" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label mb-1 fs-6 fw-semibold">Gestor / Responsável</label>
+                <input type="text" class="form-control form-control-sm" id="esc_gestor" placeholder="Nome do Gestor">
+              </div>
+            </div>
+
+            <div class="row g-2 mb-2">
+              <div class="col-md-6">
+                <label class="form-label mb-1 fs-6 fw-semibold">Cargo / Função</label>
+                <input type="text" class="form-control form-control-sm" id="esc_cargo" placeholder="Ex: Supervisor, Analista">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label mb-1 fs-6 fw-semibold">Horário / Atendimento</label>
+                <input type="text" class="form-control form-control-sm" id="esc_atendimento" placeholder="Ex: 24h, 08h às 17h">
+              </div>
+            </div>
+
+            <div class="row g-2 mb-2">
+              <div class="col-md-6">
+                <label class="form-label mb-1 fs-6 fw-semibold">Telefone Fixo</label>
+                <input type="text" class="form-control form-control-sm" id="esc_telefone" placeholder="0800 / Fixo">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label mb-1 fs-6 fw-semibold">Celular</label>
+                <input type="text" class="form-control form-control-sm" id="esc_celular" placeholder="(00) 00000-0000">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label mb-1 fs-6 fw-semibold">E-mail ou Link do Portal</label>
+              <input type="text" class="form-control form-control-sm" id="esc_email" placeholder="Email ou URL do portal">
+            </div>
+
+            <div class="text-end">
+              <button type="button" class="btn btn-sm btn-secondary me-1" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-sm btn-primary fw-bold">Salvar no Firebase</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
   
   <!-- LIBRARIAS BASE (JQUERY / BOOTSTRAP) -->
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -477,9 +553,9 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
   <!-- MÓDULOS INTERNOS DO SISTEMA -->
-<script src="./app.js"></script>
-<script src="./escalonamento.js"></script>
-<script src="./processos.js"></script>
-<script src="./plantao.js"></script>
+  <script src="./app.js"></script>
+  <script src="./escalonamento.js"></script>
+  <script src="./processos.js"></script>
+  <script src="./plantao.js"></script>
 </body>
 </html>
