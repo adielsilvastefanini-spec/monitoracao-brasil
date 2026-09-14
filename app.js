@@ -651,6 +651,7 @@
       });
     });
 // EVENTO: Clique no Botão de E-mail / WhatsApp
+// Linha 654 ajustada (opcional):
 $(document).on('click', '#btnEmail', function() {
   gerarRelatorioWhatsApp();
   
