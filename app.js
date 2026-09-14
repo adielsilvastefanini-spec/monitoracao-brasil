@@ -650,9 +650,9 @@
         fn12_renderizarEscalonamento(emp, $(this).val());
       });
     });
-// EVENTO: Clique no Botão de E-mail
+// EVENTO: Clique no Botão de E-mail / WhatsApp
 $(document).on('click', '#btnEmail', function() {
-  gerarRelatorioEmail();
+  gerarRelatorioWhatsApp();
   
   var modalEl = document.getElementById('modalEmail');
   var modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
@@ -661,38 +661,46 @@ $(document).on('click', '#btnEmail', function() {
 
 // EVENTO: Atualizar Prévia ao alterar Pontos de Atenção
 $(document).on('click', '#btnAtualizarPrevia', function() {
-  gerarRelatorioEmail();
+  gerarRelatorioWhatsApp();
 });
 
-// Função Principal: Varre a tabela, categoriza e gera o layout HTML
-function gerarRelatorioEmail() {
+// Função Auxiliar para ler o valor de inputs ou selects com fallback correto
+function obterValorCampo($row, seletor) {
+  var $elem = $row.find(seletor);
+  if ($elem.length === 0) return '-';
+  var val = $elem.val();
+  return (val !== null && val !== undefined && val.trim() !== '') ? val.trim() : '-';
+}
+
+// Função Principal: Varre a tabela e gera o layout por categoria
+function gerarRelatorioWhatsApp() {
   var incidentesLaranja = [];
   var atividadesCinza = [];
   var normalizadosVerde = [];
 
-  // Percorre as linhas da tabela principal
+  // Varre todas as linhas da tabela
   $('#incidentes tbody tr').each(function() {
     var $row = $(this);
-    var $tdSitio = $row.find('td').eq(1); // Célula com a cor do sítio
+    var $tdSitio = $row.find('td').eq(1); // Célula de indicação da cor
     var isChecked = $row.find('input[type="checkbox"]').is(':checked');
 
+    // Mapeamento corrigido buscando por nome de input/select e classes
     var item = {
-      sitio: $row.find('.select-sitio').val() || '-',
-      tipo: $row.find('.select-tipo').val() || '-',
-      dataIni: $row.find('input[name="data_inicio"]').val() || '-',
-      horaIni: $row.find('input[name="hora_inicio"]').val() || '-',
-      dataFim: $row.find('input[name="data_fim"]').val() || '-',
-      horaFim: $row.find('input[name="hora_fim"]').val() || '-',
-      falha: $row.find('.select-falha').val() || '-',
-      opcom: $row.find('.select-opcom').val() || '-',
-      impacto: $row.find('.select-impacto').val() || '-',
-      parceiro: $row.find('.select-parceiro').val() || '-',
-      causa: $row.find('.select-causa').val() || '-',
-      ticket: $row.find('input[name="ticket"]').val() || '-',
-      status: $row.find('input[name="status"]').val() || '-'
+      sitio: obterValorCampo($row, '.select-sitio, select[name="sitio"]'),
+      tipo: obterValorCampo($row, '.select-tipo, select[name="tipo"]'),
+      dataIni: obterValorCampo($row, 'input[name="data_inicio"], input[name="data_1"], .input-data:first'),
+      horaIni: obterValorCampo($row, 'input[name="hora_inicio"], input[name="h_inicio"], .input-hora:first'),
+      dataFim: obterValorCampo($row, 'input[name="data_fim"], input[name="data_2"], .input-data:last'),
+      horaFim: obterValorCampo($row, 'input[name="hora_fim"], input[name="h_fim"], .input-hora:last'),
+      falha: obterValorCampo($row, '.select-falha, select[name="falha"]'),
+      opcom: obterValorCampo($row, '.select-opcom, select[name="opcom"]'),
+      impacto: obterValorCampo($row, '.select-impacto, select[name="impacto"]'),
+      parceiro: obterValorCampo($row, '.select-parceiro, select[name="parceiro"]'),
+      ticket: obterValorCampo($row, 'input[name="ticket"], .input-ticket'),
+      status: obterValorCampo($row, 'input[name="status"], .input-status')
     };
 
-    // Classificação por cor e seleção
+    // Classificação por categoria
     if ($tdSitio.hasClass('sitio-laranja')) {
       incidentesLaranja.push(item);
     } else if ($tdSitio.hasClass('sitio-cinza')) {
@@ -702,26 +710,20 @@ function gerarRelatorioEmail() {
     }
   });
 
-  // Assunto Sugerido
-  var todosSitios = [...new Set([...incidentesLaranja, ...atividadesCinza, ...normalizadosVerde].map(i => i.sitio))].join(', ');
-  var assunto = `[PASSAGEM DE TURNO - MONITORAÇÃO BRASIL] ${todosSitios ? 'Sítios: ' + todosSitios : 'Status Geral'}`;
-  $('#emailAssunto').val(assunto);
-
-  // Ponto de Atenção digitado pelo analista
   var pontoAtencaoTexto = $('#inputPontoAtencao').val().trim() || 'Nenhum ponto de atenção crítico registrado para o turno.';
 
-  // MONTAGEM DO CORPO HTML
+  // MONTAGEM DO CORPO VISUAL (Para PDF e prévia)
   var html = `
     <div style="font-family: Arial, sans-serif; font-size: 12px; color: #1e293b;">
       <h3 style="color: #1b0088; border-bottom: 2px solid #1b0088; padding-bottom: 4px; margin-top: 0;">Relatório de Passagem de Turno - Monitoração Brasil</h3>
       
       <!-- SEÇÃO 1: INCIDENTES (LARANJA) -->
       <h4 style="color: #c2410c; background-color: #ffedd5; padding: 6px; border-left: 4px solid #f97316; margin-bottom: 6px;">1 - Incidentes em Aberto</h4>
-      ${gerarTabelaCategoria(incidentesLaranja, true)}
+      ${gerarTabelaIncidentes(incidentesLaranja)}
 
       <!-- SEÇÃO 2: ATIVIDADES PROGRAMADAS (CINZA) -->
       <h4 style="color: #374151; background-color: #f3f4f6; padding: 6px; border-left: 4px solid #6b7280; margin-bottom: 6px; margin-top: 15px;">2 - Atividades Programadas</h4>
-      ${gerarTabelaCategoria(atividadesCinza, false)}
+      ${gerarTabelaAtividadesENormalizados(atividadesCinza)}
 
       <!-- SEÇÃO 3: PONTOS DE ATENÇÃO -->
       <h4 style="color: #854d0e; background-color: #fef9c3; padding: 6px; border-left: 4px solid #eab308; margin-bottom: 6px; margin-top: 15px;">3 - Pontos de Atenção</h4>
@@ -731,27 +733,16 @@ function gerarRelatorioEmail() {
 
       <!-- SEÇÃO 4: NORMALIZADOS (VERDE SELECIONADOS) -->
       <h4 style="color: #15803d; background-color: #dcfce7; padding: 6px; border-left: 4px solid #22c55e; margin-bottom: 6px; margin-top: 15px;">4 - Incidentes Normalizados</h4>
-      ${gerarTabelaCategoria(normalizadosVerde, true)}
-      
-      <br>
-      <p style="font-size: 11px; color: #64748b;">Relatório gerado automaticamente pelo Sistema de Passagem de Turno.</p>
+      ${gerarTabelaAtividadesENormalizados(normalizadosVerde)}
     </div>
   `;
 
   $('#emailCorpoContainer').html(html);
-
-  // Configura o link MailTo
-  var bodyMailTo = encodeURIComponent(`Prezados,\n\nSegue o resumo da passagem de turno:\n\n1 - Incidentes em Aberto: ${incidentesLaranja.length}\n2 - Atividades: ${atividadesCinza.length}\n3 - Normalizados: ${normalizadosVerde.length}\n\nPonto de Atenção:\n${pontoAtencaoTexto}\n\nFavor verificar o relatório completo em anexo/copiado.`);
-  $('#btnMailTo').attr('href', `mailto:?subject=${encodeURIComponent(assunto)}&body=${bodyMailTo}`);
 }
 
-// Auxiliar: Constrói a estrutura de tabela para as categorias
-function gerarTabelaCategoria(lista, incluirTicketOpcom = true) {
-  if (lista.length === 0) {
-    return `<p style="font-style: italic; color: #94a3b8; font-size: 11px; margin: 4px 0;">Nenhum registro nesta categoria.</p>`;
-  }
-
-  var colExtrasTh = incluirTicketOpcom ? `<th>Ticket</th><th>Opcom</th>` : ``;
+// Tabela 1: Incidentes (Somente Início + Ticket, Opcom e Status visíveis)
+function gerarTabelaIncidentes(lista) {
+  if (lista.length === 0) return `<p style="font-style: italic; color: #94a3b8; font-size: 11px; margin: 4px 0;">Nenhum incidente em aberto.</p>`;
 
   var htmlTable = `
     <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; font-size: 11px; font-family: Arial, sans-serif; border-color: #cbd5e1;">
@@ -760,11 +751,11 @@ function gerarTabelaCategoria(lista, incluirTicketOpcom = true) {
           <th>Sítio</th>
           <th>Tipo</th>
           <th>Início</th>
-          <th>Fim</th>
           <th>Falha</th>
-          ${colExtrasTh}
+          <th>Opcom</th>
           <th>Impacto</th>
           <th>Parceiro</th>
+          <th>Ticket</th>
           <th>Status / Observações</th>
         </tr>
       </thead>
@@ -772,9 +763,50 @@ function gerarTabelaCategoria(lista, incluirTicketOpcom = true) {
   `;
 
   lista.forEach(function(item) {
-    var inicio = `${item.dataIni} ${item.horaIni}`.trim();
-    var fim = (item.dataFim || item.horaFim) ? `${item.dataFim} ${item.horaFim}`.trim() : 'Em Aberto';
-    var colExtrasTd = incluirTicketOpcom ? `<td style="text-align: center;"><b>${item.ticket}</b></td><td style="text-align: center;">${item.opcom}</td>` : ``;
+    var inicio = `${item.dataIni} ${item.horaIni}`.replace('- -', '-').trim();
+    htmlTable += `
+      <tr>
+        <td style="text-align: center;"><b>${item.sitio}</b></td>
+        <td style="text-align: center;">${item.tipo}</td>
+        <td style="text-align: center;">${inicio}</td>
+        <td style="text-align: center;">${item.falha}</td>
+        <td style="text-align: center;">${item.opcom}</td>
+        <td style="text-align: center;">${item.impacto}</td>
+        <td style="text-align: center;">${item.parceiro}</td>
+        <td style="text-align: center;"><b>${item.ticket}</b></td>
+        <td>${item.status}</td>
+      </tr>
+    `;
+  });
+
+  return htmlTable + `</tbody></table>`;
+}
+
+// Tabela 2 e 4: Atividades e Normalizados (Início e Fim + Status)
+function gerarTabelaAtividadesENormalizados(lista) {
+  if (lista.length === 0) return `<p style="font-style: italic; color: #94a3b8; font-size: 11px; margin: 4px 0;">Nenhum registro nesta categoria.</p>`;
+
+  var htmlTable = `
+    <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; font-size: 11px; font-family: Arial, sans-serif; border-color: #cbd5e1;">
+      <thead>
+        <tr style="background-color: #475569; color: #ffffff; text-align: center;">
+          <th>Sítio</th>
+          <th>Tipo</th>
+          <th>Início</th>
+          <th>Fim</th>
+          <th>Falha</th>
+          <th>Impacto</th>
+          <th>Parceiro</th>
+          <th>Ticket</th>
+          <th>Status / Observações</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  lista.forEach(function(item) {
+    var inicio = `${item.dataIni} ${item.horaIni}`.replace('- -', '-').trim();
+    var fim = `${item.dataFim} ${item.horaFim}`.replace('- -', '-').trim();
 
     htmlTable += `
       <tr>
@@ -783,55 +815,57 @@ function gerarTabelaCategoria(lista, incluirTicketOpcom = true) {
         <td style="text-align: center;">${inicio}</td>
         <td style="text-align: center;">${fim}</td>
         <td style="text-align: center;">${item.falha}</td>
-        ${colExtrasTd}
         <td style="text-align: center;">${item.impacto}</td>
         <td style="text-align: center;">${item.parceiro}</td>
+        <td style="text-align: center;"><b>${item.ticket}</b></td>
         <td>${item.status}</td>
       </tr>
     `;
   });
 
-  htmlTable += `</tbody></table>`;
-  return htmlTable;
+  return htmlTable + `</tbody></table>`;
 }
 
-// AUXILIAR: Copiar Assunto
-function copiarTextoInput(idInput) {
-  var copyText = document.getElementById(idInput);
-  copyText.select();
-  navigator.clipboard.writeText(copyText.value);
-  alert("Assunto copiado!");
-}
+// EVENTO: Copiar Texto Formatado em Linhas/Emojis para colar direto no WhatsApp
+$(document).on('click', '#btnCopiarTextoWhatsApp', function() {
+  var texto = "*PASSAGEM DE TURNO - MONITORAÇÃO BRASIL*\n\n";
 
-// EVENTO: Copiar HTML Formatado para E-mail (Outlook/Gmail)
-$(document).on('click', '#btnCopiarCorpoEmail', function() {
-  var container = document.getElementById('emailCorpoContainer');
-  
-  if (navigator.clipboard && window.ClipboardItem) {
-    var type = "text/html";
-    var blob = new Blob([container.innerHTML], { type: type });
-    var data = [new ClipboardItem({ [type]: blob })];
+  // 1 - Incidentes
+  texto += "🟧 *1 - INCIDENTES EM ABERTO*\n";
+  $('#emailCorpoContainer h4:contains("1 - Incidentes")').next('table').find('tbody tr').each(function() {
+    var $tds = $(this).find('td');
+    if ($tds.length > 1) {
+      texto += `• *${$tds.eq(0).text()}* (${$tds.eq(1).text()}) | Início: ${$tds.eq(2).text()} | Opcom: ${$tds.eq(4).text()} | Ticket: ${$tds.eq(7).text()}\n  Status: ${$tds.eq(8).text()}\n`;
+    }
+  });
 
-    navigator.clipboard.write(data).then(function() {
-      alert("Conteúdo formatado copiado! Basta colar (Ctrl+V) no corpo do seu e-mail.");
-    }, function() {
-      fallbackCopiarSelecao(container);
-    });
-  } else {
-    fallbackCopiarSelecao(container);
-  }
+  // 2 - Atividades
+  texto += "\n⬛ *2 - ATIVIDADES PROGRAMADAS*\n";
+  $('#emailCorpoContainer h4:contains("2 - Atividades")').next('table').find('tbody tr').each(function() {
+    var $tds = $(this).find('td');
+    if ($tds.length > 1) {
+      texto += `• *${$tds.eq(0).text()}* | Início: ${$tds.eq(2).text()} | Fim: ${$tds.eq(3).text()}\n  Status: ${$tds.eq(8).text()}\n`;
+    }
+  });
+
+  // 3 - Pontos de Atenção
+  texto += "\n🟨 *3 - PONTOS DE ATENÇÃO*\n";
+  texto += $('#inputPontoAtencao').val().trim() || 'Nenhum ponto de atenção registrado.';
+  texto += "\n";
+
+  // 4 - Normalizados
+  texto += "\n🟩 *4 - INCIDENTES NORMALIZADOS*\n";
+  $('#emailCorpoContainer h4:contains("4 - Incidentes")').next('table').find('tbody tr').each(function() {
+    var $tds = $(this).find('td');
+    if ($tds.length > 1) {
+      texto += `• *${$tds.eq(0).text()}* | Início: ${$tds.eq(2).text()} | Fim: ${$tds.eq(3).text()} | Ticket: ${$tds.eq(7).text()}\n  Status: ${$tds.eq(8).text()}\n`;
+    }
+  });
+
+  navigator.clipboard.writeText(texto).then(function() {
+    alert("Texto copiado! Agora basta abrir a conversa do WhatsApp e pressionar Ctrl+V (Colar).");
+  });
 });
-
-function fallbackCopiarSelecao(element) {
-  var range = document.createRange();
-  range.selectNodeContents(element);
-  var selection = window.getSelection();
-  selection.removeAllRanges();
-  selection.addRange(range);
-  document.execCommand('copy');
-  selection.removeAllRanges();
-  alert("Conteúdo copiado!");
-}
 
 // EVENTO: Gerar e Baixar PDF para WhatsApp
 $(document).on('click', '#btnGerarPDFWhatsApp', function() {
@@ -842,7 +876,7 @@ $(document).on('click', '#btnGerarPDFWhatsApp', function() {
     var imgData = canvas.toDataURL('image/png');
     var pdf = new jsPDF('p', 'mm', 'a4');
     
-    var imgWidth = 190; // Largura A4 útil
+    var imgWidth = 190;
     var pageHeight = 295;
     var imgHeight = (canvas.height * imgWidth) / canvas.width;
     var heightLeft = imgHeight;
@@ -859,6 +893,5 @@ $(document).on('click', '#btnGerarPDFWhatsApp', function() {
     }
 
     pdf.save('Relatorio_Passagem_Turno.pdf');
-    alert("PDF gerado com sucesso! Você já pode anexá-lo no WhatsApp.");
   });
 });
