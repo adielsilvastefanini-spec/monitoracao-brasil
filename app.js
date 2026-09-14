@@ -908,8 +908,20 @@ $(document).on('click', '#btnGerarPDFWhatsApp', function() {
   }); // Fecha o .then
 }); // Fecha o click do PDF
 
-// AVISO SIMPLES E SEGURO
-$(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrutura', function(e) {
-  // Apenas garante que a modal abre limpa sem quebrar o JS
-  console.log("Módulo em desenvolvimento acionado.");
+// AVISO DENTRO DA MODAL PARA MÓDULOS EM DESENVOLVIMENTO
+$(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrutura', function() {
+  var idBotao = $(this).attr('id');
+  
+  var mapaModais = {
+    'btnProcessos': '#bodyProcessos',
+    'btnPlantao': '#bodyPlantao',
+    'btnFerramentas': '#bodyFerramentas',
+    'btnEstrutura': '#bodyEstrutura'
+  };
+
+  var targetBody = mapaModais[idBotao];
+
+  if (targetBody && $(targetBody).length > 0) {
+    $(targetBody).html('<h5 class="text-muted text-center fw-bold my-4">Bloco em desenvolvimento</h5>');
+  }
 });
