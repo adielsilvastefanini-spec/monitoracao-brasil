@@ -826,44 +826,40 @@ function gerarTabelaAtividadesENormalizados(lista) {
   return htmlTable + `</tbody></table>`;
 }
 
-// EVENTO: Copiar Texto Formatado em Linhas/Emojis para colar direto no WhatsApp
-$(document).on('click', '#btnCopiarTextoWhatsApp', function() {
-  var texto = "*PASSAGEM DE TURNO - MONITORAÇÃO BRASIL*\n\n";
+// EVENTO: Converter Relatório em Imagem e Copiar para Clipboard (WhatsApp)
+$(document).on('click', '#btnCopiarImagemWhatsApp', function() {
+  var $btn = $(this);
+  var textoOriginal = $btn.html();
+  
+  // Feedback visual de processamento
+  $btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Gerando Imagem...').prop('disabled', true);
 
-  // 1 - Incidentes
-  texto += "🟧 *1 - INCIDENTES EM ABERTO*\n";
-  $('#emailCorpoContainer h4:contains("1 - Incidentes")').next('table').find('tbody tr').each(function() {
-    var $tds = $(this).find('td');
-    if ($tds.length > 1) {
-      texto += `• *${$tds.eq(0).text()}* (${$tds.eq(1).text()}) | Início: ${$tds.eq(2).text()} | Opcom: ${$tds.eq(4).text()} | Ticket: ${$tds.eq(7).text()}\n  Status: ${$tds.eq(8).text()}\n`;
-    }
-  });
+  var element = document.getElementById('emailCorpoContainer');
 
-  // 2 - Atividades
-  texto += "\n⬛ *2 - ATIVIDADES PROGRAMADAS*\n";
-  $('#emailCorpoContainer h4:contains("2 - Atividades")').next('table').find('tbody tr').each(function() {
-    var $tds = $(this).find('td');
-    if ($tds.length > 1) {
-      texto += `• *${$tds.eq(0).text()}* | Início: ${$tds.eq(2).text()} | Fim: ${$tds.eq(3).text()}\n  Status: ${$tds.eq(8).text()}\n`;
-    }
-  });
-
-  // 3 - Pontos de Atenção
-  texto += "\n🟨 *3 - PONTOS DE ATENÇÃO*\n";
-  texto += $('#inputPontoAtencao').val().trim() || 'Nenhum ponto de atenção registrado.';
-  texto += "\n";
-
-  // 4 - Normalizados
-  texto += "\n🟩 *4 - INCIDENTES NORMALIZADOS*\n";
-  $('#emailCorpoContainer h4:contains("4 - Incidentes")').next('table').find('tbody tr').each(function() {
-    var $tds = $(this).find('td');
-    if ($tds.length > 1) {
-      texto += `• *${$tds.eq(0).text()}* | Início: ${$tds.eq(2).text()} | Fim: ${$tds.eq(3).text()} | Ticket: ${$tds.eq(7).text()}\n  Status: ${$tds.eq(8).text()}\n`;
-    }
-  });
-
-  navigator.clipboard.writeText(texto).then(function() {
-    alert("Texto copiado! Agora basta abrir a conversa do WhatsApp e pressionar Ctrl+V (Colar).");
+  html2canvas(element, { 
+    scale: 2, // Alta resolução
+    backgroundColor: "#ffffff"
+  }).then(function(canvas) {
+    canvas.toBlob(function(blob) {
+      if (navigator.clipboard && window.ClipboardItem) {
+        var item = new ClipboardItem({ "image/png": blob });
+        navigator.clipboard.write([item]).then(function() {
+          alert("Imagem do relatório copiada! Vá ao WhatsApp e pressione Ctrl+V.");
+        }).catch(function(err) {
+          console.error("Erro ao copiar imagem: ", err);
+          alert("Não foi possível copiar a imagem automaticamente. Utilize a opção de Baixar PDF.");
+        }).finally(function() {
+          $btn.html(textoOriginal).prop('disabled', false);
+        });
+      } else {
+        alert("Seu navegador não suporta a cópia direta de imagens. Tente utilizar o recurso via PDF.");
+        $btn.html(textoOriginal).prop('disabled', false);
+      }
+    }, 'image/png');
+  }).catch(function(err) {
+    console.error("Erro no html2canvas: ", err);
+    alert("Houve um problema ao renderizar a imagem.");
+    $btn.html(textoOriginal).prop('disabled', false);
   });
 });
 
