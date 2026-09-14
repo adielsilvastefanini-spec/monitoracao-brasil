@@ -826,25 +826,40 @@ function gerarTabelaAtividadesENormalizados(lista) {
   return htmlTable + `</tbody></table>`;
 }
 
-// EVENTO: Converter Relatório em Imagem e Copiar para Clipboard (WhatsApp)
+// EVENTO: Converter Relatório em Imagem (Troca Turno) e Copiar para Clipboard (WhatsApp)
 $(document).on('click', '#btnCopiarImagemWhatsApp', function() {
   var $btn = $(this);
   var textoOriginal = $btn.html();
   
-  // Feedback visual de processamento
+  // 1. Inserir/Atualizar a Data Atual no topo do relatório
+  var hoje = new Date();
+  var dataFormatada = hoje.toLocaleDateString('pt-BR'); // Formato: DD/MM/AAAA
+
+  // Garante que exista um elemento de data no topo do container
+  if ($('#dataRelatorioHeader').length === 0) {
+    $('#emailCorpoContainer').prepend(
+      '<div id="dataRelatorioHeader" class="text-end text-muted fw-bold mb-2" style="font-size: 13px;">' +
+        '<i class="far fa-calendar-alt me-1"></i> Data: ' + dataFormatada +
+      '</div>'
+    );
+  } else {
+    $('#dataRelatorioHeader').html('<i class="far fa-calendar-alt me-1"></i> Data: ' + dataFormatada);
+  }
+
+  // 2. Feedback visual de processamento
   $btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Gerando Imagem...').prop('disabled', true);
 
   var element = document.getElementById('emailCorpoContainer');
 
   html2canvas(element, { 
-    scale: 2, // Alta resolução
+    scale: 2, // Garante alta resolução/nitidez na imagem
     backgroundColor: "#ffffff"
   }).then(function(canvas) {
     canvas.toBlob(function(blob) {
       if (navigator.clipboard && window.ClipboardItem) {
         var item = new ClipboardItem({ "image/png": blob });
         navigator.clipboard.write([item]).then(function() {
-          alert("Imagem do relatório copiada! Vá ao WhatsApp e pressione Ctrl+V.");
+          alert("Imagem de Troca de Turno copiada com sucesso! Vá ao WhatsApp e pressione Ctrl+V.");
         }).catch(function(err) {
           console.error("Erro ao copiar imagem: ", err);
           alert("Não foi possível copiar a imagem automaticamente. Utilize a opção de Baixar PDF.");
