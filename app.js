@@ -906,22 +906,8 @@ $(document).on('click', '#btnGerarPDFWhatsApp', function() {
 
     pdf.save('Relatorio_Passagem_Turno.pdf');
   });
-// AVISO SEGURO PARA MÓDULOS EM DESENVOLVIMENTO
-$(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrutura', function() {
-  var idBotao = $(this).attr('id');
-  
-  // Mapeamento direto dos IDs para evitar erros de execução
-  var mapaModais = {
-    'btnProcessos': '#bodyProcessos',
-    'btnPlantao': '#bodyPlantao',
-    'btnFerramentas': '#bodyFerramentas',
-    'btnEstrutura': '#bodyEstrutura'
-  };
-
-  var targetBody = mapaModais[idBotao];
-
-  // Só injeta o HTML se o elemento realmente existir no DOM
-  if (targetBody && $(targetBody).length > 0) {
-    $(targetBody).html('<h5 class="text-muted text-center fw-bold my-4">Bloco em desenvolvimento</h5>');
-  }
+// AVISO SIMPLES E SEGURO
+$(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrutura', function(e) {
+  // Apenas garante que a modal abre limpa sem quebrar o JS
+  console.log("Módulo em desenvolvimento acionado.");
 });
