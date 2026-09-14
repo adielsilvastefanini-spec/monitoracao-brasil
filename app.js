@@ -925,3 +925,40 @@ $(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrut
     $(targetBody).html('<h5 class="text-muted text-center fw-bold my-4">Bloco em desenvolvimento</h5>');
   }
 });
+// EXIBIR MODAL DE "BLOCO EM DESENVOLVIMENTO" DINAMICAMENTE
+$(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrutura', function(e) {
+  e.preventDefault();
+
+  // Pega o nome do módulo a partir do texto do botão clicado
+  var nomeModulo = $(this).text().trim();
+
+  // Remove qualquer modal temporária que já exista na tela
+  $('#modalEmDesenvolvimento').remove();
+
+  // Cria a estrutura da modal dinamicamente
+  var htmlModal = `
+    <div class="modal fade" id="modalEmDesenvolvimento" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-dark text-white py-2">
+            <h5 class="modal-title fs-6">${nomeModulo}</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4 text-center">
+            <i class="fas fa-tools text-warning mb-3" style="font-size: 2rem;"></i>
+            <h5 class="text-muted fw-bold mb-0">Bloco em desenvolvimento</h5>
+          </div>
+          <div class="modal-footer py-2 justify-content-end">
+            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Adiciona a modal ao final do body e a exibe via Bootstrap
+  $('body').append(htmlModal);
+  var modalInstance = new bootstrap.Modal(document.getElementById('modalEmDesenvolvimento'));
+  modalInstance.show();
+});
+// Fim do Modal de bloco em desenvolvimento //
