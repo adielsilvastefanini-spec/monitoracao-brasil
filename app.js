@@ -905,7 +905,9 @@ $(document).on('click', '#btnGerarPDFWhatsApp', function() {
     }
 
     pdf.save('Relatorio_Passagem_Turno.pdf');
-  });
+  }); // Fecha o .then
+}); // Fecha o click do PDF
+
 // AVISO SIMPLES E SEGURO
 $(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrutura', function(e) {
   // Apenas garante que a modal abre limpa sem quebrar o JS
