@@ -906,9 +906,11 @@ $(document).on('click', '#btnGerarPDFWhatsApp', function() {
 
     pdf.save('Relatorio_Passagem_Turno.pdf');
   });
-});// AVISO PARA MÓDULOS EM DESENVOLVIMENTO
-$(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrutura', function(e) {
-  e.preventDefault();
-  e.stopPropagation(); // Bloqueia a abertura das modais vinculadas
-  alert("Bloco em desenvolvimento");
+// AVISO DENTRO DA MODAL PARA MÓDULOS EM DESENVOLVIMENTO
+$(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrutura', function() {
+  var id = $(this).attr('id').replace('btn', '').toLowerCase(); // pega 'processos', 'plantao', etc.
+  var capitalizado = id.charAt(0).toUpperCase() + id.slice(1);
+  
+  // Injeta a mensagem limpa no corpo da modal que for aberta
+  $('#body' + capitalizado).html('<h5 class="text-muted text-center fw-bold my-4">Bloco em desenvolvimento</h5>');
 });
