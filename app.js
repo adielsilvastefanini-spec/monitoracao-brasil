@@ -906,4 +906,9 @@ $(document).on('click', '#btnGerarPDFWhatsApp', function() {
 
     pdf.save('Relatorio_Passagem_Turno.pdf');
   });
+});// AVISO PARA MÓDULOS EM DESENVOLVIMENTO
+$(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrutura', function(e) {
+  e.preventDefault();
+  e.stopPropagation(); // Bloqueia a abertura das modais vinculadas
+  alert("Bloco em desenvolvimento");
 });
