@@ -909,33 +909,15 @@ $(document).on('click', '#btnGerarPDFWhatsApp', function() {
 }); // Fecha o click do PDF
 
 // AVISO DENTRO DA MODAL PARA MÓDULOS EM DESENVOLVIMENTO
-$(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrutura', function() {
-  var idBotao = $(this).attr('id');
-  
-  var mapaModais = {
-    'btnProcessos': '#bodyProcessos',
-    'btnPlantao': '#bodyPlantao',
-    'btnFerramentas': '#bodyFerramentas',
-    'btnEstrutura': '#bodyEstrutura'
-  };
-
-  var targetBody = mapaModais[idBotao];
-
-  if (targetBody && $(targetBody).length > 0) {
-    $(targetBody).html('<h5 class="text-muted text-center fw-bold my-4">Bloco em desenvolvimento</h5>');
-  }
-});
-// EXIBIR MODAL DE "BLOCO EM DESENVOLVIMENTO" DINAMICAMENTE
 $(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrutura', function(e) {
   e.preventDefault();
 
-  // Pega o nome do módulo a partir do texto do botão clicado
   var nomeModulo = $(this).text().trim();
 
-  // Remove qualquer modal temporária que já exista na tela
+  // Se já existir a modal temporária, fecha e remove antes de criar outra
   $('#modalEmDesenvolvimento').remove();
+  $('.modal-backdrop').remove();
 
-  // Cria a estrutura da modal dinamicamente
   var htmlModal = `
     <div class="modal fade" id="modalEmDesenvolvimento" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
@@ -956,9 +938,18 @@ $(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrut
     </div>
   `;
 
-  // Adiciona a modal ao final do body e a exibe via Bootstrap
   $('body').append(htmlModal);
-  var modalInstance = new bootstrap.Modal(document.getElementById('modalEmDesenvolvimento'));
+
+  var $modalEl = $('#modalEmDesenvolvimento');
+  var modalInstance = new bootstrap.Modal($modalEl[0]);
+
+  // Evento acionado AUTOMATICAMENTE quando a modal terminar de fechar
+  $modalEl.on('hidden.bs.modal', function () {
+    $modalEl.remove(); // Remove a modal do HTML
+    $('.modal-backdrop').remove(); // Destrói qualquer fundo escuro travado
+    $('body').removeClass('modal-open').css('overflow', 'auto'); // Libera a rolagem e cliques na página
+  });
+
   modalInstance.show();
 });
-// Fim do Modal de bloco em desenvolvimento //
+// Fim do modal bloco em desenvolvimento //
