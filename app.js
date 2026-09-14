@@ -650,3 +650,215 @@
         fn12_renderizarEscalonamento(emp, $(this).val());
       });
     });
+// EVENTO: Clique no Botão de E-mail
+$(document).on('click', '#btnEmail', function() {
+  gerarRelatorioEmail();
+  
+  var modalEl = document.getElementById('modalEmail');
+  var modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+  modalInstance.show();
+});
+
+// EVENTO: Atualizar Prévia ao alterar Pontos de Atenção
+$(document).on('click', '#btnAtualizarPrevia', function() {
+  gerarRelatorioEmail();
+});
+
+// Função Principal: Varre a tabela, categoriza e gera o layout HTML
+function gerarRelatorioEmail() {
+  var incidentesLaranja = [];
+  var atividadesCinza = [];
+  var normalizadosVerde = [];
+
+  // Percorre as linhas da tabela principal
+  $('#incidentes tbody tr').each(function() {
+    var $row = $(this);
+    var $tdSitio = $row.find('td').eq(1); // Célula com a cor do sítio
+    var isChecked = $row.find('input[type="checkbox"]').is(':checked');
+
+    var item = {
+      sitio: $row.find('.select-sitio').val() || '-',
+      tipo: $row.find('.select-tipo').val() || '-',
+      dataIni: $row.find('input[name="data_inicio"]').val() || '-',
+      horaIni: $row.find('input[name="hora_inicio"]').val() || '-',
+      dataFim: $row.find('input[name="data_fim"]').val() || '-',
+      horaFim: $row.find('input[name="hora_fim"]').val() || '-',
+      falha: $row.find('.select-falha').val() || '-',
+      opcom: $row.find('.select-opcom').val() || '-',
+      impacto: $row.find('.select-impacto').val() || '-',
+      parceiro: $row.find('.select-parceiro').val() || '-',
+      causa: $row.find('.select-causa').val() || '-',
+      ticket: $row.find('input[name="ticket"]').val() || '-',
+      status: $row.find('input[name="status"]').val() || '-'
+    };
+
+    // Classificação por cor e seleção
+    if ($tdSitio.hasClass('sitio-laranja')) {
+      incidentesLaranja.push(item);
+    } else if ($tdSitio.hasClass('sitio-cinza')) {
+      atividadesCinza.push(item);
+    } else if ($tdSitio.hasClass('sitio-verde') && isChecked) {
+      normalizadosVerde.push(item);
+    }
+  });
+
+  // Assunto Sugerido
+  var todosSitios = [...new Set([...incidentesLaranja, ...atividadesCinza, ...normalizadosVerde].map(i => i.sitio))].join(', ');
+  var assunto = `[PASSAGEM DE TURNO - MONITORAÇÃO BRASIL] ${todosSitios ? 'Sítios: ' + todosSitios : 'Status Geral'}`;
+  $('#emailAssunto').val(assunto);
+
+  // Ponto de Atenção digitado pelo analista
+  var pontoAtencaoTexto = $('#inputPontoAtencao').val().trim() || 'Nenhum ponto de atenção crítico registrado para o turno.';
+
+  // MONTAGEM DO CORPO HTML
+  var html = `
+    <div style="font-family: Arial, sans-serif; font-size: 12px; color: #1e293b;">
+      <h3 style="color: #1b0088; border-bottom: 2px solid #1b0088; padding-bottom: 4px; margin-top: 0;">Relatório de Passagem de Turno - Monitoração Brasil</h3>
+      
+      <!-- SEÇÃO 1: INCIDENTES (LARANJA) -->
+      <h4 style="color: #c2410c; background-color: #ffedd5; padding: 6px; border-left: 4px solid #f97316; margin-bottom: 6px;">1 - Incidentes em Aberto</h4>
+      ${gerarTabelaCategoria(incidentesLaranja, true)}
+
+      <!-- SEÇÃO 2: ATIVIDADES PROGRAMADAS (CINZA) -->
+      <h4 style="color: #374151; background-color: #f3f4f6; padding: 6px; border-left: 4px solid #6b7280; margin-bottom: 6px; margin-top: 15px;">2 - Atividades Programadas</h4>
+      ${gerarTabelaCategoria(atividadesCinza, false)}
+
+      <!-- SEÇÃO 3: PONTOS DE ATENÇÃO -->
+      <h4 style="color: #854d0e; background-color: #fef9c3; padding: 6px; border-left: 4px solid #eab308; margin-bottom: 6px; margin-top: 15px;">3 - Pontos de Atenção</h4>
+      <div style="background-color: #fffbeb; border: 1px solid #fde68a; padding: 10px; border-radius: 4px; font-size: 12px; white-space: pre-line;">
+        ${pontoAtencaoTexto}
+      </div>
+
+      <!-- SEÇÃO 4: NORMALIZADOS (VERDE SELECIONADOS) -->
+      <h4 style="color: #15803d; background-color: #dcfce7; padding: 6px; border-left: 4px solid #22c55e; margin-bottom: 6px; margin-top: 15px;">4 - Incidentes Normalizados</h4>
+      ${gerarTabelaCategoria(normalizadosVerde, true)}
+      
+      <br>
+      <p style="font-size: 11px; color: #64748b;">Relatório gerado automaticamente pelo Sistema de Passagem de Turno.</p>
+    </div>
+  `;
+
+  $('#emailCorpoContainer').html(html);
+
+  // Configura o link MailTo
+  var bodyMailTo = encodeURIComponent(`Prezados,\n\nSegue o resumo da passagem de turno:\n\n1 - Incidentes em Aberto: ${incidentesLaranja.length}\n2 - Atividades: ${atividadesCinza.length}\n3 - Normalizados: ${normalizadosVerde.length}\n\nPonto de Atenção:\n${pontoAtencaoTexto}\n\nFavor verificar o relatório completo em anexo/copiado.`);
+  $('#btnMailTo').attr('href', `mailto:?subject=${encodeURIComponent(assunto)}&body=${bodyMailTo}`);
+}
+
+// Auxiliar: Constrói a estrutura de tabela para as categorias
+function gerarTabelaCategoria(lista, incluirTicketOpcom = true) {
+  if (lista.length === 0) {
+    return `<p style="font-style: italic; color: #94a3b8; font-size: 11px; margin: 4px 0;">Nenhum registro nesta categoria.</p>`;
+  }
+
+  var colExtrasTh = incluirTicketOpcom ? `<th>Ticket</th><th>Opcom</th>` : ``;
+
+  var htmlTable = `
+    <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; font-size: 11px; font-family: Arial, sans-serif; border-color: #cbd5e1;">
+      <thead>
+        <tr style="background-color: #2563eb; color: #ffffff; text-align: center;">
+          <th>Sítio</th>
+          <th>Tipo</th>
+          <th>Início</th>
+          <th>Fim</th>
+          <th>Falha</th>
+          ${colExtrasTh}
+          <th>Impacto</th>
+          <th>Parceiro</th>
+          <th>Status / Observações</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  lista.forEach(function(item) {
+    var inicio = `${item.dataIni} ${item.horaIni}`.trim();
+    var fim = (item.dataFim || item.horaFim) ? `${item.dataFim} ${item.horaFim}`.trim() : 'Em Aberto';
+    var colExtrasTd = incluirTicketOpcom ? `<td style="text-align: center;"><b>${item.ticket}</b></td><td style="text-align: center;">${item.opcom}</td>` : ``;
+
+    htmlTable += `
+      <tr>
+        <td style="text-align: center;"><b>${item.sitio}</b></td>
+        <td style="text-align: center;">${item.tipo}</td>
+        <td style="text-align: center;">${inicio}</td>
+        <td style="text-align: center;">${fim}</td>
+        <td style="text-align: center;">${item.falha}</td>
+        ${colExtrasTd}
+        <td style="text-align: center;">${item.impacto}</td>
+        <td style="text-align: center;">${item.parceiro}</td>
+        <td>${item.status}</td>
+      </tr>
+    `;
+  });
+
+  htmlTable += `</tbody></table>`;
+  return htmlTable;
+}
+
+// AUXILIAR: Copiar Assunto
+function copiarTextoInput(idInput) {
+  var copyText = document.getElementById(idInput);
+  copyText.select();
+  navigator.clipboard.writeText(copyText.value);
+  alert("Assunto copiado!");
+}
+
+// EVENTO: Copiar HTML Formatado para E-mail (Outlook/Gmail)
+$(document).on('click', '#btnCopiarCorpoEmail', function() {
+  var container = document.getElementById('emailCorpoContainer');
+  
+  if (navigator.clipboard && window.ClipboardItem) {
+    var type = "text/html";
+    var blob = new Blob([container.innerHTML], { type: type });
+    var data = [new ClipboardItem({ [type]: blob })];
+
+    navigator.clipboard.write(data).then(function() {
+      alert("Conteúdo formatado copiado! Basta colar (Ctrl+V) no corpo do seu e-mail.");
+    }, function() {
+      fallbackCopiarSelecao(container);
+    });
+  } else {
+    fallbackCopiarSelecao(container);
+  }
+});
+
+function fallbackCopiarSelecao(element) {
+  var range = document.createRange();
+  range.selectNodeContents(element);
+  var selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  document.execCommand('copy');
+  selection.removeAllRanges();
+  alert("Conteúdo copiado!");
+}
+
+// EVENTO: Gerar e Baixar PDF para WhatsApp
+$(document).on('click', '#btnGerarPDFWhatsApp', function() {
+  var element = document.getElementById('emailCorpoContainer');
+  var { jsPDF } = window.jspdf;
+
+  html2canvas(element, { scale: 2 }).then(function(canvas) {
+    var imgData = canvas.toDataURL('image/png');
+    var pdf = new jsPDF('p', 'mm', 'a4');
+    
+    var imgWidth = 190; // Largura A4 útil
+    var pageHeight = 295;
+    var imgHeight = (canvas.height * imgWidth) / canvas.width;
+    var heightLeft = imgHeight;
+    var position = 10;
+
+    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    pdf.save('Relatorio_Passagem_Turno.pdf');
+    alert("PDF gerado com sucesso! Você já pode anexá-lo no WhatsApp.");
+  });
+});
