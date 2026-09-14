@@ -42,6 +42,11 @@
       opacity: 0.9;
     }
 
+    .header-logo-box {
+      display: flex;
+      align-items: center;
+    }
+
     .container-passagem {
       padding: 0 15px 15px 15px;
       width: 100%;
@@ -275,12 +280,31 @@
 </head>
 <body>
 
-  <div class="header-banner">
+  <!-- BANNER SUPERIOR COM VETOR EMBRAER LATAM -->
+  <header class="header-banner">
     <div class="header-title-box">
       <h2>Passagem de Turno - Monitoração Brasil</h2>
       <p>Painel de Controle e Registro de Incidentes</p>
     </div>
-  </div>
+    
+    <div class="header-logo-box">
+      <svg width="130" height="42" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3));">
+        <path d="M10 28 C 40 28, 140 24, 185 28 C 195 29, 198 32, 185 33 C 140 35, 40 33, 10 28 Z" fill="#FFFFFF"/>
+        <path d="M180 28 C 190 29, 195 30, 185 32 C 175 32, 175 28, 180 28 Z" fill="#1B0088"/>
+        <path d="M90 30 L 60 52 L 75 52 L 115 30 Z" fill="#E2E8F0"/>
+        <path d="M60 52 L 58 55 L 63 55 L 65 52 Z" fill="#E2001A"/>
+        <path d="M25 28 L 5 8 C 3 6, 1 8, 3 12 L 15 28 Z" fill="#1B0088"/> 
+        <path d="M15 15 C 20 10, 25 10, 22 18 C 18 22, 10 20, 15 15 Z" fill="#E2001A"/>
+        <path d="M20 28 L 8 20 L 14 20 L 28 28 Z" fill="#CBD5E1"/>
+        <rect x="170" y="29" width="4" height="2" rx="1" fill="#1B0088"/>
+        <circle cx="150" cy="30" r="1" fill="#64748B"/>
+        <circle cx="140" cy="30" r="1" fill="#64748B"/>
+        <circle cx="130" cy="30" r="1" fill="#64748B"/>
+        <circle cx="120" cy="30" r="1" fill="#64748B"/>
+        <circle cx="110" cy="30" r="1" fill="#64748B"/>
+      </svg>
+    </div>
+  </header>
 
   <div class="container-fluid container-passagem">
     <div class="card-tabela">
@@ -545,7 +569,7 @@
     </div>
   </div>
 
- <!-- Modal de Relatório para WhatsApp -->
+  <!-- Modal de Relatório para WhatsApp -->
   <div class="modal fade" id="modalEmail" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
       <div class="modal-content">
@@ -554,7 +578,6 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-3" style="max-height: 80vh; overflow-y: auto;">
-
           <div class="mb-3">
             <label for="inputPontoAtencao" class="form-label fw-bold mb-1 fs-6 text-warning-emphasis">3 - Pontos de Atenção (Texto Livre):</label>
             <textarea class="form-control form-control-sm" id="inputPontoAtencao" rows="2" placeholder="Digite aqui alertas para o próximo turno, pendências urgentes ou riscos observados..."></textarea>
@@ -565,18 +588,15 @@
               <label class="form-label fw-bold mb-0 fs-6">Prévia do Relatório:</label>
               <button class="btn btn-sm btn-outline-primary py-0" id="btnAtualizarPrevia">Recarregar Prévia</button>
             </div>
-            
-            <!-- Relatório Formatado Visualmente -->
             <div id="emailCorpoContainer" class="p-3 border rounded bg-white" style="font-family: Arial, sans-serif; font-size: 12px; color: #000;">
               <!-- Conteúdo gerado dinamicamente via JS -->
             </div>
           </div>
-
+        </div>
         <div class="modal-footer py-2 justify-content-between">
           <span class="text-muted" style="font-size: 11px;">* Use o botão "Troca Turno" para colar a imagem direto no WhatsApp.</span>
           <div>
             <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
-            <!-- BOTÃO RENOMEADO -->
             <button type="button" class="btn btn-sm btn-success fw-bold ms-1" id="btnCopiarImagemWhatsApp">
               <i class="fab fa-whatsapp me-1"></i> Troca Turno
             </button>
@@ -585,6 +605,10 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal Processos -->
   <div class="modal fade" id="modalProcessos" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
