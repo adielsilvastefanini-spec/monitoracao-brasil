@@ -296,6 +296,21 @@ var dadosSitiosPadrao = {
     "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
   }
 };
+// Configuração do Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyC2nYXXvsZJq54tatPVVDTyecGP8VgUR3w",
+  authDomain: "passagem-de-turno-6eea4.firebaseapp.com",
+  databaseURL: "https://passagem-de-turno-6eea4-default-rtdb.firebaseio.com",
+  projectId: "passagem-de-turno-6eea4",
+  storageBucket: "passagem-de-turno-6eea4.firebasestorage.app",
+  messagingSenderId: "399308087796",
+  appId: "1:399308087796:web:18afe529724399c2e059a1",
+  measurementId: "G-BM3ZY4GRXW"
+};
+
+// Inicializa o Firebase e o Banco em Nuvem
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
 var dadosEscalonamentoPadrao = {
   "CIRION": {
