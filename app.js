@@ -1,5 +1,5 @@
 /* ==========================================================================
-   APP.JS - SISTEMA DE MONITORIA E PASSAGEM DE TURNO (VERSÃO FINAL E CORRIGIDA)
+   APP.JS - SISTEMA DE MONITORIA E PASSAGEM DE TURNO (CORREÇÃO FIREBASE)
    ========================================================================== */
 
 var dadosSitios = {};
@@ -9,14 +9,17 @@ var timerSalvarInput = null;
    01. HELPERS & BANCO DE DADOS (FIREBASE E LOCALSTORAGE)
    -------------------------------------------------------------------------- */
 
-// Função de validação segura para checar a disponibilidade do Firebase sem estourar Uncaught Error
+// Checagem ultra segura para evitar Uncaught FirebaseError quando não houver initializeApp()
 function firebaseDisponivel() {
   try {
-    return (typeof firebase !== 'undefined' && 
-            firebase.apps && 
-            firebase.apps.length > 0 && 
-            typeof database !== 'undefined' && 
-            database !== null);
+    if (typeof firebase === 'undefined' || !firebase.apps || firebase.apps.length === 0) {
+      return false;
+    }
+    // Teste de acesso seguro ao database
+    if (typeof database === 'undefined' || database === null) {
+      return false;
+    }
+    return true;
   } catch (e) {
     return false;
   }
@@ -131,7 +134,7 @@ function fn06_salvarDadosStorage() {
       localStorage.setItem('incidentes_local', JSON.stringify(listaIncidentes));
     }
   } catch (err) {
-    console.warn("Salvando em LocalStorage devido a erro/indisponibilidade do Firebase:", err);
+    console.warn("Salvando em LocalStorage:", err);
     localStorage.setItem('incidentes_local', JSON.stringify(listaIncidentes));
   }
 }
@@ -190,7 +193,7 @@ function fn09_inicializarDados() {
         dadosSitios = JSON.parse(local);
         fn09_atualizarDropdownsExistentes();
       } catch(e) {
-        console.error("Erro ao ler dadosSitios local:", e);
+        console.error("Erro ao carregar dadosSitios do localStorage:", e);
       }
     }
   };
@@ -206,14 +209,14 @@ function fn09_inicializarDados() {
           carregarLocal();
         }
       }).catch(function(err) {
-        console.warn("Falha Firebase ao carregar dadosSitios:", err);
+        console.warn("Erro no Firebase, usando fallback LocalStorage:", err);
         carregarLocal();
       });
     } else {
       carregarLocal();
     }
   } catch (err) {
-    console.warn("Inicialização em modo seguro/local.", err);
+    console.warn("Executando em modo 100% Offline / LocalStorage.", err);
     carregarLocal();
   }
 }
@@ -234,9 +237,12 @@ function fn10_removerTipoSitio(codigo, tipo) {
   if (dadosSitios[codigo] && dadosSitios[codigo][tipo]) {
     delete dadosSitios[codigo][tipo];
 
-    if (firebaseDisponivel()) {
-      database.ref('config/dadosSitios/' + codigo + '/' + tipo).remove();
-    }
+    try {
+      if (firebaseDisponivel()) {
+        database.ref('config/dadosSitios/' + codigo + '/' + tipo).remove();
+      }
+    } catch(e) {}
+
     localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
     alert(`Tipo ${tipo} removido do sítio ${codigo}.`);
   }
@@ -363,7 +369,7 @@ function fn12_renderizarEscalonamento(empresa, busca) {
 
   var renderTabela = function(dados) {
     if (!dados || Object.keys(dados).length === 0) {
-      $tbody.html('<tr><td colspan="5" class="text-center text-muted p-3">Nenhum registro de escalonamento encontrado.</td></tr>');
+      $tbody.html('<tr><td colspan="5" class="text-center text-muted p-3">Nenhum registro de escalonamento encontrado no momento.</td></tr>');
       return;
     }
 
@@ -409,8 +415,9 @@ function fn12_renderizarEscalonamento(empresa, busca) {
       renderTabela(localEsc ? JSON.parse(localEsc) : null);
     }
   } catch (e) {
-    console.warn("Falha no carregamento do escalonamento:", e);
-    renderTabela(null);
+    console.warn("Falha de acesso ao banco do escalonamento:", e);
+    var localEsc = localStorage.getItem('escalonamento_local');
+    renderTabela(localEsc ? JSON.parse(localEsc) : null);
   }
 }
 
@@ -523,14 +530,18 @@ $(document).ready(function() {
       alert(`Dados do sítio "${codigo}" (${tipo}) gravados com sucesso!`);
     };
 
-    if (firebaseDisponivel()) {
-      database.ref('config/dadosSitios/' + codigo + '/' + tipo).set(dadosSitios[codigo][tipo])
-        .then(atualizarUI)
-        .catch(function(err) {
-          console.warn('Erro ao salvar no Firebase, gravado localmente:', err.message);
-          atualizarUI();
-        });
-    } else {
+    try {
+      if (firebaseDisponivel()) {
+        database.ref('config/dadosSitios/' + codigo + '/' + tipo).set(dadosSitios[codigo][tipo])
+          .then(atualizarUI)
+          .catch(function(err) {
+            console.warn('Erro Firebase, gravando localmente:', err);
+            atualizarUI();
+          });
+      } else {
+        atualizarUI();
+      }
+    } catch(e) {
       atualizarUI();
     }
   });
@@ -576,7 +587,7 @@ $(document).ready(function() {
             alert('Erro ao copiar para o Clipboard: ' + err.message);
           });
         } catch (err) {
-          alert('Navegador não suporta a cópia direta de imagem. Tente no Chrome/Edge.');
+          alert('Navegador não suporta a cópia direta de imagem.');
         } finally {
           $btn.prop('disabled', false).text('Copiar Imagem');
         }
@@ -942,7 +953,7 @@ $(document).on('click', '#btnCopiarImagemWhatsApp', function() {
           $btn.html(textoOriginal).prop('disabled', false);
         });
       } else {
-        alert("Seu navegador não suporta a cópia direta de imagens. Tente utilizar o recurso via PDF.");
+        alert("Seu navegador não suporta a cópia direta de imagens.");
         $btn.html(textoOriginal).prop('disabled', false);
       }
     }, 'image/png');
