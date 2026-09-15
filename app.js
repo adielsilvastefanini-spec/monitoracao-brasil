@@ -12,22 +12,289 @@
    00. DADOS PADRÃO DE BACKUP (SEUS DADOS REAIS TRATADOS)
    -------------------------------------------------------------------------- */
 var dadosSitiosPadrao = {
-  "AJU": { "ATO": ["AENA", "CIRION BRASIL", "EMBRATEL", "OI"] },
-  "BEL": { "ATO": ["SOCICAM", "CIRION BRASIL", "EMBRATEL", "OI"], "MNT": ["SOCICAM", "LATAM BRASIL", "VIVO", "CIRION BRASIL", "OI"] },
-  "BHZ": { "Contact Center": ["OI", "AeC", "TELEFONICA BRASIL", "CIRION BRASIL"] },
-  "BSB": { "ATO": ["INFRAMERICA", "CIRION BRASIL", "EMBRATEL", "OI", "SITA"], "Loja": ["LATAM", "VIVO", "CIRION BRASIL", "OI"] },
-  "CDF": { "ATO": ["CIRION BRASIL", "LATAM", "VIVO"] },
-  "CGH": { "ATO": ["AENA", "TELEFONICA BRASIL", "OI"], "Teca": ["LATAM", "CIRION BRASIL", "OI", "EMBRATEL"] },
-  "CWB": { "ATO": ["CCR", "CIRION BRASIL", "OI", "EMBRATEL"], "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"], "Volvo": ["CIRION BRASIL", "LATAM", "OI", "VIVO"] },
-  "FOR": { "ATO": ["FRAPORT", "CIRION BRASIL", "EMBRATEL", "OI"] },
-  "GIG": { "ATO": ["RIOGALEÃO", "CIRION BRASIL", "EMBRATEL", "OI"] },
-  "GRU": { "ATO": ["GRUAIRPORT", "LATAM", "SITA", "TELEFONICA BRASIL", "OI"] },
-  "PMW": { "Kenerson": ["LATAM", "Vivo", "CIRION BRASIL", "Oi"] },
-  "POA": { "ATO": ["LATAM", "FRAPORT", "CIRION BRASIL", "EMBRATEL", "OI"] },
-  "REC": { "ATO": ["AENA", "CIRION BRASIL", "OI", "EMBRATEL"] },
-  "SDU": { "ATO": ["INFRAERO", "CIRION BRASIL", "EMBRATEL", "OI"] },
-  "SSA": { "ATO": ["VINCI", "CIRION BRASIL", "EMBRATEL", "OI"] },
-  "VCP": { "ATO": ["VIRACOPOS", "TIM", "CIRION BRASIL", "OI"] }
+  "AJU": {
+    "ATO": ["AENA", "CIRION BRASIL", "EMBRATEL", "OI"]
+  },
+  "BEL": {
+    "ATO": ["SOCICAM", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "MNT": ["SOCICAM", "LATAM BRASIL", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "BHZ": {
+    "Contact Center": ["OI", "AeC", "TELEFONICA BRASIL", "CIRION BRASIL"]
+  },
+  "BNU": {
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "BPS": {
+    "ATO": ["SOCICAM", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "Teca": ["LATAM", "CIRION BRASIL", "OI"],
+    "MNT": ["SOCICAM", "CLARO", "CIRION BRASIL", "OI"]
+  },
+  "BSB": {
+    "ATO": ["INFRAMERICA", "CIRION BRASIL", "EMBRATEL", "OI", "SITA"],
+    "Loja": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "BVB": {
+    "ATO": ["VINCI", "CIRION BRASIL", "OI"],
+    "Teca": ["LATAM", "CIRION BRASIL", "OI"]
+  },
+  "BYO": {
+    "ATO": ["GOVERNO", "CLARO", "CIRION BRASIL"]
+  },
+  "CAC": {
+    "ATO": ["TRANSITAR", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "CGB": {
+    "ATO": ["SOCICAM", "CIRION BRASIL", "OI", "EMBRATEL"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"],
+    "MNT": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "CGH": {
+    "ATO": ["AENA", "TELEFONICA BRASIL", "OI"],
+    "Teca": ["LATAM", "CIRION BRASIL", "OI", "EMBRATEL"]
+  },
+  "CGR": {
+    "ATO": ["AENA", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "Teca": ["LATAM", "CIRION BRASIL", "EMBRATEL", "OI"]
+  },
+  "CLV": {
+    "ATO": ["SOCICAM", "CIRION BRASIL", "OI"]
+  },
+  "CNF": {
+    "ATO": ["BH AIRPORTS", "CIRION BRASIL", "EMBRATEL", "OI"]
+  },
+  "CPV": {
+    "ATO": ["AENA", "VIVO", "CIRION BRASIL"]
+  },
+  "CWB": {
+    "ATO": ["CCR", "CIRION BRASIL", "OI", "EMBRATEL"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"],
+    "Volvo": ["VIVO", "CIRION BRASIL", "OI"]
+  },
+  "CXJ": {
+    "ATO": ["PREFEITURA", "CLARO", "CIRION BRASIL", "OI"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "DOU": {
+    "ATO": ["INFRAERO", "CLARO", "CIRION BRASIL"]
+  },
+  "FEN": {
+    "ATO": ["DIX", "CLARO", "CIRION BRASIL", "LATAM"]
+  },
+  "FLN": {
+    "ATO": ["ZURICH", "CIRION BRASIL", "EMBRATEL", "OI"]
+  },
+  "FOR": {
+    "ATO": ["FRAPORT", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "Teca": ["LATAM"],
+    "DOM EXP": ["VIVO", "CIRION BRASIL", "OI"],
+    "DOM IMP": ["CIRION BRASIL", "EMBRATEL", "OI"]
+  },
+  "GIG": {
+    "ATO": ["RIOGALEÃO", "CIRION BRASIL", "EMBRATEL", "OI"]
+  },
+  "GRU": {
+    "ATO": ["GRUAIRPORT", "LATAM", "SITA", "TELEFONICA BRASIL", "OI"],
+    "CML": ["LATAM", "TELEFONICA BRASIL", "OI"]
+  },
+  "GYN": {
+    "ATO": ["CCR", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "Teca": ["LATAM", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "Mega": ["VIVO", "CIRION BRASIL", "OI"]
+  },
+  "IGU": {
+    "ATO": ["CCR", "CIRION BRASIL", "OI"],
+    "Teca": ["LATAM", "CIRION BRASIL", "OI"]
+  },
+  "IMP": {
+    "ATO": ["CCR", "VIVO", "CIRION BRASIL", "OI"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"],
+    "MNT": ["CCR", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "IOS": {
+    "ATO": ["SOCICAM", "CIRION BRASIL", "OI"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"],
+    "MNT": ["SOCICAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "IZA": {
+    "ATO": ["LATAM", "CIRION", "CLARO"]
+  },
+  "JDO": {
+    "ATO": ["AENA", "CLARO", "CIRION BRASIL", "OI"]
+  },
+  "JJD": {
+    "ATO": ["INFRAERO", "VIVO", "CIRION BRASIL"]
+  },
+  "JJG": {
+    "ATO": ["RDL", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "JOI": {
+    "ATO": ["CCR"],
+    "ATO/Teca": ["CLARO", "CIRION BRASIL", "OI"]
+  },
+  "JPA": {
+    "ATO": ["AENA", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "LDB": {
+    "ATO": ["CCR", "CIRION BRASIL", "OI"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "MAB": {
+    "ATO": ["AENA"],
+    "MNT": ["LATAM", "VIVO", "CIRION BRASIL", "OI"],
+    "ATO/Teca": ["VIVO", "CIRION BRASIL", "OI"]
+  },
+  "MAO": {
+    "ATO": ["VINCI", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "Teca": ["LATAM", "CIRION BRASIL", "EMBRATEL", "OI"]
+  },
+  "MCP": {
+    "ATO": ["SOCICAM", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"],
+    "MNT": ["SOCICAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "MCZ": {
+    "ATO": ["AENA", "CIRION BRASIL", "OI", "EMBRATEL"],
+    "Teca": ["LATAM", "CIRION BRASIL", "OI", "EMBRATEL"]
+  },
+  "MGF": {
+    "ATO": ["SBMG S/A"],
+    "ATO/Teca": ["VIVO", "CIRION BRASIL", "OI"]
+  },
+  "MOC": {
+    "ATO": ["AENA", "TIM", "CIRION BRASIL", "OI"]
+  },
+  "NAT": {
+    "ATO": ["ZURICH"],
+    "ATO/Teca": ["CIRION BRASIL", "EMBRATEL", "OI"]
+  },
+  "NVT": {
+    "ATO": ["CCR", "CIRION BRASIL", "OI", "EMBRATEL"],
+    "Teca": ["LATAM", "CIRION BRASIL", "OI", "EMBRATEL"]
+  },
+  "OPS": {
+    "ATO": ["SOCICAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "PET": {
+    "ATO": ["CCR", "CLARO", "CIRION BRASIL", "OI"]
+  },
+  "PFB": {
+    "ATO": ["INFRAERO", "CLARO", "CIRION BRASIL", "OI"]
+  },
+  "PHB": {
+    "ATO": ["SBPB", "VIVO", "CIRION BRASIL"]
+  },
+  "PLU": {
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "PMW": {
+    "ATO": ["CCR"],
+    "P.A Teca": ["LATAM"],
+    "ATO/Teca": ["CLARO", "CIRION BRASIL", "OI"],
+    "Kenerson": ["VIVO", "CIRION BRASIL", "OI"]
+  },
+  "PNZ": {
+    "ATO": ["CCR", "CLARO", "CIRION BRASIL", "OI"]
+  },
+  "POA": {
+    "ATO": ["LATAM", "FRAPORT", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "Teca": ["LATAM", "FRAPORT", "VIVO", "CIRION BRASIL", "TIM"],
+    "MNT": ["LATAM", "FRAPORT", "CIRION BRASIL", "OI"]
+  },
+  "POP": {
+    "TELEFONICA BRASIL": ["TELEFÔNICA", "OI", "LATAM BRASIL", "CIRION"],
+    "CIRION BRASIL": ["CIRION", "LATAM BRASIL", "TELEFÔNICA", "OI"]
+  },
+  "PVH": {
+    "ATO": ["VINCI", "VIVO", "CIRION BRASIL", "OI"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "QSB": {
+    "Teca": ["LATAM", "CIRION BRASIL", "EMBRATEL", "OI"]
+  },
+  "QSC": {
+    "MNT": ["LATAM"],
+    "Lonado": ["CIRION BRASIL", "VIVO"],
+    "MRO": ["TELEFONICA BRASIL"],
+    "Museu": ["VIVO", "LATAM BRASIL", "CIRION BRASIL"]
+  },
+  "RAO": {
+    "ATO": ["VOA", "VIVO", "CIRION BRASIL", "OI"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "RBR": {
+    "ATO": ["VINCI", "CLARO", "CIRION BRASIL", "OI"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "REC": {
+    "ATO": ["AENA", "CIRION BRASIL", "OI", "EMBRATEL"],
+    "Teca": ["LATAM", "CIRION BRASIL", "EMBRATEL", "OI"]
+  },
+  "SAO": {
+    "ACADEMIA ÁTICA": ["LATAM", "TELEFONICA BRASIL", "OI"],
+    "HANGAR 2": ["LATAM", "TELEFONICA BRASIL", "OI"],
+    "EZ TOWER": ["LATAM", "OI", "CIRION", "EMBRATEL"],
+    "DHL": ["VIVO", "CIRION BRASIL", "OI"],
+    "Contact Center": ["TELEFONICA BRASIL", "CIRION"],
+    "OSASCO": ["OI", "KONECTA", "TELEFONICA BRASIL", "CIRION BRASIL"]
+  },
+  "SDU": {
+    "ATO": ["INFRAERO", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "Teca": ["LATAM", "CIRION BRASIL", "OI"]
+  },
+  "SJK": {
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "SJP": {
+    "ATO": ["ASP", "VIVO", "CIRION BRASIL", "OI"],
+    "Teca": ["ASP", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "SLZ": {
+    "ATO": ["CCR", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "SSA": {
+    "ATO": ["VINCI", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "Teca": ["LATAM", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "Contact Center": ["CIRION BRASIL", "OI", "TELEFONICA BRASIL", "KONECTA"]
+  },
+  "STM": {
+    "ATO": ["AENA", "CIRION BRASIL", "OI"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"],
+    "MNT": ["AENA", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "THE": {
+    "ATO": ["CCR"],
+    "ATO/Teca": ["CIRION BRASIL", "EMBRATEL", "OI"]
+  },
+  "UBA": {
+    "ATO": ["AENA", "VIVO", "CIRION BRASIL"]
+  },
+  "UDI": {
+    "ATO": ["AENA", "CIRION BRASIL", "OI"],
+    "Teca": ["LATAM", "CIRION BRASIL", "OI"]
+  },
+  "UNA": {
+    "ATO": ["SOCICAM", "CLARO", "CIRION BRASIL", "OI"]
+  },
+  "VCP": {
+    "ABSA": ["LATAM", "CIRION BRASIL", "EMBRATEL"],
+    "ATO": ["VIRACOPOS", "TIM", "CIRION BRASIL", "OI"],
+    "Teca": ["LATAM", "CIRION BRASIL", "EMBRATEL"]
+  },
+  "VDC": {
+    "ATO": ["SOCICAM", "CLARO", "CIRION BRASIL", "OI"],
+    "Teca": ["LATAM", "CLARO", "CIRION BRASIL", "OI"]
+  },
+  "VIX": {
+    "ATO": ["ZURICH", "CIRION BRASIL", "EMBRATEL", "OI"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
+  },
+  "XAP": {
+    "ATO": ["SOCICAM", "CIRION BRASIL", "OI"],
+    "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
+  }
 };
 
 var dadosEscalonamentoPadrao = {
@@ -113,18 +380,42 @@ $(document).ready(function() {
 });
 
 function fn_inicializarInterfaceLocal() {
-  // Preenche opções nos selects de Sítios
   fn09_atualizarDropdownsExistentes();
-
-  // Renderiza a tabela de Escalonamento
   fn12_renderizarTabelaEscalonamento(dadosEscalonamento);
 
-  // Garante que a tabela principal de incidentes tenha ao menos 1 linha se estiver vazia
-  if ($('#incidentes tbody tr').length === 0) {
+  // Carrega os incidentes salvos no localStorage
+  var incidentesSalvos = JSON.parse(localStorage.getItem('incidentes_local')) || [];
+  var $tbody = $('#incidentes tbody');
+  $tbody.empty();
+
+  if (incidentesSalvos.length > 0) {
+    incidentesSalvos.forEach(function(item) {
+      var $tr = fn08_criarLinhaTabela(item.id || Date.now().toString());
+      
+      $tr.find('.select-sitio').val(item.sitio || '');
+      fn04_carregarTiposPorSitio($tr, item.sitio);
+      
+      $tr.find('.select-tipo').val(item.tipo || '');
+      fn05_carregarParceirosPorTipo($tr, item.sitio, item.tipo);
+
+      $tr.find('.input-data1').val(item.data1 || '');
+      $tr.find('.input-hora1').val(item.hora1 || '');
+      $tr.find('.input-data2').val(item.data2 || '');
+      $tr.find('.input-hora2').val(item.hora2 || '');
+      $tr.find('.select-falha').val(item.falha || '');
+      $tr.find('.select-opcom').val(item.opcom || '');
+      $tr.find('.select-impacto').val(item.impacto || '');
+      $tr.find('.select-parceiro').val(item.parceiro || '');
+      $tr.find('.select-causa').val(item.causa || '');
+      $tr.find('.input-ticket').val(item.ticket || '');
+      $tr.find('.input-status').val(item.status || '');
+
+      fn03_avaliarStatusLinha($tr);
+    });
+  } else {
     fn08_criarLinhaTabela(Date.now().toString());
   }
 
-  // Carrega blocos de módulos de apoio
   fn_carregarEscalaPlantao();
   fn_carregarLinksProcessos();
 }
@@ -286,17 +577,29 @@ function fn03_avaliarStatusLinha($tr) {
   var hora1 = $tr.find('.input-hora1').val();
   var data2 = $tr.find('.input-data2').val();
   var hora2 = $tr.find('.input-hora2').val();
+  var causa = $tr.find('.select-causa').val();
 
   var $tdSitio = $tr.find('td.col-sitio');
   $tdSitio.removeClass('sitio-laranja sitio-cinza sitio-verde');
 
+  // Se tiver data e hora de término preenchidas, fica verde (normalizado/concluído)
+  if (data1 && hora1 && data2 && hora2) {
+    $tdSitio.addClass('sitio-verde');
+    return;
+  }
+
+  // Se a Causa for ATIVIDADE, fica cinza
+  if (causa === 'ATIVIDADE') {
+    $tdSitio.addClass('sitio-cinza');
+    return;
+  }
+
+  // Regra padrão para incidentes com data/hora de início
   if (data1 && hora1) {
     var inicio = new Date(`${data1}T${hora1}:00`);
     var agora = new Date();
 
-    if (data2 && hora2) {
-      $tdSitio.addClass('sitio-verde');
-    } else if (inicio > agora) {
+    if (inicio > agora) {
       $tdSitio.addClass('sitio-cinza');
     } else {
       $tdSitio.addClass('sitio-laranja');
@@ -759,7 +1062,7 @@ function fn_configurarEventosDOM() {
     }, 1000);
   });
 
-  $('#incidentes').on('change', 'select, input', function() {
+  $('#incidentes').on('change', '.select-causa', function() {
     var $tr = $(this).closest('tr');
     fn03_avaliarStatusLinha($tr);
     fn02_reordenarTabela();
