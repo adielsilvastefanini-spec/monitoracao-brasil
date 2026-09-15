@@ -953,3 +953,25 @@ $(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrut
   modalInstance.show();
 });
 // Fim do modal bloco em desenvolvimento //
+
+// Validação automática ao alterar Data Fim ou Hora Fim
+$(document).on('change blur', '#incidentes tbody tr input[type="date"], #incidentes tbody tr input[type="time"]', function() {
+  var $tr = $(this).closest('tr');
+  
+  // Captura os inputs de Data-2 (coluna 6) e H.Fim (coluna 7)
+  var $dataFimInput = $tr.find('td:nth-child(6) input'); 
+  var $horaFimInput = $tr.find('td:nth-child(7) input');
+
+  var dataFim = $dataFimInput.val();
+  var horaFim = $horaFimInput.val();
+
+  if (dataFim && horaFim) {
+    var dataHoraFim = new Date(`${dataFim}T${horaFim}:00`);
+    var agora = new Date();
+
+    if (dataHoraFim > agora) {
+      alert('Atenção: A Data e Hora de término não podem ser no futuro!');
+      $horaFimInput.val(''); // Limpa o campo de hora para obrigar a correção
+    }
+  }
+});
