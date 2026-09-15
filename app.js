@@ -5,6 +5,11 @@
 var dadosSitios = {};
 var timerSalvarInput = null;
 
+// Helper seguro para operações com Firebase
+function firebaseDisponivel() {
+  return typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0 && typeof database !== 'undefined';
+}
+
 function fn01_getOptionsSitio() {
   var html = '<option value="">Selecione...</option>';
   Object.keys(dadosSitios).sort().forEach(function(s) {
@@ -82,7 +87,36 @@ function fn05_carregarParceirosPorTipo($tr, sitio, tipo) {
 }
 
 function fn06_salvarDadosStorage() {
-  // Lógica de persistência no Firebase / LocalStorage
+  try {
+    var listaIncidentes = [];
+    $('#incidentes tbody tr').each(function() {
+      var $tr = $(this);
+      listaIncidentes.push({
+        id: $tr.attr('data-id'),
+        sitio: $tr.find('.select-sitio').val(),
+        tipo: $tr.find('.select-tipo').val(),
+        data1: $tr.find('.input-data1').val(),
+        hora1: $tr.find('.input-hora1').val(),
+        data2: $tr.find('.input-data2').val(),
+        hora2: $tr.find('.input-hora2').val(),
+        falha: $tr.find('.select-falha').val(),
+        opcom: $tr.find('.select-opcom').val(),
+        impacto: $tr.find('.select-impacto').val(),
+        parceiro: $tr.find('.select-parceiro').val(),
+        ticket: $tr.find('.input-ticket').val(),
+        status: $tr.find('.input-status').val()
+      });
+    });
+
+    if (firebaseDisponivel()) {
+      database.ref('incidentes').set(listaIncidentes);
+    } else {
+      localStorage.setItem('incidentes_local', JSON.stringify(listaIncidentes));
+    }
+  } catch (err) {
+    console.warn("Erro ao salvar dados, mantendo em LocalStorage:", err);
+    localStorage.setItem('incidentes_local', JSON.stringify(listaIncidentes || []));
+  }
 }
 
 function fn08_criarLinhaTabela(idRow) {
@@ -132,12 +166,31 @@ function fn08_criarLinhaTabela(idRow) {
 }
 
 function fn09_inicializarDados() {
-  // Inicialização de estrutura
+  try {
+    if (firebaseDisponivel()) {
+      database.ref('config/dadosSitios').once('value').then(function(snapshot) {
+        if (snapshot.exists()) {
+          dadosSitios = snapshot.val();
+        }
+      });
+    } else {
+      var local = localStorage.getItem('dadosSitios');
+      if (local) dadosSitios = JSON.parse(local);
+    }
+  } catch (err) {
+    console.warn("Firebase offline. Inicialização em modo local.", err);
+  }
 }
 
 function fn10_removerTipoSitio(codigo, tipo) {
   if (dadosSitios[codigo] && dadosSitios[codigo][tipo]) {
     delete dadosSitios[codigo][tipo];
+
+    if (firebaseDisponivel()) {
+      database.ref('config/dadosSitios/' + codigo + '/' + tipo).remove();
+    } else {
+      localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
+    }
     alert(`Tipo ${tipo} removido do sítio ${codigo}.`);
   }
 }
@@ -213,7 +266,56 @@ function fn11_gerarCheckPoint() {
 }
 
 function fn12_renderizarEscalonamento(empresa, busca) {
-  // Renderização da tabela de escalonamento
+  var $tbody = $('#tbodyEscalonamento');
+  if ($tbody.length === 0) return;
+  $tbody.empty();
+
+  var renderTabela = function(dados) {
+    if (!dados || Object.keys(dados).length === 0) {
+      $tbody.html('<tr><td colspan="5" class="text-center text-muted">Nenhum registro de escalonamento encontrado.</td></tr>');
+      return;
+    }
+
+    Object.keys(dados).forEach(function(key) {
+      var item = dados[key];
+      var emp = item.empresa || '-';
+      var nome = item.nome || '-';
+      var cargo = item.cargo || '-';
+      var contato = item.contato || '-';
+      var obs = item.obs || '-';
+
+      if (empresa && empresa !== "TODAS" && emp.toUpperCase() !== empresa.toUpperCase()) return;
+      if (busca) {
+        var termo = busca.toLowerCase();
+        var fullText = `${emp} ${nome} ${cargo} ${contato} ${obs}`.toLowerCase();
+        if (fullText.indexOf(termo) === -1) return;
+      }
+
+      var tr = `<tr>
+        <td><b>${emp}</b></td>
+        <td>${nome}</td>
+        <td>${cargo}</td>
+        <td>${contato}</td>
+        <td>${obs}</td>
+      </tr>`;
+      $tbody.append(tr);
+    });
+  };
+
+  try {
+    if (firebaseDisponivel()) {
+      database.ref('escalonamento').once('value').then(function(snapshot) {
+        renderTabela(snapshot.val());
+      }).catch(function() {
+        renderTabela(null);
+      });
+    } else {
+      renderTabela(null);
+    }
+  } catch (e) {
+    console.warn("Escalonamento em modo local:", e);
+    renderTabela(null);
+  }
 }
 
 /* ==========================================================================
@@ -289,13 +391,8 @@ $(document).ready(function() {
 
     var novosParceiros = parceirosStr.split(',').map(s => s.trim()).filter(s => s !== '');
 
-    if (!dadosSitios[codigo]) {
-      dadosSitios[codigo] = {};
-    }
-
-    if (!dadosSitios[codigo][tipo]) {
-      dadosSitios[codigo][tipo] = [];
-    }
+    if (!dadosSitios[codigo]) dadosSitios[codigo] = {};
+    if (!dadosSitios[codigo][tipo]) dadosSitios[codigo][tipo] = [];
 
     let inseridos = 0;
     novosParceiros.forEach(function(p) {
@@ -313,27 +410,33 @@ $(document).ready(function() {
     var $btn = $(this);
     $btn.prop('disabled', true).text('Salvando...');
 
-    database.ref('config/dadosSitios/' + codigo + '/' + tipo).set(dadosSitios[codigo][tipo])
-      .then(function() {
-        $('.select-sitio').each(function() {
-          var valAtual = $(this).val();
-          $(this).html(fn01_getOptionsSitio());
-          if (valAtual) $(this).val(valAtual);
-        });
-
-        $('#formNovoSitio')[0].reset();
-        var modalElem = document.getElementById('modalNovoSitio');
-        var modalInstance = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
-        modalInstance.hide();
-
-        alert(`Dados do sítio "${codigo}" (${tipo}) gravados com sucesso!`);
-      })
-      .catch(function(err) {
-        alert('Erro ao salvar no banco: ' + err.message);
-      })
-      .finally(function() {
-        $btn.prop('disabled', false).text('Salvar Dados');
+    var atualizarUI = function() {
+      $('.select-sitio').each(function() {
+        var valAtual = $(this).val();
+        $(this).html(fn01_getOptionsSitio());
+        if (valAtual) $(this).val(valAtual);
       });
+
+      $('#formNovoSitio')[0].reset();
+      var modalElem = document.getElementById('modalNovoSitio');
+      var modalInstance = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
+      modalInstance.hide();
+
+      $btn.prop('disabled', false).text('Salvar Dados');
+      alert(`Dados do sítio "${codigo}" (${tipo}) gravados com sucesso!`);
+    };
+
+    if (firebaseDisponivel()) {
+      database.ref('config/dadosSitios/' + codigo + '/' + tipo).set(dadosSitios[codigo][tipo])
+        .then(atualizarUI)
+        .catch(function(err) {
+          alert('Erro ao salvar no banco: ' + err.message);
+          $btn.prop('disabled', false).text('Salvar Dados');
+        });
+    } else {
+      localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
+      atualizarUI();
+    }
   });
 
   $('#btnExcluirTipoModal').on('click', function() {
@@ -418,14 +521,16 @@ $(document).ready(function() {
 
   $('#btnSalvarTudo').on('click', function() {
     fn06_salvarDadosStorage();
-    alert('Dados salvos no Firebase com sucesso!');
+    alert('Dados salvos com sucesso!');
   });
 
   $('#btnEscalonamento').on('click', function() {
     fn12_renderizarEscalonamento();
     var modalElem = document.getElementById('modalEscalonamento');
-    var modalInstance = new bootstrap.Modal(modalElem);
-    modalInstance.show();
+    if (modalElem) {
+      var modalInstance = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
+      modalInstance.show();
+    }
   });
 
   $('#filtrosEmpresaEscalonamento button').on('click', function() {
@@ -441,7 +546,7 @@ $(document).ready(function() {
     fn12_renderizarEscalonamento(emp, $(this).val());
   });
 
-}); // FIM DO $(document).ready
+}); // Fim do $(document).ready
 
 /* ==========================================================================
    DELEGAÇÃO DE EVENTOS GLOBAIS (MODAIS E RELATÓRIO)
@@ -455,8 +560,8 @@ $(document).on('click', '#btnEmail', function() {
           <div class="col-md-3">
             <label class="form-label fw-bold mb-1" style="font-size:11px;">TURNO (12H):</label>
             <select id="selectTurno" class="form-select form-select-sm">
-              <option value="Turno 1 (07h00 - 19h00)">Turno 1 (07h00 - 19h00)</option>
-              <option value="Turno 2 (19h00 - 07h00)">Turno 2 (19h00 - 07h00)</option>
+              <option value="Turno 1 (06h00 - 18h00)">Turno 1 (06h00 - 18h00)</option>
+              <option value="Turno 2 (18h00 - 06h00)">Turno 2 (18h00 - 06h00)</option>
             </select>
           </div>
           <div class="col-md-3">
@@ -564,7 +669,7 @@ function gerarRelatorioWhatsApp() {
     }
   });
 
-  var turno = $('#selectTurno').val() || 'Turno 1 (07h00 - 19h00)';
+  var turno = $('#selectTurno').val() || 'Turno 1 (06h00 - 18h00)';
   var saindo = $('#selectAnalistaSaindo').val() || 'Francisco';
   var entrando = $('#selectAnalistaEntrando').val() || 'Rodrigo';
 
