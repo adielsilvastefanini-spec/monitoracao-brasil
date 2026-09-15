@@ -1,5 +1,5 @@
 /* ==========================================================================
-   APP.JS - SISTEMA DE MONITORIA E PASSAGEM DE TURNO (CORREÇÃO FIREBASE)
+   APP.JS - SISTEMA DE MONITORIA E PASSAGEM DE TURNO (PARTE 1/3)
    ========================================================================== */
 
 var dadosSitios = {};
@@ -9,16 +9,12 @@ var timerSalvarInput = null;
    01. HELPERS & BANCO DE DADOS (FIREBASE E LOCALSTORAGE)
    -------------------------------------------------------------------------- */
 
-// Checagem ultra segura para evitar Uncaught FirebaseError quando não houver initializeApp()
+// Teste de integridade estrito antes de invocar qualquer método do Firebase
 function firebaseDisponivel() {
   try {
-    if (typeof firebase === 'undefined' || !firebase.apps || firebase.apps.length === 0) {
-      return false;
-    }
-    // Teste de acesso seguro ao database
-    if (typeof database === 'undefined' || database === null) {
-      return false;
-    }
+    if (typeof firebase === 'undefined' || !firebase) return false;
+    if (!firebase.apps || firebase.apps.length === 0) return false;
+    if (typeof database === 'undefined' || !database || typeof database.ref !== 'function') return false;
     return true;
   } catch (e) {
     return false;
@@ -134,7 +130,6 @@ function fn06_salvarDadosStorage() {
       localStorage.setItem('incidentes_local', JSON.stringify(listaIncidentes));
     }
   } catch (err) {
-    console.warn("Salvando em LocalStorage:", err);
     localStorage.setItem('incidentes_local', JSON.stringify(listaIncidentes));
   }
 }
@@ -192,31 +187,28 @@ function fn09_inicializarDados() {
       try {
         dadosSitios = JSON.parse(local);
         fn09_atualizarDropdownsExistentes();
-      } catch(e) {
-        console.error("Erro ao carregar dadosSitios do localStorage:", e);
-      }
+      } catch(e) {}
     }
   };
 
+  if (!firebaseDisponivel()) {
+    carregarLocal();
+    return;
+  }
+
   try {
-    if (firebaseDisponivel()) {
-      database.ref('config/dadosSitios').once('value').then(function(snapshot) {
-        if (snapshot.exists()) {
-          dadosSitios = snapshot.val();
-          localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
-          fn09_atualizarDropdownsExistentes();
-        } else {
-          carregarLocal();
-        }
-      }).catch(function(err) {
-        console.warn("Erro no Firebase, usando fallback LocalStorage:", err);
+    database.ref('config/dadosSitios').once('value').then(function(snapshot) {
+      if (snapshot.exists()) {
+        dadosSitios = snapshot.val();
+        localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
+        fn09_atualizarDropdownsExistentes();
+      } else {
         carregarLocal();
-      });
-    } else {
+      }
+    }).catch(function() {
       carregarLocal();
-    }
+    });
   } catch (err) {
-    console.warn("Executando em modo 100% Offline / LocalStorage.", err);
     carregarLocal();
   }
 }
@@ -232,6 +224,9 @@ function fn09_atualizarDropdownsExistentes() {
     }
   });
 }
+/* ==========================================================================
+   APP.JS - SISTEMA DE MONITORIA E PASSAGEM DE TURNO (PARTE 2/3)
+   ========================================================================== */
 
 function fn10_removerTipoSitio(codigo, tipo) {
   if (dadosSitios[codigo] && dadosSitios[codigo][tipo]) {
@@ -400,26 +395,31 @@ function fn12_renderizarEscalonamento(empresa, busca) {
     });
   };
 
-  try {
-    if (firebaseDisponivel()) {
-      database.ref('escalonamento').once('value').then(function(snapshot) {
-        var val = snapshot.val();
-        if (val) localStorage.setItem('escalonamento_local', JSON.stringify(val));
-        renderTabela(val);
-      }).catch(function() {
-        var localEsc = localStorage.getItem('escalonamento_local');
-        renderTabela(localEsc ? JSON.parse(localEsc) : null);
-      });
-    } else {
-      var localEsc = localStorage.getItem('escalonamento_local');
-      renderTabela(localEsc ? JSON.parse(localEsc) : null);
-    }
-  } catch (e) {
-    console.warn("Falha de acesso ao banco do escalonamento:", e);
+  var carregarEscalonamentoLocal = function() {
     var localEsc = localStorage.getItem('escalonamento_local');
     renderTabela(localEsc ? JSON.parse(localEsc) : null);
+  };
+
+  if (!firebaseDisponivel()) {
+    carregarEscalonamentoLocal();
+    return;
+  }
+
+  try {
+    database.ref('escalonamento').once('value').then(function(snapshot) {
+      var val = snapshot.val();
+      if (val) localStorage.setItem('escalonamento_local', JSON.stringify(val));
+      renderTabela(val);
+    }).catch(function() {
+      carregarEscalonamentoLocal();
+    });
+  } catch (e) {
+    carregarEscalonamentoLocal();
   }
 }
+/* ==========================================================================
+   APP.JS - SISTEMA DE MONITORIA E PASSAGEM DE TURNO (PARTE 3/3)
+   ========================================================================== */
 
 /* --------------------------------------------------------------------------
    04. INICIALIZAÇÃO JQUERY & EVENTOS DOM
@@ -535,7 +535,6 @@ $(document).ready(function() {
         database.ref('config/dadosSitios/' + codigo + '/' + tipo).set(dadosSitios[codigo][tipo])
           .then(atualizarUI)
           .catch(function(err) {
-            console.warn('Erro Firebase, gravando localmente:', err);
             atualizarUI();
           });
       } else {
