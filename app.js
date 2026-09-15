@@ -611,6 +611,261 @@
       $('#checkAll').on('change', function() {
         $('.check-item').prop('checked', this.checked);
       });
+function fn11_gerarCheckPoint() {
+      var $tbodyCP = $('#tbodyCheckPoint');
+      $tbodyCP.empty();
+
+      var hoje = new Date().toISOString().split('T')[0];
+      var totalItens = 0;
+
+      $('#incidentes tbody tr').each(function() {
+        var $tr = $(this);
+        var $tdSitio = $tr.find('td.col-sitio');
+
+        var ehPendente = $tdSitio.hasClass('sitio-laranja');
+        var ehAtividade = $tdSitio.hasClass('sitio-cinza');
+        var data1 = $tr.find('.input-data1').val();
+
+        if (ehPendente || (ehAtividade && data1 === hoje)) {
+          totalItens++;
+
+          var formatarDataBR = function(d) {
+            if (!d) return '';
+            var p = d.split('-');
+            return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+          };
+
+          var sitio = $tr.find('.select-sitio').val() || '';
+          var tipo = $tr.find('.select-tipo').val() || '';
+          var d1Formatted = formatarDataBR(data1);
+          var h1 = $tr.find('.input-hora1').val() || '';
+          var d2Formatted = formatarDataBR($tr.find('.input-data2').val());
+          var h2 = $tr.find('.input-hora2').val() || '';
+          var falha = $tr.find('.select-falha').val() || '';
+          var opcom = $tr.find('.select-opcom').val() || '';
+          var impacto = $tr.find('.select-impacto').val() || '';
+          var parceiro = $tr.find('.select-parceiro').val() || '';
+          var causa = $tr.find('.select-causa').val() || '';
+          var ticket = $tr.find('.input-ticket').val() || '';
+          var status = $tr.find('.input-status').val() || '';
+
+          var classeAtividade = ehAtividade ? ' cp-row-atividade' : '';
+
+          var trHTML = `<tr>
+            <td class="${classeAtividade}"><b>${sitio}</b></td>
+            <td class="${classeAtividade}">${tipo}</td>
+            <td class="${classeAtividade}">${d1Formatted}</td>
+            <td class="${classeAtividade}">${h1}</td>
+            <td class="${classeAtividade}">${d2Formatted}</td>
+            <td class="${classeAtividade}">${h2}</td>
+            <td class="${classeAtividade}">${falha}</td>
+            <td class="${classeAtividade}">${opcom}</td>
+            <td class="${classeAtividade}">${impacto}</td>
+            <td class="${classeAtividade}">${parceiro}</td>
+            <td class="${classeAtividade}">${causa}</td>
+            <td class="cp-col-ticket${classeAtividade}">${ticket}</td>
+            <td class="cp-col-status${classeAtividade}">${status}</td>
+          </tr>`;
+
+          $tbodyCP.append(trHTML);
+        }
+      });
+
+      if (totalItens === 0) {
+        alert("Não existem pendências ou atividades registradas para a data de hoje.");
+        return;
+      }
+
+      var modalElem = document.getElementById('modalCheckPoint');
+      var modalInstance = new bootstrap.Modal(modalElem);
+      modalInstance.show();
+    }
+
+    $(document).ready(function() {
+
+      fn09_inicializarDados();
+
+      $('#btnNovoItem').on('click', function() {
+        var novoId = Date.now().toString();
+        var $tr = fn08_criarLinhaTabela(novoId);
+        fn02_reordenarTabela();
+        fn06_salvarDadosStorage();
+        $tr.find('.select-sitio').focus();
+      });
+
+      /* 1. DIGITAÇÃO FLUIDA (COM DEBOUNCE) */
+      $('#incidentes').on('input', 'input', function() {
+        var $tr = $(this).closest('tr');
+        fn03_avaliarStatusLinha($tr);
+        
+        clearTimeout(timerSalvarInput);
+        timerSalvarInput = setTimeout(function() {
+          fn06_salvarDadosStorage();
+        }, 1000);
+      });
+
+      /* 2. REORDENA A TABELA AO MUDAR SELECT OU SAIR DO CAMPO */
+      $('#incidentes').on('change', 'select, input', function() {
+        var $tr = $(this).closest('tr');
+        fn03_avaliarStatusLinha($tr);
+        fn02_reordenarTabela();
+        fn06_salvarDadosStorage();
+      });
+
+      /* 3. VALIDAÇÃO DE DATA E HORA FIM NO FUTURO */
+      $('#incidentes').on('change blur', '.input-data2, .input-hora2', function() {
+        var $tr = $(this).closest('tr');
+        var data2Val = $tr.find('.input-data2').val();
+        var hora2Val = $tr.find('.input-hora2').val();
+
+        if (data2Val && hora2Val) {
+          var dataHoraFim = new Date(`${data2Val}T${hora2Val}:00`);
+          var agora = new Date();
+
+          if (dataHoraFim > agora) {
+            alert('Atenção: A Data e Hora de término não podem ser no futuro!');
+            $tr.find('.input-hora2').val(''); // Reseta a hora para correção
+            fn03_avaliarStatusLinha($tr);
+          }
+        }
+      });
+
+      $('#incidentes').on('change', '.select-sitio', function() {
+        var $tr = $(this).closest('tr');
+        fn04_carregarTiposPorSitio($tr, $(this).val());
+      });
+
+      $('#incidentes').on('change', '.select-tipo', function() {
+        var $tr = $(this).closest('tr');
+        var sitio = $tr.find('.select-sitio').val();
+        fn05_carregarParceirosPorTipo($tr, sitio, $(this).val());
+      });
+
+      $('#btnSalvarNovoSitio').on('click', function() {
+        var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
+        var tipo = $('#inputNovoTipo').val().trim();
+        var parceirosStr = $('#inputNovosParceiros').val().trim();
+
+        if (!codigo || !tipo || !parceirosStr) {
+          alert('Por favor, preencha o Sítio, o Tipo e os Parceiros para salvar.');
+          return;
+        }
+
+        var novosParceiros = parceirosStr.split(',').map(s => s.trim()).filter(s => s !== '');
+
+        if (!dadosSitios[codigo]) {
+          dadosSitios[codigo] = {};
+        }
+
+        if (!dadosSitios[codigo][tipo]) {
+          dadosSitios[codigo][tipo] = [];
+        }
+
+        let inseridos = 0;
+        novosParceiros.forEach(function(p) {
+          if (!dadosSitios[codigo][tipo].includes(p)) {
+            dadosSitios[codigo][tipo].push(p);
+            inseridos++;
+          }
+        });
+
+        if (inseridos === 0) {
+          alert(`Todos os parceiros informados já existem para o tipo "${tipo}" no sítio "${codigo}".`);
+          return;
+        }
+
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Salvando...');
+
+        database.ref('config/dadosSitios/' + codigo + '/' + tipo).set(dadosSitios[codigo][tipo])
+          .then(function() {
+            $('.select-sitio').each(function() {
+              var valAtual = $(this).val();
+              $(this).html(fn01_getOptionsSitio());
+              if (valAtual) $(this).val(valAtual);
+            });
+
+            $('#formNovoSitio')[0].reset();
+            var modalElem = document.getElementById('modalNovoSitio');
+            var modalInstance = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
+            modalInstance.hide();
+
+            alert(`Dados do sítio "${codigo}" (${tipo}) gravados com sucesso!`);
+          })
+          .catch(function(err) {
+            alert('Erro ao salvar no banco: ' + err.message);
+          })
+          .finally(function() {
+            $btn.prop('disabled', false).text('Salvar Dados');
+          });
+      });
+
+      $('#btnExcluirTipoModal').on('click', function() {
+        var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
+        var tipo = $('#inputNovoTipo').val().trim();
+
+        if (!codigo || !tipo) {
+          alert('Preencha o Código do Sítio e o Tipo que você deseja excluir.');
+          return;
+        }
+
+        if (confirm(`Tem certeza que deseja apagar o tipo "${tipo}" do sítio "${codigo}"?`)) {
+          fn10_removerTipoSitio(codigo, tipo);
+        }
+      });
+
+      $('#btnCheckPoint').on('click', function() {
+        fn11_gerarCheckPoint();
+      });
+
+      $('#btnCopiarImagemCP').on('click', function() {
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Gerando...');
+
+        var container = document.getElementById('containerCheckPointExport');
+
+        html2canvas(container, {
+          scale: 2,
+          useCORS: true
+        }).then(function(canvas) {
+          canvas.toBlob(function(blob) {
+            try {
+              var item = new ClipboardItem({ 'image/png': blob });
+              navigator.clipboard.write([item]).then(function() {
+                var modalElem = document.getElementById('modalCheckPoint');
+                var modalInstance = bootstrap.Modal.getInstance(modalElem);
+                if (modalInstance) modalInstance.hide();
+
+                alert('Imagem do Check-Point copiada! Cole (Ctrl+V) no WhatsApp.');
+              }).catch(function(err) {
+                alert('Erro ao copiar para o Clipboard: ' + err.message);
+              });
+            } catch (err) {
+              alert('Navegador não suporta a cópia direta de imagem. Tente no Chrome/Edge.');
+            } finally {
+              $btn.prop('disabled', false).text('Copiar Imagem');
+            }
+          }, 'image/png');
+        });
+      });
+
+      $('#inputCustomSearch').on('keyup', function() {
+        var termo = $(this).val().toLowerCase();
+        $('#incidentes tbody tr').each(function() {
+          var texto = $(this).text().toLowerCase();
+          var inputs = $(this).find('input, select').map(function() { return $(this).val(); }).get().join(' ').toLowerCase();
+          
+          if ((texto + ' ' + inputs).indexOf(termo) !== -1) {
+            $(this).show();
+          } else {
+            $(this).hide();
+          }
+        });
+      });
+
+      $('#checkAll').on('change', function() {
+        $('.check-item').prop('checked', this.checked);
+      });
 
       $('#btnExcluirSelecionado').on('click', function() {
         var $selecionados = $('.check-item:checked');
@@ -629,7 +884,8 @@
         fn06_salvarDadosStorage();
         alert('Dados salvos no Firebase com sucesso!');
       });
-/* EVENTOS DO ESCALONAMENTO */
+
+      /* EVENTOS DO ESCALONAMENTO */
       $('#btnEscalonamento').on('click', function() {
         fn12_renderizarEscalonamento();
         var modalElem = document.getElementById('modalEscalonamento');
@@ -649,329 +905,378 @@
         var emp = $('#filtrosEmpresaEscalonamento button.active').attr('data-emp') || "TODAS";
         fn12_renderizarEscalonamento(emp, $(this).val());
       });
-    });
-// EVENTO: Clique no Botão de E-mail / WhatsApp
-// Linha 654 ajustada (opcional):
-$(document).on('click', '#btnEmail', function() {
-  gerarRelatorioWhatsApp();
-  
-  var modalEl = document.getElementById('modalEmail');
-  var modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-  modalInstance.show();
-});
 
-// EVENTO: Atualizar Prévia ao alterar Pontos de Atenção
-$(document).on('click', '#btnAtualizarPrevia', function() {
-  gerarRelatorioWhatsApp();
-});
+    }); // FIM DO $(document).ready
 
-// Função Auxiliar para ler o valor de inputs ou selects com fallback correto
-function obterValorCampo($row, seletor) {
-  var $elem = $row.find(seletor);
-  if ($elem.length === 0) return '-';
-  var val = $elem.val();
-  return (val !== null && val !== undefined && val.trim() !== '') ? val.trim() : '-';
-}
-
-// Função Principal: Varre a tabela e gera o layout por categoria
-function gerarRelatorioWhatsApp() {
-  var incidentesLaranja = [];
-  var atividadesCinza = [];
-  var normalizadosVerde = [];
-
-  // Varre todas as linhas da tabela
-  $('#incidentes tbody tr').each(function() {
-    var $row = $(this);
-    var $tdSitio = $row.find('td').eq(1); // Célula de indicação da cor
-    var isChecked = $row.find('input[type="checkbox"]').is(':checked');
-
-    // Mapeamento corrigido buscando por nome de input/select e classes
-    var item = {
-      sitio: obterValorCampo($row, '.select-sitio, select[name="sitio"]'),
-      tipo: obterValorCampo($row, '.select-tipo, select[name="tipo"]'),
-      dataIni: obterValorCampo($row, 'input[name="data_inicio"], input[name="data_1"], .input-data:first'),
-      horaIni: obterValorCampo($row, 'input[name="hora_inicio"], input[name="h_inicio"], .input-hora:first'),
-      dataFim: obterValorCampo($row, 'input[name="data_fim"], input[name="data_2"], .input-data:last'),
-      horaFim: obterValorCampo($row, 'input[name="hora_fim"], input[name="h_fim"], .input-hora:last'),
-      falha: obterValorCampo($row, '.select-falha, select[name="falha"]'),
-      opcom: obterValorCampo($row, '.select-opcom, select[name="opcom"]'),
-      impacto: obterValorCampo($row, '.select-impacto, select[name="impacto"]'),
-      parceiro: obterValorCampo($row, '.select-parceiro, select[name="parceiro"]'),
-      ticket: obterValorCampo($row, 'input[name="ticket"], .input-ticket'),
-      status: obterValorCampo($row, 'input[name="status"], .input-status')
-    };
-
-    // Classificação por categoria
-    if ($tdSitio.hasClass('sitio-laranja')) {
-      incidentesLaranja.push(item);
-    } else if ($tdSitio.hasClass('sitio-cinza')) {
-      atividadesCinza.push(item);
-    } else if ($tdSitio.hasClass('sitio-verde') && isChecked) {
-      normalizadosVerde.push(item);
-    }
-  });
-
-  var pontoAtencaoTexto = $('#inputPontoAtencao').val().trim() || 'Nenhum ponto de atenção crítico registrado para o turno.';
-
-  // MONTAGEM DO CORPO VISUAL (Para PDF e prévia)
-  var html = `
-    <div style="font-family: Arial, sans-serif; font-size: 12px; color: #1e293b;">
-      <h3 style="color: #1b0088; border-bottom: 2px solid #1b0088; padding-bottom: 4px; margin-top: 0;">Relatório de Passagem de Turno - Monitoração Brasil</h3>
-      
-      <!-- SEÇÃO 1: INCIDENTES (LARANJA) -->
-      <h4 style="color: #c2410c; background-color: #ffedd5; padding: 6px; border-left: 4px solid #f97316; margin-bottom: 6px;">1 - Incidentes em Aberto</h4>
-      ${gerarTabelaIncidentes(incidentesLaranja)}
-
-      <!-- SEÇÃO 2: ATIVIDADES PROGRAMADAS (CINZA) -->
-      <h4 style="color: #374151; background-color: #f3f4f6; padding: 6px; border-left: 4px solid #6b7280; margin-bottom: 6px; margin-top: 15px;">2 - Atividades Programadas</h4>
-      ${gerarTabelaAtividadesENormalizados(atividadesCinza)}
-
-      <!-- SEÇÃO 3: PONTOS DE ATENÇÃO -->
-      <h4 style="color: #854d0e; background-color: #fef9c3; padding: 6px; border-left: 4px solid #eab308; margin-bottom: 6px; margin-top: 15px;">3 - Pontos de Atenção</h4>
-      <div style="background-color: #fffbeb; border: 1px solid #fde68a; padding: 10px; border-radius: 4px; font-size: 12px; white-space: pre-line;">
-        ${pontoAtencaoTexto}
-      </div>
-
-      <!-- SEÇÃO 4: NORMALIZADOS (VERDE SELECIONADOS) -->
-      <h4 style="color: #15803d; background-color: #dcfce7; padding: 6px; border-left: 4px solid #22c55e; margin-bottom: 6px; margin-top: 15px;">4 - Incidentes Normalizados</h4>
-      ${gerarTabelaAtividadesENormalizados(normalizadosVerde)}
-    </div>
-  `;
-
-  $('#emailCorpoContainer').html(html);
-}
-
-// Tabela 1: Incidentes (Somente Início + Ticket, Opcom e Status visíveis)
-function gerarTabelaIncidentes(lista) {
-  if (lista.length === 0) return `<p style="font-style: italic; color: #94a3b8; font-size: 11px; margin: 4px 0;">Nenhum incidente em aberto.</p>`;
-
-  var htmlTable = `
-    <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; font-size: 11px; font-family: Arial, sans-serif; border-color: #cbd5e1;">
-      <thead>
-        <tr style="background-color: #2563eb; color: #ffffff; text-align: center;">
-          <th>Sítio</th>
-          <th>Tipo</th>
-          <th>Início</th>
-          <th>Falha</th>
-          <th>Opcom</th>
-          <th>Impacto</th>
-          <th>Parceiro</th>
-          <th>Ticket</th>
-          <th>Status / Observações</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-  lista.forEach(function(item) {
-    var inicio = `${item.dataIni} ${item.horaIni}`.replace('- -', '-').trim();
-    htmlTable += `
-      <tr>
-        <td style="text-align: center;"><b>${item.sitio}</b></td>
-        <td style="text-align: center;">${item.tipo}</td>
-        <td style="text-align: center;">${inicio}</td>
-        <td style="text-align: center;">${item.falha}</td>
-        <td style="text-align: center;">${item.opcom}</td>
-        <td style="text-align: center;">${item.impacto}</td>
-        <td style="text-align: center;">${item.parceiro}</td>
-        <td style="text-align: center;"><b>${item.ticket}</b></td>
-        <td>${item.status}</td>
-      </tr>
-    `;
-  });
-
-  return htmlTable + `</tbody></table>`;
-}
-
-// Tabela 2 e 4: Atividades e Normalizados (Início e Fim + Status)
-function gerarTabelaAtividadesENormalizados(lista) {
-  if (lista.length === 0) return `<p style="font-style: italic; color: #94a3b8; font-size: 11px; margin: 4px 0;">Nenhum registro nesta categoria.</p>`;
-
-  var htmlTable = `
-    <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; font-size: 11px; font-family: Arial, sans-serif; border-color: #cbd5e1;">
-      <thead>
-        <tr style="background-color: #475569; color: #ffffff; text-align: center;">
-          <th>Sítio</th>
-          <th>Tipo</th>
-          <th>Início</th>
-          <th>Fim</th>
-          <th>Falha</th>
-          <th>Impacto</th>
-          <th>Parceiro</th>
-          <th>Ticket</th>
-          <th>Status / Observações</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-  lista.forEach(function(item) {
-    var inicio = `${item.dataIni} ${item.horaIni}`.replace('- -', '-').trim();
-    var fim = `${item.dataFim} ${item.horaFim}`.replace('- -', '-').trim();
-
-    htmlTable += `
-      <tr>
-        <td style="text-align: center;"><b>${item.sitio}</b></td>
-        <td style="text-align: center;">${item.tipo}</td>
-        <td style="text-align: center;">${inicio}</td>
-        <td style="text-align: center;">${fim}</td>
-        <td style="text-align: center;">${item.falha}</td>
-        <td style="text-align: center;">${item.impacto}</td>
-        <td style="text-align: center;">${item.parceiro}</td>
-        <td style="text-align: center;"><b>${item.ticket}</b></td>
-        <td>${item.status}</td>
-      </tr>
-    `;
-  });
-
-  return htmlTable + `</tbody></table>`;
-}
-
-// EVENTO: Converter Relatório em Imagem (Troca Turno) e Copiar para Clipboard (WhatsApp)
-$(document).on('click', '#btnCopiarImagemWhatsApp', function() {
-  var $btn = $(this);
-  var textoOriginal = $btn.html();
-  
-  // 1. Inserir/Atualizar a Data Atual no topo do relatório
-  var hoje = new Date();
-  var dataFormatada = hoje.toLocaleDateString('pt-BR'); // Formato: DD/MM/AAAA
-
-  // Garante que exista um elemento de data no topo do container
-  if ($('#dataRelatorioHeader').length === 0) {
-    $('#emailCorpoContainer').prepend(
-      '<div id="dataRelatorioHeader" class="text-end text-muted fw-bold mb-2" style="font-size: 13px;">' +
-        '<i class="far fa-calendar-alt me-1"></i> Data: ' + dataFormatada +
-      '</div>'
-    );
-  } else {
-    $('#dataRelatorioHeader').html('<i class="far fa-calendar-alt me-1"></i> Data: ' + dataFormatada);
-  }
-
-  // 2. Feedback visual de processamento
-  $btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Gerando Imagem...').prop('disabled', true);
-
-  var element = document.getElementById('emailCorpoContainer');
-
-  html2canvas(element, { 
-    scale: 2, // Garante alta resolução/nitidez na imagem
-    backgroundColor: "#ffffff"
-  }).then(function(canvas) {
-    canvas.toBlob(function(blob) {
-      if (navigator.clipboard && window.ClipboardItem) {
-        var item = new ClipboardItem({ "image/png": blob });
-        navigator.clipboard.write([item]).then(function() {
-          alert("Imagem de Troca de Turno copiada com sucesso! Vá ao WhatsApp e pressione Ctrl+V.");
-        }).catch(function(err) {
-          console.error("Erro ao copiar imagem: ", err);
-          alert("Não foi possível copiar a imagem automaticamente. Utilize a opção de Baixar PDF.");
-        }).finally(function() {
-          $btn.html(textoOriginal).prop('disabled', false);
-        });
-      } else {
-        alert("Seu navegador não suporta a cópia direta de imagens. Tente utilizar o recurso via PDF.");
-        $btn.html(textoOriginal).prop('disabled', false);
+    /* EVENTOS GLOBAIS DE DELEGAÇÃO DE DOM */
+    $(document).on('click', '#btnEmail', function() {
+      // Injeta os controles de Turno, Analistas e Ferramentas na modal caso ainda não existam
+      if ($('#containerControlesTurno').length === 0) {
+        var controlesHTML = `
+          <div id="containerControlesTurno" class="card p-3 mb-3 border-secondary-subtle bg-light">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label fw-bold mb-1" style="font-size:11px;">TURNO (12H):</label>
+                <select id="selectTurno" class="form-select form-select-sm">
+                  <option value="Turno 1 (07h00 - 19h00)">Turno 1 (07h00 - 19h00)</option>
+                  <option value="Turno 2 (19h00 - 07h00)">Turno 2 (19h00 - 07h00)</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold mb-1" style="font-size:11px;">ANALISTA SAINDO:</label>
+                <select id="selectAnalistaSaindo" class="form-select form-select-sm">
+                  <option value="Francisco">Francisco</option>
+                  <option value="Rodrigo">Rodrigo</option>
+                  <option value="Matheus">Matheus</option>
+                  <option value="Bruno">Bruno</option>
+                  <option value="Wendel">Wendel</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold mb-1" style="font-size:11px;">ANALISTA ENTRANDO:</label>
+                <select id="selectAnalistaEntrando" class="form-select form-select-sm">
+                  <option value="Rodrigo">Rodrigo</option>
+                  <option value="Francisco">Francisco</option>
+                  <option value="Matheus">Matheus</option>
+                  <option value="Bruno">Bruno</option>
+                  <option value="Wendel">Wendel</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold mb-1" style="font-size:11px;">VALIDAÇÃO DE FERRAMENTAS:</label>
+                <div class="d-flex flex-column gap-1">
+                  <div class="form-check form-check-inline m-0">
+                    <input class="form-check-input check-ferramenta" type="checkbox" id="checkCastleRock" checked>
+                    <label class="form-check-label fw-bold" for="checkCastleRock" style="font-size:11px; cursor:pointer;">
+                      <i class="fas fa-chess-rook text-primary me-1"></i> CastleRock <span id="stCastleRock" class="ms-1 text-success">✔️</span>
+                    </label>
+                  </div>
+                  <div class="form-check form-check-inline m-0">
+                    <input class="form-check-input check-ferramenta" type="checkbox" id="checkGrafana" checked>
+                    <label class="form-check-label fw-bold" for="checkGrafana" style="font-size:11px; cursor:pointer;">
+                      <i class="fas fa-chart-line text-warning me-1"></i> Grafana <span id="stGrafana" class="ms-1 text-success">✔️</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        $('#emailCorpoContainer').before(controlesHTML);
       }
-    }, 'image/png');
-  }).catch(function(err) {
-    console.error("Erro no html2canvas: ", err);
-    alert("Houve um problema ao renderizar a imagem.");
-    $btn.html(textoOriginal).prop('disabled', false);
-  });
-});
 
-// EVENTO: Gerar e Baixar PDF para WhatsApp
-$(document).on('click', '#btnGerarPDFWhatsApp', function() {
-  var element = document.getElementById('emailCorpoContainer');
-  var { jsPDF } = window.jspdf;
+      gerarRelatorioWhatsApp();
+      
+      var modalEl = document.getElementById('modalEmail');
+      var modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      modalInstance.show();
+    });
 
-  html2canvas(element, { scale: 2 }).then(function(canvas) {
-    var imgData = canvas.toDataURL('image/png');
-    var pdf = new jsPDF('p', 'mm', 'a4');
-    
-    var imgWidth = 190;
-    var pageHeight = 295;
-    var imgHeight = (canvas.height * imgWidth) / canvas.width;
-    var heightLeft = imgHeight;
-    var position = 10;
+    // Atualiza status (V ou X) e regenera o relatório dinamicamente ao mudar opções
+    $(document).on('change', '#selectTurno, #selectAnalistaSaindo, #selectAnalistaEntrando, .check-ferramenta', function() {
+      var crChecked = $('#checkCastleRock').is(':checked');
+      var grChecked = $('#checkGrafana').is(':checked');
 
-    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+      $('#stCastleRock').html(crChecked ? '✔️' : '❌').attr('class', crChecked ? 'ms-1 text-success' : 'ms-1 text-danger');
+      $('#stGrafana').html(grChecked ? '✔️' : '❌').attr('class', grChecked ? 'ms-1 text-success' : 'ms-1 text-danger');
 
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      gerarRelatorioWhatsApp();
+    });
+
+    $(document).on('click', '#btnAtualizarPrevia', function() {
+      gerarRelatorioWhatsApp();
+    });
+
+    function obterValorCampo($row, seletor) {
+      var $elem = $row.find(seletor);
+      if ($elem.length === 0) return '-';
+      var val = $elem.val();
+      return (val !== null && val !== undefined && val.trim() !== '') ? val.trim() : '-';
     }
 
-    pdf.save('Relatorio_Passagem_Turno.pdf');
-  }); // Fecha o .then
-}); // Fecha o click do PDF
+    function gerarRelatorioWhatsApp() {
+      var incidentesLaranja = [];
+      var atividadesCinza = [];
+      var normalizadosVerde = [];
 
-// AVISO DENTRO DA MODAL PARA MÓDULOS EM DESENVOLVIMENTO
-$(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrutura', function(e) {
-  e.preventDefault();
+      $('#incidentes tbody tr').each(function() {
+        var $row = $(this);
+        var $tdSitio = $row.find('td').eq(1);
+        var isChecked = $row.find('input[type="checkbox"]').is(':checked');
 
-  var nomeModulo = $(this).text().trim();
+        var item = {
+          sitio: obterValorCampo($row, '.select-sitio, select[name="sitio"]'),
+          tipo: obterValorCampo($row, '.select-tipo, select[name="tipo"]'),
+          dataIni: obterValorCampo($row, 'input[name="data_inicio"], input[name="data_1"], .input-data:first'),
+          horaIni: obterValorCampo($row, 'input[name="hora_inicio"], input[name="h_inicio"], .input-hora:first'),
+          dataFim: obterValorCampo($row, 'input[name="data_fim"], input[name="data_2"], .input-data:last'),
+          horaFim: obterValorCampo($row, 'input[name="hora_fim"], input[name="h_fim"], .input-hora:last'),
+          falha: obterValorCampo($row, '.select-falha, select[name="falha"]'),
+          opcom: obterValorCampo($row, '.select-opcom, select[name="opcom"]'),
+          impacto: obterValorCampo($row, '.select-impacto, select[name="impacto"]'),
+          parceiro: obterValorCampo($row, '.select-parceiro, select[name="parceiro"]'),
+          ticket: obterValorCampo($row, 'input[name="ticket"], .input-ticket'),
+          status: obterValorCampo($row, 'input[name="status"], .input-status')
+        };
 
-  // Se já existir a modal temporária, fecha e remove antes de criar outra
-  $('#modalEmDesenvolvimento').remove();
-  $('.modal-backdrop').remove();
+        if ($tdSitio.hasClass('sitio-laranja')) {
+          incidentesLaranja.push(item);
+        } else if ($tdSitio.hasClass('sitio-cinza')) {
+          atividadesCinza.push(item);
+        } else if ($tdSitio.hasClass('sitio-verde') && isChecked) {
+          normalizadosVerde.push(item);
+        }
+      });
 
-  var htmlModal = `
-    <div class="modal fade" id="modalEmDesenvolvimento" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header bg-dark text-white py-2">
-            <h5 class="modal-title fs-6">${nomeModulo}</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      var turno = $('#selectTurno').val() || 'Turno 1 (07h00 - 19h00)';
+      var saindo = $('#selectAnalistaSaindo').val() || 'Francisco';
+      var entrando = $('#selectAnalistaEntrando').val() || 'Rodrigo';
+
+      var crOk = $('#checkCastleRock').is(':checked');
+      var grOk = $('#checkGrafana').is(':checked');
+
+      var castleRockIcon = crOk ? '<b style="color: #16a34a;">[✔️ CastleRock Validado]</b>' : '<b style="color: #dc2626;">[❌ CastleRock Pendente]</b>';
+      var grafanaIcon = grOk ? '<b style="color: #16a34a;">[✔️ Grafana Validado]</b>' : '<b style="color: #dc2626;">[❌ Grafana Pendente]</b>';
+
+      var pontoAtencaoTexto = $('#inputPontoAtencao').val() ? $('#inputPontoAtencao').val().trim() : 'Nenhum ponto de atenção crítico registrado para o turno.';
+
+      var html = `
+        <div style="font-family: Arial, sans-serif; font-size: 12px; color: #1e293b;">
+          <h3 style="color: #1b0088; border-bottom: 2px solid #1b0088; padding-bottom: 4px; margin-top: 0;">Relatório de Passagem de Turno - Monitoração Brasil</h3>
+          
+          <!-- INFORMAÇÕES DE TURNO, ANALISTAS E FERRAMENTAS -->
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px; margin-bottom: 12px; font-size: 11px;">
+            <table style="width: 100%; font-size: 11px;">
+              <tr>
+                <td><b>Turno:</b> ${turno}</td>
+                <td><b>Saindo:</b> ${saindo}</td>
+                <td><b>Entrando:</b> ${entrando}</td>
+              </tr>
+              <tr>
+                <td colspan="3" style="padding-top: 5px; border-top: 1px dashed #cbd5e1; margin-top: 5px;">
+                  <b>Status das Ferramentas:</b> ${castleRockIcon} &nbsp;|&nbsp; ${grafanaIcon}
+                </td>
+              </tr>
+            </table>
           </div>
-          <div class="modal-body p-4 text-center">
-            <i class="fas fa-tools text-warning mb-3" style="font-size: 2rem;"></i>
-            <h5 class="text-muted fw-bold mb-0">Bloco em desenvolvimento</h5>
+
+          <h4 style="color: #c2410c; background-color: #ffedd5; padding: 6px; border-left: 4px solid #f97316; margin-bottom: 6px;">1 - Incidentes em Aberto</h4>
+          ${gerarTabelaIncidentes(incidentesLaranja)}
+
+          <h4 style="color: #374151; background-color: #f3f4f6; padding: 6px; border-left: 4px solid #6b7280; margin-bottom: 6px; margin-top: 15px;">2 - Atividades Programadas</h4>
+          ${gerarTabelaAtividadesENormalizados(atividadesCinza)}
+
+          <h4 style="color: #854d0e; background-color: #fef9c3; padding: 6px; border-left: 4px solid #eab308; margin-bottom: 6px; margin-top: 15px;">3 - Pontos de Atenção</h4>
+          <div style="background-color: #fffbeb; border: 1px solid #fde68a; padding: 10px; border-radius: 4px; font-size: 12px; white-space: pre-line;">
+            ${pontoAtencaoTexto}
           </div>
-          <div class="modal-footer py-2 justify-content-end">
-            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
+
+          <h4 style="color: #15803d; background-color: #dcfce7; padding: 6px; border-left: 4px solid #22c55e; margin-bottom: 6px; margin-top: 15px;">4 - Incidentes Normalizados</h4>
+          ${gerarTabelaAtividadesENormalizados(normalizadosVerde)}
+        </div>
+      `;
+
+      $('#emailCorpoContainer').html(html);
+    }
+
+    function gerarTabelaIncidentes(lista) {
+      if (lista.length === 0) return `<p style="font-style: italic; color: #94a3b8; font-size: 11px; margin: 4px 0;">Nenhum incidente em aberto.</p>`;
+
+      var htmlTable = `
+        <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; font-size: 11px; font-family: Arial, sans-serif; border-color: #cbd5e1;">
+          <thead>
+            <tr style="background-color: #2563eb; color: #ffffff; text-align: center;">
+              <th>Sítio</th>
+              <th>Tipo</th>
+              <th>Início</th>
+              <th>Falha</th>
+              <th>Opcom</th>
+              <th>Impacto</th>
+              <th>Parceiro</th>
+              <th>Ticket</th>
+              <th>Status / Observações</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      lista.forEach(function(item) {
+        var inicio = `${item.dataIni} ${item.horaIni}`.replace('- -', '-').trim();
+        htmlTable += `
+          <tr>
+            <td style="text-align: center;"><b>${item.sitio}</b></td>
+            <td style="text-align: center;">${item.tipo}</td>
+            <td style="text-align: center;">${inicio}</td>
+            <td style="text-align: center;">${item.falha}</td>
+            <td style="text-align: center;">${item.opcom}</td>
+            <td style="text-align: center;">${item.impacto}</td>
+            <td style="text-align: center;">${item.parceiro}</td>
+            <td style="text-align: center;"><b>${item.ticket}</b></td>
+            <td>${item.status}</td>
+          </tr>
+        `;
+      });
+
+      return htmlTable + `</tbody></table>`;
+    }
+
+    function gerarTabelaAtividadesENormalizados(lista) {
+      if (lista.length === 0) return `<p style="font-style: italic; color: #94a3b8; font-size: 11px; margin: 4px 0;">Nenhum registro nesta categoria.</p>`;
+
+      var htmlTable = `
+        <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; font-size: 11px; font-family: Arial, sans-serif; border-color: #cbd5e1;">
+          <thead>
+            <tr style="background-color: #475569; color: #ffffff; text-align: center;">
+              <th>Sítio</th>
+              <th>Tipo</th>
+              <th>Início</th>
+              <th>Fim</th>
+              <th>Falha</th>
+              <th>Impacto</th>
+              <th>Parceiro</th>
+              <th>Ticket</th>
+              <th>Status / Observações</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      lista.forEach(function(item) {
+        var inicio = `${item.dataIni} ${item.horaIni}`.replace('- -', '-').trim();
+        var fim = `${item.dataFim} ${item.horaFim}`.replace('- -', '-').trim();
+
+        htmlTable += `
+          <tr>
+            <td style="text-align: center;"><b>${item.sitio}</b></td>
+            <td style="text-align: center;">${item.tipo}</td>
+            <td style="text-align: center;">${inicio}</td>
+            <td style="text-align: center;">${fim}</td>
+            <td style="text-align: center;">${item.falha}</td>
+            <td style="text-align: center;">${item.impacto}</td>
+            <td style="text-align: center;">${item.parceiro}</td>
+            <td style="text-align: center;"><b>${item.ticket}</b></td>
+            <td>${item.status}</td>
+          </tr>
+        `;
+      });
+
+      return htmlTable + `</tbody></table>`;
+    }
+
+    $(document).on('click', '#btnCopiarImagemWhatsApp', function() {
+      var $btn = $(this);
+      var textoOriginal = $btn.html();
+      
+      var hoje = new Date();
+      var dataFormatada = hoje.toLocaleDateString('pt-BR');
+
+      if ($('#dataRelatorioHeader').length === 0) {
+        $('#emailCorpoContainer').prepend(
+          '<div id="dataRelatorioHeader" class="text-end text-muted fw-bold mb-2" style="font-size: 13px;">' +
+            '<i class="far fa-calendar-alt me-1"></i> Data: ' + dataFormatada +
+          '</div>'
+        );
+      } else {
+        $('#dataRelatorioHeader').html('<i class="far fa-calendar-alt me-1"></i> Data: ' + dataFormatada);
+      }
+
+      $btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Gerando Imagem...').prop('disabled', true);
+
+      var element = document.getElementById('emailCorpoContainer');
+
+      html2canvas(element, { 
+        scale: 2,
+        backgroundColor: "#ffffff"
+      }).then(function(canvas) {
+        canvas.toBlob(function(blob) {
+          if (navigator.clipboard && window.ClipboardItem) {
+            var item = new ClipboardItem({ "image/png": blob });
+            navigator.clipboard.write([item]).then(function() {
+              alert("Imagem de Troca de Turno copiada com sucesso! Vá ao WhatsApp e pressione Ctrl+V.");
+            }).catch(function(err) {
+              console.error("Erro ao copiar imagem: ", err);
+              alert("Não foi possível copiar a imagem automaticamente. Utilize a opção de Baixar PDF.");
+            }).finally(function() {
+              $btn.html(textoOriginal).prop('disabled', false);
+            });
+          } else {
+            alert("Seu navegador não suporta a cópia direta de imagens. Tente utilizar o recurso via PDF.");
+            $btn.html(textoOriginal).prop('disabled', false);
+          }
+        }, 'image/png');
+      }).catch(function(err) {
+        console.error("Erro no html2canvas: ", err);
+        alert("Houve um problema ao renderizar a imagem.");
+        $btn.html(textoOriginal).prop('disabled', false);
+      });
+    });
+
+    $(document).on('click', '#btnGerarPDFWhatsApp', function() {
+      var element = document.getElementById('emailCorpoContainer');
+      var { jsPDF } = window.jspdf;
+
+      html2canvas(element, { scale: 2 }).then(function(canvas) {
+        var imgData = canvas.toDataURL('image/png');
+        var pdf = new jsPDF('p', 'mm', 'a4');
+        
+        var imgWidth = 190;
+        var pageHeight = 295;
+        var imgHeight = (canvas.height * imgWidth) / canvas.width;
+        var heightLeft = imgHeight;
+        var position = 10;
+
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+
+        pdf.save('Relatorio_Passagem_Turno.pdf');
+      });
+    });
+
+    $(document).on('click', '#btnProcessos, #btnPlantao, #btnFerramentas, #btnEstrutura', function(e) {
+      e.preventDefault();
+
+      var nomeModulo = $(this).text().trim();
+
+      $('#modalEmDesenvolvimento').remove();
+      $('.modal-backdrop').remove();
+
+      var htmlModal = `
+        <div class="modal fade" id="modalEmDesenvolvimento" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header bg-dark text-white py-2">
+                <h5 class="modal-title fs-6">${nomeModulo}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body p-4 text-center">
+                <i class="fas fa-tools text-warning mb-3" style="font-size: 2rem;"></i>
+                <h5 class="text-muted fw-bold mb-0">Bloco em desenvolvimento</h5>
+              </div>
+              <div class="modal-footer py-2 justify-content-end">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  `;
+      `;
 
-  $('body').append(htmlModal);
+      $('body').append(htmlModal);
 
-  var $modalEl = $('#modalEmDesenvolvimento');
-  var modalInstance = new bootstrap.Modal($modalEl[0]);
+      var $modalEl = $('#modalEmDesenvolvimento');
+      var modalInstance = new bootstrap.Modal($modalEl[0]);
 
-  // Evento acionado AUTOMATICAMENTE quando a modal terminar de fechar
-  $modalEl.on('hidden.bs.modal', function () {
-    $modalEl.remove(); // Remove a modal do HTML
-    $('.modal-backdrop').remove(); // Destrói qualquer fundo escuro travado
-    $('body').removeClass('modal-open').css('overflow', 'auto'); // Libera a rolagem e cliques na página
-  });
+      $modalEl.on('hidden.bs.modal', function () {
+        $modalEl.remove();
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open').css('overflow', 'auto');
+      });
 
-  modalInstance.show();
-});
-// Fim do modal bloco em desenvolvimento //
-
-// Validação automática ao alterar Data Fim ou Hora Fim
-$(document).on('change blur', '#incidentes tbody tr input[type="date"], #incidentes tbody tr input[type="time"]', function() {
-  var $tr = $(this).closest('tr');
-  
-  // Captura os inputs de Data-2 (coluna 6) e H.Fim (coluna 7)
-  var $dataFimInput = $tr.find('td:nth-child(6) input'); 
-  var $horaFimInput = $tr.find('td:nth-child(7) input');
-
-  var dataFim = $dataFimInput.val();
-  var horaFim = $horaFimInput.val();
-
-  if (dataFim && horaFim) {
-    var dataHoraFim = new Date(`${dataFim}T${horaFim}:00`);
-    var agora = new Date();
-
-    if (dataHoraFim > agora) {
-      alert('Atenção: A Data e Hora de término não podem ser no futuro!');
-      $horaFimInput.val(''); // Limpa o campo de hora para obrigar a correção
-    }
-  }
-});
+      modalInstance.show();
+    });
