@@ -1,20 +1,33 @@
 /* ==========================================================================
-   APP.JS - SISTEMA DE MONITORIA E PASSAGEM DE TURNO
+   APP.JS - SISTEMA DE MONITORIA E PASSAGEM DE TURNO (VERSÃO COMPLETA)
    ========================================================================== */
 
 var dadosSitios = {};
 var timerSalvarInput = null;
 
-// Helper seguro para operações com Firebase
+/* --------------------------------------------------------------------------
+   01. HELPERS & BANCO DE DADOS (FIREBASE E LOCALSTORAGE)
+   -------------------------------------------------------------------------- */
+
 function firebaseDisponivel() {
-  return typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0 && typeof database !== 'undefined';
+  try {
+    return typeof firebase !== 'undefined' && 
+           firebase.apps && 
+           firebase.apps.length > 0 && 
+           typeof database !== 'undefined' && 
+           database !== null;
+  } catch (e) {
+    return false;
+  }
 }
 
 function fn01_getOptionsSitio() {
   var html = '<option value="">Selecione...</option>';
-  Object.keys(dadosSitios).sort().forEach(function(s) {
-    html += `<option value="${s}">${s}</option>`;
-  });
+  if (dadosSitios && typeof dadosSitios === 'object') {
+    Object.keys(dadosSitios).sort().forEach(function(s) {
+      html += `<option value="${s}">${s}</option>`;
+    });
+  }
   return html;
 }
 
@@ -114,7 +127,7 @@ function fn06_salvarDadosStorage() {
       localStorage.setItem('incidentes_local', JSON.stringify(listaIncidentes));
     }
   } catch (err) {
-    console.warn("Erro ao salvar dados, mantendo em LocalStorage:", err);
+    console.warn("Salvando em LocalStorage devido a erro no banco:", err);
     localStorage.setItem('incidentes_local', JSON.stringify(listaIncidentes || []));
   }
 }
@@ -171,15 +184,27 @@ function fn09_inicializarDados() {
       database.ref('config/dadosSitios').once('value').then(function(snapshot) {
         if (snapshot.exists()) {
           dadosSitios = snapshot.val();
+          fn09_atualizarDropdownsExistentes();
         }
       });
     } else {
       var local = localStorage.getItem('dadosSitios');
-      if (local) dadosSitios = JSON.parse(local);
+      if (local) {
+        dadosSitios = JSON.parse(local);
+        fn09_atualizarDropdownsExistentes();
+      }
     }
   } catch (err) {
-    console.warn("Firebase offline. Inicialização em modo local.", err);
+    console.warn("Inicialização em modo local.", err);
   }
+}
+
+function fn09_atualizarDropdownsExistentes() {
+  $('.select-sitio').each(function() {
+    var valAtual = $(this).val();
+    $(this).html(fn01_getOptionsSitio());
+    if (valAtual) $(this).val(valAtual);
+  });
 }
 
 function fn10_removerTipoSitio(codigo, tipo) {
@@ -194,6 +219,50 @@ function fn10_removerTipoSitio(codigo, tipo) {
     alert(`Tipo ${tipo} removido do sítio ${codigo}.`);
   }
 }
+
+/* --------------------------------------------------------------------------
+   02. MÓDULO DE PLANTÃO & PROCESSOS
+   -------------------------------------------------------------------------- */
+
+function fn_carregarEscalaPlantao() {
+  var $div = $('#containerEscalaPlantao');
+  if ($div.length === 0) return;
+
+  var plantaoHTML = `
+    <div class="card p-3 shadow-sm mb-3">
+      <h6 class="fw-bold text-primary mb-2"><i class="fas fa-user-clock me-2"></i>Escala do Plantão</h6>
+      <div class="row g-2 text-center" style="font-size: 13px;">
+        <div class="col"><div class="p-2 border rounded bg-light"><b>Plantão 1:</b> Francisco</div></div>
+        <div class="col"><div class="p-2 border rounded bg-light"><b>Plantão 2:</b> Rodrigo</div></div>
+        <div class="col"><div class="p-2 border rounded bg-light"><b>Plantão 3:</b> Matheus</div></div>
+        <div class="col"><div class="p-2 border rounded bg-light"><b>Sobreaviso:</b> Bruno / Wendel</div></div>
+      </div>
+    </div>
+  `;
+  $div.html(plantaoHTML);
+}
+
+function fn_carregarLinksProcessos() {
+  var $div = $('#containerLinksProcessos');
+  if ($div.length === 0) return;
+
+  var linksHTML = `
+    <div class="card p-3 shadow-sm mb-3">
+      <h6 class="fw-bold text-dark mb-2"><i class="fas fa-folder-open me-2"></i>Processos & Procedimentos Quick Links</h6>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="#" class="btn btn-sm btn-outline-secondary"><i class="fas fa-book me-1"></i> POP Acionamento Link</a>
+        <a href="#" class="btn btn-sm btn-outline-secondary"><i class="fas fa-book me-1"></i> POP Falha de Energia</a>
+        <a href="#" class="btn btn-sm btn-outline-secondary"><i class="fas fa-book me-1"></i> POP Roteadores / SD-WAN</a>
+        <a href="#" class="btn btn-sm btn-outline-secondary"><i class="fas fa-phone-alt me-1"></i> Contatos Operadoras</a>
+      </div>
+    </div>
+  `;
+  $div.html(linksHTML);
+}
+
+/* --------------------------------------------------------------------------
+   03. CHECKPOINT & ESCALONAMENTO
+   -------------------------------------------------------------------------- */
 
 function fn11_gerarCheckPoint() {
   var $tbodyCP = $('#tbodyCheckPoint');
@@ -313,18 +382,20 @@ function fn12_renderizarEscalonamento(empresa, busca) {
       renderTabela(null);
     }
   } catch (e) {
-    console.warn("Escalonamento em modo local:", e);
+    console.warn("Falha no carregamento do escalonamento:", e);
     renderTabela(null);
   }
 }
 
-/* ==========================================================================
-   INICIALIZAÇÃO JQUERY & EVENTOS
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   04. INICIALIZAÇÃO JQUERY & EVENTOS DOM
+   -------------------------------------------------------------------------- */
 
 $(document).ready(function() {
 
   fn09_inicializarDados();
+  fn_carregarEscalaPlantao();
+  fn_carregarLinksProcessos();
 
   $('#btnNovoItem').on('click', function() {
     var novoId = Date.now().toString();
@@ -411,11 +482,7 @@ $(document).ready(function() {
     $btn.prop('disabled', true).text('Salvando...');
 
     var atualizarUI = function() {
-      $('.select-sitio').each(function() {
-        var valAtual = $(this).val();
-        $(this).html(fn01_getOptionsSitio());
-        if (valAtual) $(this).val(valAtual);
-      });
+      fn09_atualizarDropdownsExistentes();
 
       $('#formNovoSitio')[0].reset();
       var modalElem = document.getElementById('modalNovoSitio');
@@ -548,9 +615,9 @@ $(document).ready(function() {
 
 }); // Fim do $(document).ready
 
-/* ==========================================================================
-   DELEGAÇÃO DE EVENTOS GLOBAIS (MODAIS E RELATÓRIO)
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   05. DELEGAÇÃO DE EVENTOS GLOBAIS (PASSAGEM DE TURNO & RELATÓRIOS)
+   -------------------------------------------------------------------------- */
 
 $(document).on('click', '#btnEmail', function() {
   if ($('#containerControlesTurno').length === 0) {
@@ -558,10 +625,10 @@ $(document).on('click', '#btnEmail', function() {
       <div id="containerControlesTurno" class="card p-3 mb-3 border-secondary-subtle bg-light">
         <div class="row g-3">
           <div class="col-md-3">
-            <label class="form-label fw-bold mb-1" style="font-size:11px;">TURNO (12H):</label>
+            <label class="form-label fw-bold mb-1" style="font-size:11px;">TURNO:</label>
             <select id="selectTurno" class="form-select form-select-sm">
-              <option value="Turno 1 (06h00 - 18h00)">Turno 1 (06h00 - 18h00)</option>
-              <option value="Turno 2 (18h00 - 06h00)">Turno 2 (18h00 - 06h00)</option>
+              <option value="Turno 1">Turno 1</option>
+              <option value="Turno 2">Turno 2</option>
             </select>
           </div>
           <div class="col-md-3">
@@ -588,15 +655,15 @@ $(document).on('click', '#btnEmail', function() {
             <label class="form-label fw-bold mb-1" style="font-size:11px;">VALIDAÇÃO DE FERRAMENTAS:</label>
             <div class="d-flex flex-column gap-1">
               <div class="form-check form-check-inline m-0">
-                <input class="form-check-input check-ferramenta" type="checkbox" id="checkCastleRock" checked>
+                <input class="form-check-input check-ferramenta" type="checkbox" id="checkCastleRock">
                 <label class="form-check-label fw-bold" for="checkCastleRock" style="font-size:11px; cursor:pointer;">
-                  <i class="fas fa-chess-rook text-primary me-1"></i> CastleRock <span id="stCastleRock" class="ms-1 text-success">✔️</span>
+                  <i class="fas fa-chess-rook text-primary me-1"></i> CastleRock <span id="stCastleRock" class="ms-1 text-danger">❌</span>
                 </label>
               </div>
               <div class="form-check form-check-inline m-0">
-                <input class="form-check-input check-ferramenta" type="checkbox" id="checkGrafana" checked>
+                <input class="form-check-input check-ferramenta" type="checkbox" id="checkGrafana">
                 <label class="form-check-label fw-bold" for="checkGrafana" style="font-size:11px; cursor:pointer;">
-                  <i class="fas fa-chart-line text-warning me-1"></i> Grafana <span id="stGrafana" class="ms-1 text-success">✔️</span>
+                  <i class="fas fa-chart-line text-warning me-1"></i> Grafana <span id="stGrafana" class="ms-1 text-danger">❌</span>
                 </label>
               </div>
             </div>
@@ -648,10 +715,10 @@ function gerarRelatorioWhatsApp() {
     var item = {
       sitio: obterValorCampo($row, '.select-sitio, select[name="sitio"]'),
       tipo: obterValorCampo($row, '.select-tipo, select[name="tipo"]'),
-      dataIni: obterValorCampo($row, 'input[name="data_inicio"], input[name="data_1"], .input-data:first'),
-      horaIni: obterValorCampo($row, 'input[name="hora_inicio"], input[name="h_inicio"], .input-hora:first'),
-      dataFim: obterValorCampo($row, 'input[name="data_fim"], input[name="data_2"], .input-data:last'),
-      horaFim: obterValorCampo($row, 'input[name="hora_fim"], input[name="h_fim"], .input-hora:last'),
+      dataIni: obterValorCampo($row, 'input[name="data_inicio"], input[name="data_1"], .input-data1'),
+      horaIni: obterValorCampo($row, 'input[name="hora_inicio"], input[name="h_inicio"], .input-hora1'),
+      dataFim: obterValorCampo($row, 'input[name="data_fim"], input[name="data_2"], .input-data2'),
+      horaFim: obterValorCampo($row, 'input[name="hora_fim"], input[name="h_fim"], .input-hora2'),
       falha: obterValorCampo($row, '.select-falha, select[name="falha"]'),
       opcom: obterValorCampo($row, '.select-opcom, select[name="opcom"]'),
       impacto: obterValorCampo($row, '.select-impacto, select[name="impacto"]'),
@@ -669,7 +736,7 @@ function gerarRelatorioWhatsApp() {
     }
   });
 
-  var turno = $('#selectTurno').val() || 'Turno 1 (06h00 - 18h00)';
+  var turno = $('#selectTurno').val() || 'Turno 1';
   var saindo = $('#selectAnalistaSaindo').val() || 'Francisco';
   var entrando = $('#selectAnalistaEntrando').val() || 'Rodrigo';
 
