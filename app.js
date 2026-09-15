@@ -198,26 +198,29 @@ function fn08_criarLinhaTabela(id) {
       <td class="align-middle">
         <select class="form-select form-select-sm select-falha">
           <option value="">Selecione...</option>
-          <option value="ENERGIA">ENERGIA</option>
-          <option value="LINK">LINK</option>
-          <option value="HARDWARE">HARDWARE</option>
-          <option value="ROTEADOR">ROTEADOR</option>
+          <option value="ISOLADO">Isolado</option>
+          <option value="PRIMÁRIO">Primário</option>
+          <option value="SECUNDÁRIO">Secundário</option>
+          <option value="TELEFONIA">Telefonia</option>
+          <option value="SETORES">Setores</option>
+          <option value="REDE INTERNA">Rede Interna</option>
         </select>
       </td>
       <td class="align-middle">
         <select class="form-select form-select-sm select-opcom">
           <option value="">Selecione...</option>
-          <option value="SIM">SIM</option>
-          <option value="NÃO">NÃO</option>
+          <option value="N/A">N/A</option>
+          <option value="OP-1">OP-1</option>
+          <option value="OP-2">OP-2</option>
+          <option value="OP-3">OP-3</option>
         </select>
       </td>
       <td class="align-middle">
         <select class="form-select form-select-sm select-impacto">
           <option value="">Selecione...</option>
-          <option value="ALTO">ALTO</option>
-          <option value="MÉDIO">MÉDIO</option>
-          <option value="BAIXO">BAIXO</option>
-          <option value="SEM IMPACTO">SEM IMPACTO</option>
+          <option value="N/A">N/A</option>
+          <option value="SIM">Sim</option>
+          <option value="NÃO">Não</option>
         </select>
       </td>
       <td class="align-middle">
@@ -226,9 +229,16 @@ function fn08_criarLinhaTabela(id) {
       <td class="align-middle">
         <select class="form-select form-select-sm select-causa">
           <option value="">Selecione...</option>
-          <option value="FALHA EXTERNA">FALHA EXTERNA</option>
-          <option value="MANUTENÇÃO">MANUTENÇÃO</option>
-          <option value="DESCONHECIDO">DESCONHECIDO</option>
+          <option value="PENDENTE">Pendente</option>
+          <option value="ENERGIA">Energia</option>
+          <option value="ROMPIMENTO DE FIBRA">Rompimento de Fibra</option>
+          <option value="INTERMITÊNCIA">Intermitência</option>
+          <option value="ATIVIDADE">Atividade</option>
+          <option value="COMUTADO ROTA">Comutado Rota</option>
+          <option value="MASSIVA">Massiva</option>
+          <option value="CONFIGURAÇÃO">Configuração</option>
+          <option value="ESTAÇÃO DA OPERADORA">Estação da Operadora</option>
+          <option value="BACK BONE">Back Bone</option>
         </select>
       </td>
       <td class="align-middle"><input type="text" class="form-control form-control-sm input-ticket" placeholder="Ticket/Chamado"></td>
