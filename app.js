@@ -706,6 +706,8 @@ function gerarRelatorioWhatsApp() {
   var incidentesLaranja = [];
   var atividadesCinza = [];
   var normalizadosVerde = [];
+  
+  var hoje = new Date().toISOString().split('T')[0];
 
   $('#incidentes tbody tr').each(function() {
     var $row = $(this);
@@ -730,9 +732,13 @@ function gerarRelatorioWhatsApp() {
     if ($tdSitio.hasClass('sitio-laranja')) {
       incidentesLaranja.push(item);
     } else if ($tdSitio.hasClass('sitio-cinza')) {
-      atividadesCinza.push(item);
-    } else if ($tdSitio.hasClass('sitio-verde') && isChecked) {
-      normalizadosVerde.push(item);
+      if (item.dataIni === hoje || item.dataFim === hoje || isChecked) {
+        atividadesCinza.push(item);
+      }
+    } else if ($tdSitio.hasClass('sitio-verde')) {
+      if (item.dataFim === hoje || isChecked) {
+        normalizadosVerde.push(item);
+      }
     }
   });
 
