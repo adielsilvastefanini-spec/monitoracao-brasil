@@ -1,5 +1,5 @@
 /* ==========================================================================
-   APP.JS - SISTEMA DE MONITORIA E PASSAGEM DE TURNO (VERSÃO COMPLETA)
+   APP.JS - SISTEMA DE MONITORIA E PASSAGEM DE TURNO (VERSÃO FINAL E CORRIGIDA)
    ========================================================================== */
 
 var dadosSitios = {};
@@ -9,13 +9,14 @@ var timerSalvarInput = null;
    01. HELPERS & BANCO DE DADOS (FIREBASE E LOCALSTORAGE)
    -------------------------------------------------------------------------- */
 
+// Função de validação segura para checar a disponibilidade do Firebase sem estourar Uncaught Error
 function firebaseDisponivel() {
   try {
-    return typeof firebase !== 'undefined' && 
-           firebase.apps && 
-           firebase.apps.length > 0 && 
-           typeof database !== 'undefined' && 
-           database !== null;
+    return (typeof firebase !== 'undefined' && 
+            firebase.apps && 
+            firebase.apps.length > 0 && 
+            typeof database !== 'undefined' && 
+            database !== null);
   } catch (e) {
     return false;
   }
@@ -23,7 +24,7 @@ function firebaseDisponivel() {
 
 function fn01_getOptionsSitio() {
   var html = '<option value="">Selecione...</option>';
-  if (dadosSitios && typeof dadosSitios === 'object') {
+  if (dadosSitios && typeof dadosSitios === 'object' && Object.keys(dadosSitios).length > 0) {
     Object.keys(dadosSitios).sort().forEach(function(s) {
       html += `<option value="${s}">${s}</option>`;
     });
@@ -92,16 +93,19 @@ function fn05_carregarParceirosPorTipo($tr, sitio, tipo) {
   $selectParceiro.html('<option value="">Selecione...</option>');
 
   if (sitio && tipo && dadosSitios[sitio] && dadosSitios[sitio][tipo]) {
-    dadosSitios[sitio][tipo].forEach(function(p) {
-      $selectParceiro.append(`<option value="${p}">${p}</option>`);
-    });
+    var parceiros = dadosSitios[sitio][tipo];
+    if (Array.isArray(parceiros)) {
+      parceiros.forEach(function(p) {
+        $selectParceiro.append(`<option value="${p}">${p}</option>`);
+      });
+    }
   }
   if (valAtual) $selectParceiro.val(valAtual);
 }
 
 function fn06_salvarDadosStorage() {
+  var listaIncidentes = [];
   try {
-    var listaIncidentes = [];
     $('#incidentes tbody tr').each(function() {
       var $tr = $(this);
       listaIncidentes.push({
@@ -127,8 +131,8 @@ function fn06_salvarDadosStorage() {
       localStorage.setItem('incidentes_local', JSON.stringify(listaIncidentes));
     }
   } catch (err) {
-    console.warn("Salvando em LocalStorage devido a erro no banco:", err);
-    localStorage.setItem('incidentes_local', JSON.stringify(listaIncidentes || []));
+    console.warn("Salvando em LocalStorage devido a erro/indisponibilidade do Firebase:", err);
+    localStorage.setItem('incidentes_local', JSON.stringify(listaIncidentes));
   }
 }
 
@@ -179,23 +183,38 @@ function fn08_criarLinhaTabela(idRow) {
 }
 
 function fn09_inicializarDados() {
+  var carregarLocal = function() {
+    var local = localStorage.getItem('dadosSitios');
+    if (local) {
+      try {
+        dadosSitios = JSON.parse(local);
+        fn09_atualizarDropdownsExistentes();
+      } catch(e) {
+        console.error("Erro ao ler dadosSitios local:", e);
+      }
+    }
+  };
+
   try {
     if (firebaseDisponivel()) {
       database.ref('config/dadosSitios').once('value').then(function(snapshot) {
         if (snapshot.exists()) {
           dadosSitios = snapshot.val();
+          localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
           fn09_atualizarDropdownsExistentes();
+        } else {
+          carregarLocal();
         }
+      }).catch(function(err) {
+        console.warn("Falha Firebase ao carregar dadosSitios:", err);
+        carregarLocal();
       });
     } else {
-      var local = localStorage.getItem('dadosSitios');
-      if (local) {
-        dadosSitios = JSON.parse(local);
-        fn09_atualizarDropdownsExistentes();
-      }
+      carregarLocal();
     }
   } catch (err) {
-    console.warn("Inicialização em modo local.", err);
+    console.warn("Inicialização em modo seguro/local.", err);
+    carregarLocal();
   }
 }
 
@@ -203,7 +222,11 @@ function fn09_atualizarDropdownsExistentes() {
   $('.select-sitio').each(function() {
     var valAtual = $(this).val();
     $(this).html(fn01_getOptionsSitio());
-    if (valAtual) $(this).val(valAtual);
+    if (valAtual) {
+      $(this).val(valAtual);
+      var $tr = $(this).closest('tr');
+      fn04_carregarTiposPorSitio($tr, valAtual);
+    }
   });
 }
 
@@ -213,9 +236,8 @@ function fn10_removerTipoSitio(codigo, tipo) {
 
     if (firebaseDisponivel()) {
       database.ref('config/dadosSitios/' + codigo + '/' + tipo).remove();
-    } else {
-      localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
     }
+    localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
     alert(`Tipo ${tipo} removido do sítio ${codigo}.`);
   }
 }
@@ -330,7 +352,7 @@ function fn11_gerarCheckPoint() {
   }
 
   var modalElem = document.getElementById('modalCheckPoint');
-  var modalInstance = new bootstrap.Modal(modalElem);
+  var modalInstance = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
   modalInstance.show();
 }
 
@@ -341,10 +363,11 @@ function fn12_renderizarEscalonamento(empresa, busca) {
 
   var renderTabela = function(dados) {
     if (!dados || Object.keys(dados).length === 0) {
-      $tbody.html('<tr><td colspan="5" class="text-center text-muted">Nenhum registro de escalonamento encontrado.</td></tr>');
+      $tbody.html('<tr><td colspan="5" class="text-center text-muted p-3">Nenhum registro de escalonamento encontrado.</td></tr>');
       return;
     }
 
+    $tbody.empty();
     Object.keys(dados).forEach(function(key) {
       var item = dados[key];
       var emp = item.empresa || '-';
@@ -374,12 +397,16 @@ function fn12_renderizarEscalonamento(empresa, busca) {
   try {
     if (firebaseDisponivel()) {
       database.ref('escalonamento').once('value').then(function(snapshot) {
-        renderTabela(snapshot.val());
+        var val = snapshot.val();
+        if (val) localStorage.setItem('escalonamento_local', JSON.stringify(val));
+        renderTabela(val);
       }).catch(function() {
-        renderTabela(null);
+        var localEsc = localStorage.getItem('escalonamento_local');
+        renderTabela(localEsc ? JSON.parse(localEsc) : null);
       });
     } else {
-      renderTabela(null);
+      var localEsc = localStorage.getItem('escalonamento_local');
+      renderTabela(localEsc ? JSON.parse(localEsc) : null);
     }
   } catch (e) {
     console.warn("Falha no carregamento do escalonamento:", e);
@@ -441,13 +468,15 @@ $(document).ready(function() {
 
   $('#incidentes').on('change', '.select-sitio', function() {
     var $tr = $(this).closest('tr');
-    fn04_carregarTiposPorSitio($tr, $(this).val());
+    var sitioSel = $(this).val();
+    fn04_carregarTiposPorSitio($tr, sitioSel);
   });
 
   $('#incidentes').on('change', '.select-tipo', function() {
     var $tr = $(this).closest('tr');
     var sitio = $tr.find('.select-sitio').val();
-    fn05_carregarParceirosPorTipo($tr, sitio, $(this).val());
+    var tipoSel = $(this).val();
+    fn05_carregarParceirosPorTipo($tr, sitio, tipoSel);
   });
 
   $('#btnSalvarNovoSitio').on('click', function() {
@@ -482,6 +511,7 @@ $(document).ready(function() {
     $btn.prop('disabled', true).text('Salvando...');
 
     var atualizarUI = function() {
+      localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
       fn09_atualizarDropdownsExistentes();
 
       $('#formNovoSitio')[0].reset();
@@ -497,11 +527,10 @@ $(document).ready(function() {
       database.ref('config/dadosSitios/' + codigo + '/' + tipo).set(dadosSitios[codigo][tipo])
         .then(atualizarUI)
         .catch(function(err) {
-          alert('Erro ao salvar no banco: ' + err.message);
-          $btn.prop('disabled', false).text('Salvar Dados');
+          console.warn('Erro ao salvar no Firebase, gravado localmente:', err.message);
+          atualizarUI();
         });
     } else {
-      localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
       atualizarUI();
     }
   });
