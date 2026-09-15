@@ -3,23 +3,93 @@
    Padrão: Local-First (Renderização Instantânea + Sincronização Silenciosa)
    ========================================================================== */
 
+/* ==========================================================================
+   APP.JS - SISTEMA DE MONITORIA E PASSAGEM DE TURNO
+   Padrão: Local-First (Renderização Instantânea + Sincronização Silenciosa)
+   ========================================================================== */
+
 /* --------------------------------------------------------------------------
-   00. DADOS PADRÃO DE BACKUP (FALLBACK PARA NAVEGADOR LIMPO)
+   00. DADOS PADRÃO DE BACKUP (SEUS DADOS REAIS TRATADOS)
    -------------------------------------------------------------------------- */
 var dadosSitiosPadrao = {
-  "SITIO_DEMO": {
-    "Link / Energia": ["Operadora A", "Operadora B"],
-    "Roteador SD-WAN": ["Parceiro X"]
-  }
+  "AJU": { "ATO": ["AENA", "CIRION BRASIL", "EMBRATEL", "OI"] },
+  "BEL": { "ATO": ["SOCICAM", "CIRION BRASIL", "EMBRATEL", "OI"], "MNT": ["SOCICAM", "LATAM BRASIL", "VIVO", "CIRION BRASIL", "OI"] },
+  "BHZ": { "Contact Center": ["OI", "AeC", "TELEFONICA BRASIL", "CIRION BRASIL"] },
+  "BSB": { "ATO": ["INFRAMERICA", "CIRION BRASIL", "EMBRATEL", "OI", "SITA"], "Loja": ["LATAM", "VIVO", "CIRION BRASIL", "OI"] },
+  "CDF": { "ATO": ["CIRION BRASIL", "LATAM", "VIVO"] },
+  "CGH": { "ATO": ["AENA", "TELEFONICA BRASIL", "OI"], "Teca": ["LATAM", "CIRION BRASIL", "OI", "EMBRATEL"] },
+  "CWB": { "ATO": ["CCR", "CIRION BRASIL", "OI", "EMBRATEL"], "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"], "Volvo": ["CIRION BRASIL", "LATAM", "OI", "VIVO"] },
+  "FOR": { "ATO": ["FRAPORT", "CIRION BRASIL", "EMBRATEL", "OI"] },
+  "GIG": { "ATO": ["RIOGALEÃO", "CIRION BRASIL", "EMBRATEL", "OI"] },
+  "GRU": { "ATO": ["GRUAIRPORT", "LATAM", "SITA", "TELEFONICA BRASIL", "OI"] },
+  "PMW": { "Kenerson": ["LATAM", "Vivo", "CIRION BRASIL", "Oi"] },
+  "POA": { "ATO": ["LATAM", "FRAPORT", "CIRION BRASIL", "EMBRATEL", "OI"] },
+  "REC": { "ATO": ["AENA", "CIRION BRASIL", "OI", "EMBRATEL"] },
+  "SDU": { "ATO": ["INFRAERO", "CIRION BRASIL", "EMBRATEL", "OI"] },
+  "SSA": { "ATO": ["VINCI", "CIRION BRASIL", "EMBRATEL", "OI"] },
+  "VCP": { "ATO": ["VIRACOPOS", "TIM", "CIRION BRASIL", "OI"] }
 };
 
 var dadosEscalonamentoPadrao = {
-  "1": {
-    "empresa": "SISTEMAS",
-    "nome": "Suporte N2",
-    "cargo": "Analista de Redes",
-    "contato": "(11) 99999-9999",
-    "obs": "Plantão 24/7"
+  "CIRION": {
+    "empresa": "CIRION",
+    "niveis": [
+      { "atendimento": "24h", "cargo": "Central de Serviços", "email": "https://portal.ciriontechnologies.com/", "gestor": "Chamado", "nivel": "0", "telefone": "0800 887 3333 / (11) 3957-2288" },
+      { "atendimento": "24h", "cargo": "Central de Serviços", "email": "-", "gestor": "Chamado", "nivel": "1", "telefone": "11 3957-2005 / 11 3957-2415" },
+      { "atendimento": "24h", "cargo": "Mesa de Ajuda", "email": "ms.scalation.tier2@ciriontechnologies.com", "gestor": "-", "nivel": "1", "telefone": "(11) 3958-0051" },
+      { "atendimento": "24h", "cargo": "Suporte Dedicado", "email": "cristóbal.gonzalez.ext@ciriontechnologies.com", "gestor": "Cristóbal Gonzalez", "nivel": "1", "telefone": "56 2 2422 5941" },
+      { "atendimento": "24h", "cargo": "Suporte Dedicado", "email": "samuel.parraguez.ext@ciriontechnologies.com", "gestor": "Samuel Parraguez", "nivel": "1", "telefone": "57 2 2422 5914" },
+      { "atendimento": "90min - 4h", "cargo": "Supervisor", "email": "ms.escalation@ciriontechnologies.com", "gestor": "-", "nivel": "2", "telefone": "(11) 3957-2299" },
+      { "atendimento": "8h as 17h", "cargo": "Supervisor", "celular": "(11) 99649-9685", "email": "Evandro.oliveira@ciriontechnologies.com", "gestor": "Evandro Oliveira", "nivel": "2", "telefone": "-" },
+      { "atendimento": "14h as 23h", "cargo": "Supervisor", "celular": "(11) 99633-6619", "email": "Rafael.deandrade@ciriontechnologies.com", "gestor": "Rafael Rangel", "nivel": "2", "telefone": "-" },
+      { "atendimento": "23h as 8h", "cargo": "Supervisor", "email": "dl-nm-brasil@ciriontechnologies.com", "gestor": "Tech Lead", "nivel": "2", "telefone": "-" },
+      { "atendimento": "2h a 8h", "cargo": "Coordenador", "celular": "(11) 97133-3863", "email": "eduardo.silva@ciriontechnologies.com", "gestor": "Eduardo Silva", "nivel": "3", "telefone": "(11) 3957-2243" },
+      { "atendimento": "4h a 12h", "cargo": "Manager", "celular": "(11) 97124-7730", "email": "pamela.spadrezani@ciriontechnologies.com", "gestor": "Pâmela Spadrezani", "nivel": "4", "telefone": "(11) 3957-2243" },
+      { "atendimento": "8h a 18h", "cargo": "Executive Manager", "celular": "57 300 8359-695", "email": "juan.quitian@ciriontechnologies.com", "gestor": "Juan Quitian", "nivel": "5", "telefone": "52 55 8897-3814" },
+      { "atendimento": "12h a 24h", "cargo": "Diretor", "celular": "(11) 93351-6699", "email": "claudia.secco@ciriontechnologies.com", "gestor": "Claudia Secco", "nivel": "6", "telefone": "(11) 3957-2213" }
+    ]
+  },
+  "EBT": {
+    "empresa": "EBT",
+    "niveis": [
+      { "atendimento": "24h", "cargo": "Portal", "email": "https://embratel.com.br/embratelonline/", "gestor": "Chamado", "nivel": "0", "telefone": "0800 721 1021" },
+      { "atendimento": "24h", "cargo": "CRN", "email": "caspo@embratel.com.br / CHAMADO@claroatendimento.com.br", "gestor": "Chamado", "nivel": "Plantão", "telefone": "(11) 2121-2880" },
+      { "atendimento": "08h ás 17h", "cargo": "Analista", "celular": "(11) 98949-6265", "email": "jeferson.santana@claro.com.br", "gestor": "Jefferson Tadeu", "nivel": "1", "telefone": "(11) 2121-2898" },
+      { "atendimento": "06h ás 20h", "cargo": "Gestor Técnico", "celular": "(11) 99202-8125", "email": "adriano.nascimento@claro.com.br", "gestor": "Adriano Nascimento", "nivel": "2", "telefone": "(11) 2121-7146" },
+      { "atendimento": "-", "cargo": "Ger. Operacional", "celular": "(11) 99259-6352", "email": "jose.nevessilva@claro.com.br", "gestor": "José E. Neves Silva", "nivel": "3", "telefone": "(11) 2121-2134" }
+    ]
+  },
+  "OI": {
+    "empresa": "OI",
+    "niveis": [
+      { "atendimento": "24h", "cargo": "Portal", "email": "https://portaloisolucoes.oi.com.br/login", "gestor": "Chamado", "nivel": "Plantão", "telefone": "0800 031 8031 / 0800-282-1231" },
+      { "atendimento": "24h", "cargo": "Gestor Técnico", "email": "-", "gestor": "-", "nivel": "1", "telefone": "-" },
+      { "atendimento": "24h", "cargo": "Sup.Técnico", "celular": "(11) 98050-0277", "email": "helbert.santos@oi.net.br", "gestor": "Helbert V D Santos", "nivel": "2", "telefone": "-" },
+      { "atendimento": "24h", "cargo": "Ger. Operações", "celular": "(11) 96953-7738", "email": "danilo.mendes@oi.net.br", "gestor": "Danilo M Oliveira", "nivel": "3", "telefone": "-" },
+      { "atendimento": "24h", "cargo": "Diretor. Nac. Operações", "celular": "(11) 98050-0075", "email": "helio.magatti@oi.net.br", "gestor": "Helio Magatti", "nivel": "4", "telefone": "-" }
+    ]
+  },
+  "SITA": {
+    "empresa": "SITA",
+    "niveis": [
+      { "atendimento": "24h", "cargo": "Service Desk", "email": "network.support@sita.aero", "gestor": "Network Support", "nivel": "1", "telefone": "0800 881 0040" },
+      { "atendimento": "24h", "cargo": "Supervisor", "email": "sjo.supervisor@sita.aero", "gestor": "Service Desk", "nivel": "2", "telefone": "1 514 282 2838" },
+      { "atendimento": "24h", "cargo": "TCSS", "celular": "(21) 96722-0546", "email": "wendel.arcosy@sita.aero", "gestor": "Wendel Arcosy", "nivel": "3", "telefone": "(11) 5538-4821" },
+      { "atendimento": "24h", "cargo": "TCSS", "email": "marco.rodrigues@sita.aero", "gestor": "Marcos Rodrigues", "nivel": "3", "telefone": "-" },
+      { "atendimento": "8x5", "cargo": "CSM", "celular": "(11) 99547-4838", "email": "sirley.mendes@sita.aero", "gestor": "Sirley Mendes", "nivel": "4", "telefone": "-" },
+      { "atendimento": "8x5", "cargo": "AC", "celular": "(56) 98768-0941", "email": "miguel.saraiva@sita.aero", "gestor": "Miguel Saraiva", "nivel": "5", "telefone": "-" },
+      { "atendimento": "-", "cargo": "ROD", "celular": "(11) 95697-7477", "email": "rackel.valadares@sita.aero", "gestor": "Rackel Valadares", "nivel": "6", "telefone": "-" }
+    ]
+  },
+  "VIVO": {
+    "empresa": "VIVO",
+    "niveis": [
+      { "atendimento": "24h", "cargo": "Dados e Voz", "email": "relacionamentoempresas.br@vivo.com.br", "gestor": "Chamado", "nivel": "0", "telefone": "0800 015 1551" },
+      { "atendimento": "24h", "cargo": "GI", "email": "plantaoempresas@vivo.com.br (Após 18h e fds)", "gestor": "Chamado", "nivel": "0", "telefone": "0800 0112499" },
+      { "atendimento": "24h", "cargo": "Gestor Técnico", "celular": "(11) 97504-1171", "email": "ana.gilio@telefonica.com", "gestor": "Ana Paula Gilio", "nivel": "1", "telefone": "-" },
+      { "atendimento": "24h", "cargo": "Gerente CS", "celular": "(11) 99934-1065", "email": "daniela.reboreda@telefonica.com", "gestor": "Daniela Reboreda", "nivel": "2", "telefone": "-" },
+      { "atendimento": "24h", "cargo": "Gerente SE CS", "celular": "(11) 99551-6968", "email": "douglas.santana@telefonica.com", "gestor": "Douglas Santana", "nivel": "3", "telefone": "-" }
+    ]
   }
 };
 
@@ -27,7 +97,6 @@ var dadosEscalonamentoPadrao = {
 var dadosSitios = JSON.parse(localStorage.getItem('dadosSitios')) || dadosSitiosPadrao;
 var dadosEscalonamento = JSON.parse(localStorage.getItem('escalonamento_local')) || dadosEscalonamentoPadrao;
 var timerSalvarInput = null;
-
 /* --------------------------------------------------------------------------
    01. INICIALIZAÇÃO DA APLICAÇÃO (LOCAL-FIRST)
    -------------------------------------------------------------------------- */
@@ -384,28 +453,56 @@ function fn12_renderizarTabelaEscalonamento(dados, filtroEmpresa, termoBusca) {
   }
 
   Object.keys(dados).forEach(function(key) {
-    var item = dados[key];
-    var emp = item.empresa || '-';
-    var nome = item.nome || '-';
-    var cargo = item.cargo || '-';
-    var contato = item.contato || '-';
-    var obs = item.obs || '-';
+    var itemEmpresa = dados[key];
+    var emp = itemEmpresa.empresa || key;
 
     if (filtroEmpresa && filtroEmpresa !== "TODAS" && emp.toUpperCase() !== filtroEmpresa.toUpperCase()) return;
-    if (termoBusca) {
-      var termo = termoBusca.toLowerCase();
-      var fullText = `${emp} ${nome} ${cargo} ${contato} ${obs}`.toLowerCase();
-      if (fullText.indexOf(termo) === -1) return;
-    }
 
-    var tr = `<tr>
-      <td><b>${emp}</b></td>
-      <td>${nome}</td>
-      <td>${cargo}</td>
-      <td>${contato}</td>
-      <td>${obs}</td>
-    </tr>`;
-    $tbody.append(tr);
+    // Se for formato de níveis em array (seus dados reais)
+    if (itemEmpresa.niveis && Array.isArray(itemEmpresa.niveis)) {
+      itemEmpresa.niveis.forEach(function(n) {
+        var nome = n.gestor || '-';
+        var cargo = `Nível ${n.nivel} - ${n.cargo || ''}`.trim();
+        var contato = [n.telefone, n.celular].filter(Boolean).filter(c => c !== '-').join(' / ') || '-';
+        var obs = [n.email, n.atendimento ? `Horário: ${n.atendimento}` : ''].filter(Boolean).filter(o => o !== '-').join(' | ') || '-';
+
+        if (termoBusca) {
+          var termo = termoBusca.toLowerCase();
+          var fullText = `${emp} ${nome} ${cargo} ${contato} ${obs}`.toLowerCase();
+          if (fullText.indexOf(termo) === -1) return;
+        }
+
+        var tr = `<tr>
+          <td><b>${emp}</b></td>
+          <td>${nome}</td>
+          <td>${cargo}</td>
+          <td>${contato}</td>
+          <td><small>${obs}</small></td>
+        </tr>`;
+        $tbody.append(tr);
+      });
+    } else {
+      // Suporte ao formato simples antigo
+      var nome = itemEmpresa.nome || '-';
+      var cargo = itemEmpresa.cargo || '-';
+      var contato = itemEmpresa.contato || '-';
+      var obs = itemEmpresa.obs || '-';
+
+      if (termoBusca) {
+        var termo = termoBusca.toLowerCase();
+        var fullText = `${emp} ${nome} ${cargo} ${contato} ${obs}`.toLowerCase();
+        if (fullText.indexOf(termo) === -1) return;
+      }
+
+      var tr = `<tr>
+        <td><b>${emp}</b></td>
+        <td>${nome}</td>
+        <td>${cargo}</td>
+        <td>${contato}</td>
+        <td>${obs}</td>
+      </tr>`;
+      $tbody.append(tr);
+    }
   });
 }
 
