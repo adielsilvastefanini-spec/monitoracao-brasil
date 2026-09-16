@@ -400,9 +400,9 @@ function fn_inicializarInterfaceLocal() {
     fn12_renderizarTabelaEscalonamento(dadosEscalonamento);
   }
 
-  // Ouve atualizações em tempo real no banco de dados
-  db.ref('incidentes_compartilhados').on('value', function(snapshot) {
-    // Se o usuário estiver digitando em um campo ativo, ignora a re-renderização momentânea
+  // Ouve o nó "passagens" em tempo real
+  db.ref('passagens').on('value', function(snapshot) {
+    // Evita recriar a tabela se o operador estiver digitando em algum campo
     if ($(document.activeElement).is('input, select')) {
       return;
     }
@@ -411,8 +411,17 @@ function fn_inicializarInterfaceLocal() {
     var $tbody = $('#incidentes tbody');
     $tbody.empty();
 
-    if (Array.isArray(incidentesSalvos) && incidentesSalvos.length > 0) {
-      incidentesSalvos.forEach(function(item) {
+    // Converte objeto ou array vindo do Firebase
+    var lista = [];
+    if (Array.isArray(incidentesSalvos)) {
+      lista = incidentesSalvos;
+    } else if (typeof incidentesSalvos === 'object') {
+      lista = Object.values(incidentesSalvos);
+    }
+
+    if (lista.length > 0) {
+      lista.forEach(function(item) {
+        if (!item) return;
         var $tr = fn08_criarLinhaTabela(item.id || Date.now().toString());
 
         $tr.find('.select-sitio').val(item.sitio || '');
@@ -665,29 +674,32 @@ function fn09_atualizarDropdownsExistentes() {
 }
 
 function fn06_salvarDadosStorage() {
-  var incidentesArray = [];
+  var incidentes = [];
   $('#incidentes tbody tr').each(function() {
     var $tr = $(this);
-    incidentesArray.push({
-      id: $tr.attr('data-id'),
-      sitio: $tr.find('.select-sitio').val(),
-      tipo: $tr.find('.select-tipo').val(),
-      data1: $tr.find('.input-data1').val(),
-      hora1: $tr.find('.input-hora1').val(),
-      data2: $tr.find('.input-data2').val(),
-      hora2: $tr.find('.input-hora2').val(),
-      falha: $tr.find('.select-falha').val(),
-      opcom: $tr.find('.select-opcom').val(),
-      impacto: $tr.find('.select-impacto').val(),
-      parceiro: $tr.find('.select-parceiro').val(),
-      causa: $tr.find('.select-causa').val(),
-      ticket: $tr.find('.input-ticket').val(),
-      status: $tr.find('.input-status').val()
+    var id = $tr.attr('data-id');
+    if (!id) return;
+
+    incidentes.push({
+      id: id,
+      sitio: $tr.find('.select-sitio').val() || '',
+      tipo: $tr.find('.select-tipo').val() || '',
+      data1: $tr.find('.input-data1').val() || '',
+      hora1: $tr.find('.input-hora1').val() || '',
+      data2: $tr.find('.input-data2').val() || '',
+      hora2: $tr.find('.input-hora2').val() || '',
+      falha: $tr.find('.select-falha').val() || '',
+      opcom: $tr.find('.select-opcom').val() || '',
+      impacto: $tr.find('.select-impacto').val() || '',
+      parceiro: $tr.find('.select-parceiro').val() || '',
+      causa: $tr.find('.select-causa').val() || '',
+      ticket: $tr.find('.input-ticket').val() || '',
+      status: $tr.find('.input-status').val() || ''
     });
   });
 
-  localStorage.setItem('incidentes_local', JSON.stringify(incidentesArray));
-  localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
+  // Salva diretamente na nó "passagens" do seu Firebase
+  db.ref('passagens').set(incidentes);
 }
 
 function fn10_removerTipoSitio(codigo, tipo) {
