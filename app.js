@@ -396,43 +396,52 @@ $(document).ready(function() {
 
 function fn_inicializarInterfaceLocal() {
   fn09_atualizarDropdownsExistentes();
-  fn12_renderizarTabelaEscalonamento(dadosEscalonamento);
-
-  // Carrega os incidentes salvos no localStorage
-  var incidentesSalvos = JSON.parse(localStorage.getItem('incidentes_local')) || [];
-  var $tbody = $('#incidentes tbody');
-  $tbody.empty();
-
-  if (incidentesSalvos.length > 0) {
-    incidentesSalvos.forEach(function(item) {
-      var $tr = fn08_criarLinhaTabela(item.id || Date.now().toString());
-      
-      $tr.find('.select-sitio').val(item.sitio || '');
-      fn04_carregarTiposPorSitio($tr, item.sitio);
-      
-      $tr.find('.select-tipo').val(item.tipo || '');
-      fn05_carregarParceirosPorTipo($tr, item.sitio, item.tipo);
-
-      $tr.find('.input-data1').val(item.data1 || '');
-      $tr.find('.input-hora1').val(item.hora1 || '');
-      $tr.find('.input-data2').val(item.data2 || '');
-      $tr.find('.input-hora2').val(item.hora2 || '');
-      $tr.find('.select-falha').val(item.falha || '');
-      $tr.find('.select-opcom').val(item.opcom || '');
-      $tr.find('.select-impacto').val(item.impacto || '');
-      $tr.find('.select-parceiro').val(item.parceiro || '');
-      $tr.find('.select-causa').val(item.causa || '');
-      $tr.find('.input-ticket').val(item.ticket || '');
-      $tr.find('.input-status').val(item.status || '');
-
-      fn03_avaliarStatusLinha($tr);
-    });
-  } else {
-    fn08_criarLinhaTabela(Date.now().toString());
+  if (typeof dadosEscalonamento !== 'undefined') {
+    fn12_renderizarTabelaEscalonamento(dadosEscalonamento);
   }
 
-  fn_carregarEscalaPlantao();
-  fn_carregarLinksProcessos();
+  // Ouve atualizações em tempo real no banco de dados
+  db.ref('incidentes_compartilhados').on('value', function(snapshot) {
+    // Se o usuário estiver digitando em um campo ativo, ignora a re-renderização momentânea
+    if ($(document.activeElement).is('input, select')) {
+      return;
+    }
+
+    var incidentesSalvos = snapshot.val() || [];
+    var $tbody = $('#incidentes tbody');
+    $tbody.empty();
+
+    if (Array.isArray(incidentesSalvos) && incidentesSalvos.length > 0) {
+      incidentesSalvos.forEach(function(item) {
+        var $tr = fn08_criarLinhaTabela(item.id || Date.now().toString());
+
+        $tr.find('.select-sitio').val(item.sitio || '');
+        fn04_carregarTiposPorSitio($tr, item.sitio);
+
+        $tr.find('.select-tipo').val(item.tipo || '');
+        fn05_carregarParceirosPorTipo($tr, item.sitio, item.tipo);
+
+        $tr.find('.input-data1').val(item.data1 || '');
+        $tr.find('.input-hora1').val(item.hora1 || '');
+        $tr.find('.input-data2').val(item.data2 || '');
+        $tr.find('.input-hora2').val(item.hora2 || '');
+        $tr.find('.select-falha').val(item.falha || '');
+        $tr.find('.select-opcom').val(item.opcom || '');
+        $tr.find('.select-impacto').val(item.impacto || '');
+        $tr.find('.select-parceiro').val(item.parceiro || '');
+        $tr.find('.select-causa').val(item.causa || '');
+        $tr.find('.input-ticket').val(item.ticket || '');
+        $tr.find('.input-status').val(item.status || '');
+
+        fn03_avaliarStatusLinha($tr);
+      });
+    } else {
+      fn08_criarLinhaTabela(Date.now().toString());
+    }
+  });
+
+  if (typeof fn_carregarEscalaPlantao === 'function') fn_carregarEscalaPlantao();
+  if (typeof fn_carregarLinksProcessos === 'function') fn_carregarLinksProcessos();
 }
 
 /* --------------------------------------------------------------------------
@@ -1448,5 +1457,9 @@ function fn_configurarEventosDOM() {
 
     modalInstance.show();
   });
+  // Salva automaticamente no Firebase ao alterar qualquer input ou select da tabela
+$('#incidentes').on('change input', 'input, select', function() {
+  fn06_salvarDadosStorage();
+});
 
 }
