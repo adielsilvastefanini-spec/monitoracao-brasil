@@ -402,12 +402,11 @@ function fn_ordenarIncidentes(lista) {
     var dataFimA = (a.data2 || '').trim();
     var dataFimB = (b.data2 || '').trim();
 
-    // Considera normalizado/fechado se tiver Data Fim preenchida OU status correspondente
     var ehNormalizadoA = dataFimA !== '' || statusA.includes('norma') || statusA.includes('fech') || statusA.includes('ok');
     var ehNormalizadoB = dataFimB !== '' || statusB.includes('norma') || statusB.includes('fech') || statusB.includes('ok');
 
-    if (ehNormalizadoA && !ehNormalizadoB) return 1;  // Joga A (normalizado) para baixo
-    if (!ehNormalizadoA && ehNormalizadoB) return -1; // Mantém B em cima (pendente)
+    if (ehNormalizadoA && !ehNormalizadoB) return 1;
+    if (!ehNormalizadoA && ehNormalizadoB) return -1;
     return 0;
   });
 }
@@ -488,7 +487,7 @@ function fn_inicializarInterfaceLocal() {
   if (typeof fn_carregarEscalaPlantao === 'function') fn_carregarEscalaPlantao();
   if (typeof fn_carregarLinksProcessos === 'function') fn_carregarLinksProcessos();
 
-  // Escuta de validações de data e hora
+  // Escuta de validações de data e hora (dentro da função inicializadora)
   $('#incidentes').off('change.validaData').on('change.validaData', '.input-data1, .input-data2, .input-hora1, .input-hora2', function() {
     var $tr = $(this).closest('tr');
     fn_validarDataFutura($tr, $(this));
@@ -548,21 +547,6 @@ function fn_validarDataFutura($tr, $inputElemento) {
   }
 
   return true;
-}
-
-  // ------------------------------------------------------------------
-  // EVENTOS DE VALIDAÇÃO DE DATA E HORA FUTURA (AGREGADOS)
-  // ------------------------------------------------------------------
-  $('#incidentes').off('change.validaData').on('change.validaData', '.input-data1, .input-data2, .input-hora1, .input-hora2', function() {
-    var $tr = $(this).closest('tr');
-    fn_validarDataFutura($tr, $(this));
-  });
-
-  $('#incidentes').off('change.validaCausa').on('change.validaCausa', '.select-causa', function() {
-    var $tr = $(this).closest('tr');
-    fn_validarDataFutura($tr, $tr.find('.input-data1'));
-    fn_validarDataFutura($tr, $tr.find('.input-hora1'));
-  });
 }
 
 /* --------------------------------------------------------------------------
