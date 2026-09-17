@@ -393,16 +393,18 @@ $(document).ready(function() {
   // STEP 3: Configura escutas de eventos no DOM
   fn_configurarEventosDOM();
 });
-// Função auxiliar para mover os itens verde/normalizados para o fim
+
+// Ordena a lista: pendentes no topo, normalizados no final
 function fn_ordenarIncidentes(lista) {
   return lista.sort(function(a, b) {
     var statusA = (a.status || '').toLowerCase();
     var statusB = (b.status || '').toLowerCase();
 
-    var ehNormalizadoA = statusA.includes('normalizado') || statusA.includes('fechado') || statusA.includes('ok');
-    var ehNormalizadoB = statusB.includes('normalizado') || statusB.includes('fechado') || statusB.includes('ok');
+    // Considera normalizado se tiver Data 2 preenchida ou status contendo "norma", "fech" ou "ok"
+    var ehNormalizadoA = (a.data2 && a.data2.trim() !== '') || statusA.includes('norma') || statusA.includes('fech') || statusA.includes('ok');
+    var ehNormalizadoB = (b.data2 && b.data2.trim() !== '') || statusB.includes('norma') || statusB.includes('fech') || statusB.includes('ok');
 
-    if (ehNormalizadoA && !ehNormalizadoB) return 1;  // Move A para o final
+    if (ehNormalizadoA && !ehNormalizadoB) return 1;  // Joga A para o final
     if (!ehNormalizadoA && ehNormalizadoB) return -1; // Mantém B abaixo
     return 0;
   });
@@ -433,7 +435,7 @@ function fn_inicializarInterfaceLocal() {
       lista = Object.values(incidentesSalvos);
     }
 
-    // ORDENAÇÃO: Ordena os incidentes colocando os normalizados (verdes) no final da tabela
+    // Aplica a ordenação para manter os normalizados no final
     lista = fn_ordenarIncidentes(lista);
 
     if (lista.length > 0) {
