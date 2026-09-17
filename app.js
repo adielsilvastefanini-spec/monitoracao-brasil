@@ -437,9 +437,6 @@ function fn_inicializarInterfaceLocal() {
       lista = Object.values(incidentesSalvos);
     }
 
-    // Aplica a ordenação para manter os normalizados no final
-    lista = fn_ordenarIncidentes(lista);
-
     if (lista.length > 0) {
       lista.forEach(function(item) {
         if (!item) return;
@@ -463,8 +460,30 @@ function fn_inicializarInterfaceLocal() {
         $tr.find('.input-ticket').val(item.ticket || '');
         $tr.find('.input-status').val(item.status || '');
 
+        // Aplica as regras visuais na linha (ex: aplica classe verde caso normalizado)
         fn03_avaliarStatusLinha($tr);
       });
+
+      // ORDENAÇÃO NO DOM: Move visualmente as linhas verdes/normalizadas para o final
+      $tbody.find('tr').sort(function(a, b) {
+        var $a = $(a);
+        var $b = $(b);
+
+        var dataFimA = ($a.find('.input-data2').val() || '').trim();
+        var dataFimB = ($b.find('.input-data2').val() || '').trim();
+        
+        var statusA = ($a.find('.input-status').val() || '').toLowerCase();
+        var statusB = ($b.find('.input-status').val() || '').toLowerCase();
+
+        // Checa se a linha tem a classe de sucesso ou data de término preenchida
+        var ehNormalizadoA = dataFimA !== '' || statusA.includes('norma') || $a.hasClass('table-success') || $a.find('.select-sitio').hasClass('bg-success');
+        var ehNormalizadoB = dataFimB !== '' || statusB.includes('norma') || $b.hasClass('table-success') || $b.find('.select-sitio').hasClass('bg-success');
+
+        if (ehNormalizadoA && !ehNormalizadoB) return 1;
+        if (!ehNormalizadoA && ehNormalizadoB) return -1;
+        return 0;
+      }).appendTo($tbody);
+
     } else {
       fn08_criarLinhaTabela(Date.now().toString());
     }
