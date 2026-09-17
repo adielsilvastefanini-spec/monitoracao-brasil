@@ -411,6 +411,33 @@ function fn_ordenarIncidentes(lista) {
     return 0;
   });
 }
+// Impede a inserção de datas futuras, exceto quando a Causa for "Atividade"
+function fn_validarDataFutura($tr, $inputData) {
+  var causa = ($tr.find('.select-causa').val() || '').toLowerCase().trim();
+  
+  // Se for "atividade", permite qualquer data (inclusive futura)
+  if (causa === 'atividade') {
+    return true;
+  }
+
+  var dataValor = $inputData.val();
+  if (!dataValor) return true;
+
+  // Converte DD/MM/AAAA para objeto Date
+  var partes = dataValor.split('/');
+  if (partes.length === 3) {
+    var dataInserida = new Date(partes[2], partes[1] - 1, partes[0]);
+    var hoje = new Date();
+    hoje.setHours(0, 0, 0, 0); // Considera apenas a data (sem hora)
+
+    if (dataInserida > hoje) {
+      alert('Datas futuras só são permitidas quando a Causa for "Atividade".');
+      $inputData.val(''); // Limpa o campo com data futura inválida
+      return false;
+    }
+  }
+  return true;
+}
 
 function fn_inicializarInterfaceLocal() {
   fn09_atualizarDropdownsExistentes();
@@ -460,7 +487,7 @@ function fn_inicializarInterfaceLocal() {
         $tr.find('.input-ticket').val(item.ticket || '');
         $tr.find('.input-status').val(item.status || '');
 
-        // Aplica as regras visuais na linha (ex: aplica classe verde caso normalizado)
+        // Aplica as regras visuais na linha
         fn03_avaliarStatusLinha($tr);
       });
 
@@ -475,7 +502,6 @@ function fn_inicializarInterfaceLocal() {
         var statusA = ($a.find('.input-status').val() || '').toLowerCase();
         var statusB = ($b.find('.input-status').val() || '').toLowerCase();
 
-        // Checa se a linha tem a classe de sucesso ou data de término preenchida
         var ehNormalizadoA = dataFimA !== '' || statusA.includes('norma') || $a.hasClass('table-success') || $a.find('.select-sitio').hasClass('bg-success');
         var ehNormalizadoB = dataFimB !== '' || statusB.includes('norma') || $b.hasClass('table-success') || $b.find('.select-sitio').hasClass('bg-success');
 
@@ -491,6 +517,18 @@ function fn_inicializarInterfaceLocal() {
 
   if (typeof fn_carregarEscalaPlantao === 'function') fn_carregarEscalaPlantao();
   if (typeof fn_carregarLinksProcessos === 'function') fn_carregarLinksProcessos();
+
+  // Validação de datas futuras vinculada aos inputs da tabela
+  $('#incidentes').off('change.validaData').on('change.validaData', '.input-data1, .input-data2', function() {
+    var $tr = $(this).closest('tr');
+    fn_validarDataFutura($tr, $(this));
+  });
+
+  $('#incidentes').off('change.validaCausa').on('change.validaCausa', '.select-causa', function() {
+    var $tr = $(this).closest('tr');
+    fn_validarDataFutura($tr, $tr.find('.input-data1'));
+    fn_validarDataFutura($tr, $tr.find('.input-data2'));
+  });
 }
 
 /* --------------------------------------------------------------------------
