@@ -393,6 +393,20 @@ $(document).ready(function() {
   // STEP 3: Configura escutas de eventos no DOM
   fn_configurarEventosDOM();
 });
+// Função auxiliar para mover os itens verde/normalizados para o fim
+function fn_ordenarIncidentes(lista) {
+  return lista.sort(function(a, b) {
+    var statusA = (a.status || '').toLowerCase();
+    var statusB = (b.status || '').toLowerCase();
+
+    var ehNormalizadoA = statusA.includes('normalizado') || statusA.includes('fechado') || statusA.includes('ok');
+    var ehNormalizadoB = statusB.includes('normalizado') || statusB.includes('fechado') || statusB.includes('ok');
+
+    if (ehNormalizadoA && !ehNormalizadoB) return 1;  // Move A para o final
+    if (!ehNormalizadoA && ehNormalizadoB) return -1; // Mantém B abaixo
+    return 0;
+  });
+}
 
 function fn_inicializarInterfaceLocal() {
   fn09_atualizarDropdownsExistentes();
@@ -418,6 +432,9 @@ function fn_inicializarInterfaceLocal() {
     } else if (typeof incidentesSalvos === 'object') {
       lista = Object.values(incidentesSalvos);
     }
+
+    // ORDENAÇÃO: Ordena os incidentes colocando os normalizados (verdes) no final da tabela
+    lista = fn_ordenarIncidentes(lista);
 
     if (lista.length > 0) {
       lista.forEach(function(item) {
