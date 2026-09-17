@@ -679,37 +679,62 @@ function fn02_reordenarTabela() {
 }
 
 function fn03_avaliarStatusLinha($tr) {
-  var data1 = $tr.find('.input-data1').val();
-  var hora1 = $tr.find('.input-hora1').val();
-  var data2 = $tr.find('.input-data2').val();
-  var hora2 = $tr.find('.input-hora2').val();
-  var causa = $tr.find('.select-causa').val();
+  var sitioVal    = ($tr.find('.select-sitio').val() || '').trim();
+  var tipoVal     = ($tr.find('.select-tipo').val() || '').trim();
+  var data1Val    = ($tr.find('.input-data1').val() || '').trim();
+  var hora1Val    = ($tr.find('.input-hora1').val() || '').trim();
+  var data2Val    = ($tr.find('.input-data2').val() || '').trim();
+  var hora2Val    = ($tr.find('.input-hora2').val() || '').trim();
+  var causaVal    = ($tr.find('.select-causa').val() || '').toLowerCase().trim();
+  var causaText   = ($tr.find('.select-causa option:selected').text() || '').toLowerCase().trim();
+  var statusVal   = ($tr.find('.input-status').val() || '').toLowerCase().trim();
 
-  var $tdSitio = $tr.find('td.col-sitio');
-  $tdSitio.removeClass('sitio-laranja sitio-cinza sitio-verde');
+  var ehAtividade = causaVal.indexOf('atividade') !== -1 || causaText.indexOf('atividade') !== -1;
+  var temDataFim = data2Val !== '' && hora2Val !== '';
 
-  // Se tiver data e hora de término preenchidas, fica verde (normalizado/concluído)
-  if (data1 && hora1 && data2 && hora2) {
-    $tdSitio.addClass('sitio-verde');
-    return;
-  }
-
-  // Se a Causa for ATIVIDADE, fica cinza
-  if (causa === 'ATIVIDADE') {
-    $tdSitio.addClass('sitio-cinza');
-    return;
-  }
-
-  // Regra padrão para incidentes com data/hora de início
-  if (data1 && hora1) {
-    var inicio = new Date(`${data1}T${hora1}:00`);
+  // Verifica se o término está no futuro
+  var ehFimFuturo = false;
+  if (temDataFim) {
     var agora = new Date();
+    var dataFimObj = null;
 
-    if (inicio > agora) {
-      $tdSitio.addClass('sitio-cinza');
-    } else {
-      $tdSitio.addClass('sitio-laranja');
+    if (data2Val.indexOf('/') !== -1) {
+      var p = data2Val.split('/');
+      if (p.length === 3) dataFimObj = new Date(p[2], p[1] - 1, p[0]);
+    } else if (data2Val.indexOf('-') !== -1) {
+      var pIso = data2Val.split('-');
+      if (pIso.length === 3) dataFimObj = new Date(pIso[0], pIso[1] - 1, pIso[2]);
     }
+
+    if (dataFimObj) {
+      if (hora2Val.indexOf(':') !== -1) {
+        var pHora = hora2Val.split(':');
+        dataFimObj.setHours(parseInt(pHora[0], 10), parseInt(pHora[1], 10), 0, 0);
+      }
+      if (dataFimObj > agora) {
+        ehFimFuturo = true;
+      }
+    }
+  }
+
+  var $selectSitio = $tr.find('.select-sitio');
+
+  // REGRA PARA ATIVIDADE (Pinta de CINZA se o término for futuro)
+  if (ehAtividade && ehFimFuturo) {
+    $tr.removeClass('table-success table-warning table-danger').addClass('table-secondary');
+    $selectSitio.removeClass('bg-success bg-warning bg-danger').addClass('bg-secondary text-white');
+    return;
+  }
+
+  // CASO GERAL (Incidentes comuns ou atividades concluídas no passado)
+  var ehNormalizado = temDataFim || statusVal.includes('norma') || statusVal.includes('fech') || statusVal.includes('ok');
+
+  if (ehNormalizado) {
+    $tr.removeClass('table-secondary table-warning table-danger').addClass('table-success');
+    $selectSitio.removeClass('bg-secondary bg-warning bg-danger').addClass('bg-success text-white');
+  } else {
+    $tr.removeClass('table-secondary table-success table-danger');
+    $selectSitio.removeClass('bg-secondary bg-success bg-danger').addClass('bg-warning text-dark');
   }
 }
 
