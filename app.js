@@ -411,11 +411,10 @@ function fn_ordenarIncidentes(lista) {
     return 0;
   });
 }
-// Impede a inserção de datas futuras, exceto quando a Causa for "Atividade"
 function fn_validarDataFutura($tr, $inputData) {
   var causa = ($tr.find('.select-causa').val() || '').toLowerCase().trim();
   
-  // Se for "atividade", permite qualquer data (inclusive futura)
+  // Se a Causa for "Atividade", permite datas e horários futuros
   if (causa === 'atividade') {
     return true;
   }
@@ -423,19 +422,33 @@ function fn_validarDataFutura($tr, $inputData) {
   var dataValor = $inputData.val();
   if (!dataValor) return true;
 
-  // Converte DD/MM/AAAA para objeto Date
-  var partes = dataValor.split('/');
-  if (partes.length === 3) {
-    var dataInserida = new Date(partes[2], partes[1] - 1, partes[0]);
-    var hoje = new Date();
-    hoje.setHours(0, 0, 0, 0); // Considera apenas a data (sem hora)
+  var hoje = new Date();
+  hoje.setHours(0, 0, 0, 0); // Zera hora para comparar apenas a data
 
-    if (dataInserida > hoje) {
-      alert('Datas futuras só são permitidas quando a Causa for "Atividade".');
-      $inputData.val(''); // Limpa o campo com data futura inválida
-      return false;
+  var dataInserida = null;
+
+  // 1. Tratamento para formato DD/MM/AAAA (Texto/Máscara)
+  if (dataValor.indexOf('/') !== -1) {
+    var partes = dataValor.split('/');
+    if (partes.length === 3) {
+      dataInserida = new Date(partes[2], partes[1] - 1, partes[0]);
+    }
+  } 
+  // 2. Tratamento para formato AAAA-MM-DD (Input type="date")
+  else if (dataValor.indexOf('-') !== -1) {
+    var partesIso = dataValor.split('-');
+    if (partesIso.length === 3) {
+      dataInserida = new Date(partesIso[0], partesIso[1] - 1, partesIso[2]);
     }
   }
+
+  // Validação do bloqueio
+  if (dataInserida && dataInserida > hoje) {
+    alert('Datas futuras só são permitidas quando a Causa for "Atividade".');
+    $inputData.val(''); // Limpa o campo
+    return false;
+  }
+
   return true;
 }
 
