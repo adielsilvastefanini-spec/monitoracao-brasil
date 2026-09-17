@@ -394,18 +394,20 @@ $(document).ready(function() {
   fn_configurarEventosDOM();
 });
 
-// Ordena a lista: pendentes no topo, normalizados no final
 function fn_ordenarIncidentes(lista) {
   return lista.sort(function(a, b) {
-    var statusA = (a.status || '').toLowerCase();
-    var statusB = (b.status || '').toLowerCase();
+    var statusA = (a.status || '').toLowerCase().trim();
+    var statusB = (b.status || '').toLowerCase().trim();
+    
+    var dataFimA = (a.data2 || '').trim();
+    var dataFimB = (b.data2 || '').trim();
 
-    // Considera normalizado se tiver Data 2 preenchida ou status contendo "norma", "fech" ou "ok"
-    var ehNormalizadoA = (a.data2 && a.data2.trim() !== '') || statusA.includes('norma') || statusA.includes('fech') || statusA.includes('ok');
-    var ehNormalizadoB = (b.data2 && b.data2.trim() !== '') || statusB.includes('norma') || statusB.includes('fech') || statusB.includes('ok');
+    // Considera normalizado/fechado se tiver Data Fim preenchida OU status correspondente
+    var ehNormalizadoA = dataFimA !== '' || statusA.includes('norma') || statusA.includes('fech') || statusA.includes('ok');
+    var ehNormalizadoB = dataFimB !== '' || statusB.includes('norma') || statusB.includes('fech') || statusB.includes('ok');
 
-    if (ehNormalizadoA && !ehNormalizadoB) return 1;  // Joga A para o final
-    if (!ehNormalizadoA && ehNormalizadoB) return -1; // Mantém B abaixo
+    if (ehNormalizadoA && !ehNormalizadoB) return 1;  // Joga A (normalizado) para baixo
+    if (!ehNormalizadoA && ehNormalizadoB) return -1; // Mantém B em cima (pendente)
     return 0;
   });
 }
