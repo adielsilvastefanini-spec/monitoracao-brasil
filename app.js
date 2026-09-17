@@ -420,7 +420,6 @@ function fn_inicializarInterfaceLocal() {
 
   // Ouve o nó "passagens" em tempo real
   db.ref('passagens').on('value', function(snapshot) {
-    // Evita recriar a tabela se o operador estiver digitando em algum campo
     if ($(document.activeElement).is('input, select')) {
       return;
     }
@@ -429,7 +428,6 @@ function fn_inicializarInterfaceLocal() {
     var $tbody = $('#incidentes tbody');
     $tbody.empty();
 
-    // Converte objeto ou array vindo do Firebase
     var lista = [];
     if (Array.isArray(incidentesSalvos)) {
       lista = incidentesSalvos;
@@ -460,11 +458,10 @@ function fn_inicializarInterfaceLocal() {
         $tr.find('.input-ticket').val(item.ticket || '');
         $tr.find('.input-status').val(item.status || '');
 
-        // Aplica as regras visuais na linha
         fn03_avaliarStatusLinha($tr);
       });
 
-      // ORDENAÇÃO NO DOM: Move visualmente as linhas verdes/normalizadas para o final
+      // Ordenação das linhas concluídas no DOM
       $tbody.find('tr').sort(function(a, b) {
         var $a = $(a);
         var $b = $(b);
@@ -491,9 +488,7 @@ function fn_inicializarInterfaceLocal() {
   if (typeof fn_carregarEscalaPlantao === 'function') fn_carregarEscalaPlantao();
   if (typeof fn_carregarLinksProcessos === 'function') fn_carregarLinksProcessos();
 
-  // ------------------------------------------------------------------
-  // EVENTOS DE VALIDAÇÃO DE DATA E HORA FUTURA (AGREGADOS)
-  // ------------------------------------------------------------------
+  // Escuta de validações de data e hora
   $('#incidentes').off('change.validaData').on('change.validaData', '.input-data1, .input-data2, .input-hora1, .input-hora2', function() {
     var $tr = $(this).closest('tr');
     fn_validarDataFutura($tr, $(this));
@@ -505,18 +500,16 @@ function fn_inicializarInterfaceLocal() {
     fn_validarDataFutura($tr, $tr.find('.input-hora1'));
   });
 }
-// Validação de Data //
+
 function fn_validarDataFutura($tr, $inputElemento) {
   var $selectCausa = $tr.find('.select-causa');
   var valCausa = ($selectCausa.val() || '').toLowerCase().trim();
   var textoCausa = ($selectCausa.find('option:selected').text() || '').toLowerCase().trim();
 
-  // Se a Causa for "Atividade", libera qualquer data/hora futura sem alertas
   if (valCausa.indexOf('atividade') !== -1 || textoCausa.indexOf('atividade') !== -1) {
     return true;
   }
 
-  // Identifica se a alteração foi no Bloco 1 (Início) ou Bloco 2 (Término)
   var ehBloco2 = $inputElemento.hasClass('input-data2') || $inputElemento.hasClass('input-hora2');
   var dataValor = ehBloco2 ? $tr.find('.input-data2').val() : $tr.find('.input-data1').val();
   var horaValor = ehBloco2 ? $tr.find('.input-hora2').val() : $tr.find('.input-hora1').val();
@@ -540,7 +533,6 @@ function fn_validarDataFutura($tr, $inputElemento) {
     var pHora = horaValor.split(':');
     dataInserida.setHours(parseInt(pHora[0], 10), parseInt(pHora[1], 10), 0, 0);
   } else {
-    // Se digitou só a data sem hora, considera o fim do dia
     dataInserida.setHours(23, 59, 59, 999);
   }
 
@@ -549,7 +541,6 @@ function fn_validarDataFutura($tr, $inputElemento) {
     alert(msg);
     $inputElemento.val('');
     
-    // Se limpou o término inválido, reavalia a cor da linha
     if (typeof fn03_avaliarStatusLinha === 'function') {
       fn03_avaliarStatusLinha($tr);
     }
