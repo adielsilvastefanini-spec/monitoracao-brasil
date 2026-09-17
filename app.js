@@ -411,56 +411,6 @@ function fn_ordenarIncidentes(lista) {
     return 0;
   });
 }
-function fn_validarDataFutura($tr, $inputElemento) {
-  // Pega o valor do select e também o texto da opção selecionada
-  var $selectCausa = $tr.find('.select-causa');
-  var valCausa = ($selectCausa.val() || '').toLowerCase().trim();
-  var textoCausa = ($selectCausa.find('option:selected').text() || '').toLowerCase().trim();
-
-  // Se a Causa contiver "atividade" (seja no valor ou no texto do option), libera tudo
-  if (valCausa.indexOf('atividade') !== -1 || textoCausa.indexOf('atividade') !== -1) {
-    return true;
-  }
-
-  var dataValor = $tr.find('.input-data1').val() || $tr.find('.input-data2').val();
-  var horaValor = $tr.find('.input-hora1').val() || $tr.find('.input-hora2').val();
-
-  if (!dataValor) return true;
-
-  var agora = new Date();
-  var dataInserida = null;
-
-  // Extrai Ano, Mês e Dia
-  if (dataValor.indexOf('/') !== -1) {
-    var p = dataValor.split('/');
-    if (p.length === 3) dataInserida = new Date(p[2], p[1] - 1, p[0]);
-  } else if (dataValor.indexOf('-') !== -1) {
-    var pIso = dataValor.split('-');
-    if (pIso.length === 3) dataInserida = new Date(pIso[0], pIso[1] - 1, pIso[2]);
-  }
-
-  if (!dataInserida) return true;
-
-  // Se houver hora preenchida (HH:MM), insere no objeto Date
-  if (horaValor && horaValor.indexOf(':') !== -1) {
-    var pHora = horaValor.split(':');
-    dataInserida.setHours(parseInt(pHora[0], 10), parseInt(pHora[1], 10), 0, 0);
-  } else {
-    // Se não tem hora, considera o final do dia para comparar
-    dataInserida.setHours(23, 59, 59, 999);
-  }
-
-  // Se a data/hora inserida for maior que o momento atual
-  if (dataInserida > agora) {
-    alert('Datas e horários futuros só são permitidos quando a Causa for "Atividade".');
-    if ($inputElemento) {
-      $inputElemento.val(''); // Limpa o campo alterado (data ou hora)
-    }
-    return false;
-  }
-
-  return true;
-}
 
 function fn_inicializarInterfaceLocal() {
   fn09_atualizarDropdownsExistentes();
@@ -541,14 +491,74 @@ function fn_inicializarInterfaceLocal() {
   if (typeof fn_carregarEscalaPlantao === 'function') fn_carregarEscalaPlantao();
   if (typeof fn_carregarLinksProcessos === 'function') fn_carregarLinksProcessos();
 
-  // Validação de datas futuras vinculada aos inputs da tabela
-  // Dispara a validação em alterações de Data E Hora
+  // ------------------------------------------------------------------
+  // EVENTOS DE VALIDAÇÃO DE DATA E HORA FUTURA (AGREGADOS)
+  // ------------------------------------------------------------------
   $('#incidentes').off('change.validaData').on('change.validaData', '.input-data1, .input-data2, .input-hora1, .input-hora2', function() {
     var $tr = $(this).closest('tr');
     fn_validarDataFutura($tr, $(this));
   });
 
-  // Revalida se o operador alterar a Causa
+  $('#incidentes').off('change.validaCausa').on('change.validaCausa', '.select-causa', function() {
+    var $tr = $(this).closest('tr');
+    fn_validarDataFutura($tr, $tr.find('.input-data1'));
+    fn_validarDataFutura($tr, $tr.find('.input-hora1'));
+  });
+}
+function fn_validarDataFutura($tr, $inputElemento) {
+  var $selectCausa = $tr.find('.select-causa');
+  var valCausa = ($selectCausa.val() || '').toLowerCase().trim();
+  var textoCausa = ($selectCausa.find('option:selected').text() || '').toLowerCase().trim();
+
+  // Se a Causa contiver "atividade", libera datas e horários futuros
+  if (valCausa.indexOf('atividade') !== -1 || textoCausa.indexOf('atividade') !== -1) {
+    return true;
+  }
+
+  var dataValor = $tr.find('.input-data1').val() || $tr.find('.input-data2').val();
+  var horaValor = $tr.find('.input-hora1').val() || $tr.find('.input-hora2').val();
+
+  if (!dataValor) return true;
+
+  var agora = new Date();
+  var dataInserida = null;
+
+  if (dataValor.indexOf('/') !== -1) {
+    var p = dataValor.split('/');
+    if (p.length === 3) dataInserida = new Date(p[2], p[1] - 1, p[0]);
+  } else if (dataValor.indexOf('-') !== -1) {
+    var pIso = dataValor.split('-');
+    if (pIso.length === 3) dataInserida = new Date(pIso[0], pIso[1] - 1, pIso[2]);
+  }
+
+  if (!dataInserida) return true;
+
+  if (horaValor && horaValor.indexOf(':') !== -1) {
+    var pHora = horaValor.split(':');
+    dataInserida.setHours(parseInt(pHora[0], 10), parseInt(pHora[1], 10), 0, 0);
+  } else {
+    dataInserida.setHours(23, 59, 59, 999);
+  }
+
+  if (dataInserida > agora) {
+    alert('Datas e horários futuros só são permitidos quando a Causa for "Atividade".');
+    if ($inputElemento) {
+      $inputElemento.val('');
+    }
+    return false;
+  }
+
+  return true;
+}
+
+  // ------------------------------------------------------------------
+  // EVENTOS DE VALIDAÇÃO DE DATA E HORA FUTURA (AGREGADOS)
+  // ------------------------------------------------------------------
+  $('#incidentes').off('change.validaData').on('change.validaData', '.input-data1, .input-data2, .input-hora1, .input-hora2', function() {
+    var $tr = $(this).closest('tr');
+    fn_validarDataFutura($tr, $(this));
+  });
+
   $('#incidentes').off('change.validaCausa').on('change.validaCausa', '.select-causa', function() {
     var $tr = $(this).closest('tr');
     fn_validarDataFutura($tr, $tr.find('.input-data1'));
