@@ -394,11 +394,11 @@ $(document).ready(function() {
   fn_configurarEventosDOM();
 });
 
+// 1. Função de Ordenação
 function fn_ordenarIncidentes(lista) {
   return lista.sort(function(a, b) {
     var statusA = (a.status || '').toLowerCase().trim();
     var statusB = (b.status || '').toLowerCase().trim();
-    
     var dataFimA = (a.data2 || '').trim();
     var dataFimB = (b.data2 || '').trim();
 
@@ -411,100 +411,13 @@ function fn_ordenarIncidentes(lista) {
   });
 }
 
-function fn_inicializarInterfaceLocal() {
-  fn09_atualizarDropdownsExistentes();
-  if (typeof dadosEscalonamento !== 'undefined') {
-    fn12_renderizarTabelaEscalonamento(dadosEscalonamento);
-  }
-
-  // Ouve o nó "passagens" em tempo real
-  db.ref('passagens').on('value', function(snapshot) {
-    if ($(document.activeElement).is('input, select')) {
-      return;
-    }
-
-    var incidentesSalvos = snapshot.val() || [];
-    var $tbody = $('#incidentes tbody');
-    $tbody.empty();
-
-    var lista = [];
-    if (Array.isArray(incidentesSalvos)) {
-      lista = incidentesSalvos;
-    } else if (typeof incidentesSalvos === 'object') {
-      lista = Object.values(incidentesSalvos);
-    }
-
-    if (lista.length > 0) {
-      lista.forEach(function(item) {
-        if (!item) return;
-        var $tr = fn08_criarLinhaTabela(item.id || Date.now().toString());
-
-        $tr.find('.select-sitio').val(item.sitio || '');
-        fn04_carregarTiposPorSitio($tr, item.sitio);
-
-        $tr.find('.select-tipo').val(item.tipo || '');
-        fn05_carregarParceirosPorTipo($tr, item.sitio, item.tipo);
-
-        $tr.find('.input-data1').val(item.data1 || '');
-        $tr.find('.input-hora1').val(item.hora1 || '');
-        $tr.find('.input-data2').val(item.data2 || '');
-        $tr.find('.input-hora2').val(item.hora2 || '');
-        $tr.find('.select-falha').val(item.falha || '');
-        $tr.find('.select-opcom').val(item.opcom || '');
-        $tr.find('.select-impacto').val(item.impacto || '');
-        $tr.find('.select-parceiro').val(item.parceiro || '');
-        $tr.find('.select-causa').val(item.causa || '');
-        $tr.find('.input-ticket').val(item.ticket || '');
-        $tr.find('.input-status').val(item.status || '');
-
-        fn03_avaliarStatusLinha($tr);
-      });
-
-      // Ordenação das linhas concluídas no DOM
-      $tbody.find('tr').sort(function(a, b) {
-        var $a = $(a);
-        var $b = $(b);
-
-        var dataFimA = ($a.find('.input-data2').val() || '').trim();
-        var dataFimB = ($b.find('.input-data2').val() || '').trim();
-        
-        var statusA = ($a.find('.input-status').val() || '').toLowerCase();
-        var statusB = ($b.find('.input-status').val() || '').toLowerCase();
-
-        var ehNormalizadoA = dataFimA !== '' || statusA.includes('norma') || $a.hasClass('table-success') || $a.find('.select-sitio').hasClass('bg-success');
-        var ehNormalizadoB = dataFimB !== '' || statusB.includes('norma') || $b.hasClass('table-success') || $b.find('.select-sitio').hasClass('bg-success');
-
-        if (ehNormalizadoA && !ehNormalizadoB) return 1;
-        if (!ehNormalizadoA && ehNormalizadoB) return -1;
-        return 0;
-      }).appendTo($tbody);
-
-    } else {
-      fn08_criarLinhaTabela(Date.now().toString());
-    }
-  });
-
-  if (typeof fn_carregarEscalaPlantao === 'function') fn_carregarEscalaPlantao();
-  if (typeof fn_carregarLinksProcessos === 'function') fn_carregarLinksProcessos();
-
-  // Escuta de validações de data e hora (dentro da função inicializadora)
-  $('#incidentes').off('change.validaData').on('change.validaData', '.input-data1, .input-data2, .input-hora1, .input-hora2', function() {
-    var $tr = $(this).closest('tr');
-    fn_validarDataFutura($tr, $(this));
-  });
-
-  $('#incidentes').off('change.validaCausa').on('change.validaCausa', '.select-causa', function() {
-    var $tr = $(this).closest('tr');
-    fn_validarDataFutura($tr, $tr.find('.input-data1'));
-    fn_validarDataFutura($tr, $tr.find('.input-hora1'));
-  });
-}
-
+// 2. Validador isolado (Escopo Global)
 function fn_validarDataFutura($tr, $inputElemento) {
   var $selectCausa = $tr.find('.select-causa');
   var valCausa = ($selectCausa.val() || '').toLowerCase().trim();
   var textoCausa = ($selectCausa.find('option:selected').text() || '').toLowerCase().trim();
 
+  // Libera se a Causa for "Atividade"
   if (valCausa.indexOf('atividade') !== -1 || textoCausa.indexOf('atividade') !== -1) {
     return true;
   }
@@ -549,16 +462,89 @@ function fn_validarDataFutura($tr, $inputElemento) {
   return true;
 }
 
-/* --------------------------------------------------------------------------
-   02. SINCRONIZAÇÃO SILENCIOSA EM SEGUNDO PLANO
-   -------------------------------------------------------------------------- */
-function fn_sincronizarFirebaseBackground() {
-  // Verifica existência do Firebase sem interromper a execução do script
-  if (typeof firebase === 'undefined' || typeof database === 'undefined') {
-    return;
+// 3. Inicialização e Escuta de Eventos
+function fn_inicializarInterfaceLocal() {
+  fn09_atualizarDropdownsExistentes();
+  if (typeof dadosEscalonamento !== 'undefined') {
+    fn12_renderizarTabelaEscalonamento(dadosEscalonamento);
   }
 
-  // Sincronizar Sítios
+  db.ref('passagens').on('value', function(snapshot) {
+    if ($(document.activeElement).is('input, select')) {
+      return;
+    }
+
+    var incidentesSalvos = snapshot.val() || [];
+    var $tbody = $('#incidentes tbody');
+    $tbody.empty();
+
+    var lista = Array.isArray(incidentesSalvos) ? incidentesSalvos : Object.values(incidentesSalvos || {});
+
+    if (lista.length > 0) {
+      lista.forEach(function(item) {
+        if (!item) return;
+        var $tr = fn08_criarLinhaTabela(item.id || Date.now().toString());
+
+        $tr.find('.select-sitio').val(item.sitio || '');
+        fn04_carregarTiposPorSitio($tr, item.sitio);
+
+        $tr.find('.select-tipo').val(item.tipo || '');
+        fn05_carregarParceirosPorTipo($tr, item.sitio, item.tipo);
+
+        $tr.find('.input-data1').val(item.data1 || '');
+        $tr.find('.input-hora1').val(item.hora1 || '');
+        $tr.find('.input-data2').val(item.data2 || '');
+        $tr.find('.input-hora2').val(item.hora2 || '');
+        $tr.find('.select-falha').val(item.falha || '');
+        $tr.find('.select-opcom').val(item.opcom || '');
+        $tr.find('.select-impacto').val(item.impacto || '');
+        $tr.find('.select-parceiro').val(item.parceiro || '');
+        $tr.find('.select-causa').val(item.causa || '');
+        $tr.find('.input-ticket').val(item.ticket || '');
+        $tr.find('.input-status').val(item.status || '');
+
+        fn03_avaliarStatusLinha($tr);
+      });
+
+      $tbody.find('tr').sort(function(a, b) {
+        var $a = $(a), $b = $(b);
+        var dataFimA = ($a.find('.input-data2').val() || '').trim();
+        var dataFimB = ($b.find('.input-data2').val() || '').trim();
+        var statusA = ($a.find('.input-status').val() || '').toLowerCase();
+        var statusB = ($b.find('.input-status').val() || '').toLowerCase();
+
+        var ehNormalizadoA = dataFimA !== '' || statusA.includes('norma') || $a.hasClass('table-success') || $a.find('.select-sitio').hasClass('bg-success');
+        var ehNormalizadoB = dataFimB !== '' || statusB.includes('norma') || $b.hasClass('table-success') || $b.find('.select-sitio').hasClass('bg-success');
+
+        if (ehNormalizadoA && !ehNormalizadoB) return 1;
+        if (!ehNormalizadoA && ehNormalizadoB) return -1;
+        return 0;
+      }).appendTo($tbody);
+
+    } else {
+      fn08_criarLinhaTabela(Date.now().toString());
+    }
+  });
+
+  if (typeof fn_carregarEscalaPlantao === 'function') fn_carregarEscalaPlantao();
+  if (typeof fn_carregarLinksProcessos === 'function') fn_carregarLinksProcessos();
+
+  // Registra eventos uma única vez
+  $('#incidentes').off('change.validaData').on('change.validaData', '.input-data1, .input-data2, .input-hora1, .input-hora2', function() {
+    fn_validarDataFutura($(this).closest('tr'), $(this));
+  });
+
+  $('#incidentes').off('change.validaCausa').on('change.validaCausa', '.select-causa', function() {
+    var $tr = $(this).closest('tr');
+    fn_validarDataFutura($tr, $tr.find('.input-data1'));
+    fn_validarDataFutura($tr, $tr.find('.input-hora1'));
+  });
+}
+
+// 4. Sincronização em segundo plano
+function fn_sincronizarFirebaseBackground() {
+  if (typeof firebase === 'undefined' || typeof database === 'undefined') return;
+
   try {
     database.ref('config/dadosSitios').once('value').then(function(snapshot) {
       if (snapshot.exists()) {
@@ -566,14 +552,9 @@ function fn_sincronizarFirebaseBackground() {
         localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
         fn09_atualizarDropdownsExistentes();
       }
-    }).catch(function() {
-      console.warn("Modo Offline: Usando sítios do cache local.");
     });
-  } catch (e) {
-    console.warn("Firebase indisponível para sítios.");
-  }
+  } catch (e) { console.warn("Erro ao sincronizar sítios."); }
 
-  // Sincronizar Escalonamento
   try {
     database.ref('escalonamento').once('value').then(function(snapshot) {
       if (snapshot.exists()) {
@@ -581,12 +562,8 @@ function fn_sincronizarFirebaseBackground() {
         localStorage.setItem('escalonamento_local', JSON.stringify(dadosEscalonamento));
         fn12_renderizarTabelaEscalonamento(dadosEscalonamento);
       }
-    }).catch(function() {
-      console.warn("Modo Offline: Usando escalonamento do cache local.");
     });
-  } catch (e) {
-    console.warn("Firebase indisponível para escalonamento.");
-  }
+  } catch (e) { console.warn("Erro ao sincronizar escalonamento."); }
 }
 
 /* --------------------------------------------------------------------------
