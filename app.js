@@ -505,18 +505,21 @@ function fn_inicializarInterfaceLocal() {
     fn_validarDataFutura($tr, $tr.find('.input-hora1'));
   });
 }
+// Validação de Data //
 function fn_validarDataFutura($tr, $inputElemento) {
   var $selectCausa = $tr.find('.select-causa');
   var valCausa = ($selectCausa.val() || '').toLowerCase().trim();
   var textoCausa = ($selectCausa.find('option:selected').text() || '').toLowerCase().trim();
 
-  // Se a Causa contiver "atividade", libera datas e horários futuros
+  // Se a Causa for "Atividade", libera qualquer data/hora futura sem alertas
   if (valCausa.indexOf('atividade') !== -1 || textoCausa.indexOf('atividade') !== -1) {
     return true;
   }
 
-  var dataValor = $tr.find('.input-data1').val() || $tr.find('.input-data2').val();
-  var horaValor = $tr.find('.input-hora1').val() || $tr.find('.input-hora2').val();
+  // Identifica se a alteração foi no Bloco 1 (Início) ou Bloco 2 (Término)
+  var ehBloco2 = $inputElemento.hasClass('input-data2') || $inputElemento.hasClass('input-hora2');
+  var dataValor = ehBloco2 ? $tr.find('.input-data2').val() : $tr.find('.input-data1').val();
+  var horaValor = ehBloco2 ? $tr.find('.input-hora2').val() : $tr.find('.input-hora1').val();
 
   if (!dataValor) return true;
 
@@ -537,13 +540,18 @@ function fn_validarDataFutura($tr, $inputElemento) {
     var pHora = horaValor.split(':');
     dataInserida.setHours(parseInt(pHora[0], 10), parseInt(pHora[1], 10), 0, 0);
   } else {
+    // Se digitou só a data sem hora, considera o fim do dia
     dataInserida.setHours(23, 59, 59, 999);
   }
 
   if (dataInserida > agora) {
-    alert('Datas e horários futuros só são permitidos quando a Causa for "Atividade".');
-    if ($inputElemento) {
-      $inputElemento.val('');
+    var msg = ehBloco2 ? 'A Data e Hora de término não podem ser no futuro (exceto para "Atividade").' : 'A Data e Hora de início não podem ser no futuro (exceto para "Atividade").';
+    alert(msg);
+    $inputElemento.val('');
+    
+    // Se limpou o término inválido, reavalia a cor da linha
+    if (typeof fn03_avaliarStatusLinha === 'function') {
+      fn03_avaliarStatusLinha($tr);
     }
     return false;
   }
