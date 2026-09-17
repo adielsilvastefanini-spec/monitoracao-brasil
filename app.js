@@ -1178,24 +1178,7 @@ function fn_configurarEventosDOM() {
     fn06_salvarDadosStorage();
   });
 
-  $('#incidentes').on('change blur', '.input-data2, .input-hora2', function() {
-    var $tr = $(this).closest('tr');
-    var data2Val = $tr.find('.input-data2').val();
-    var hora2Val = $tr.find('.input-hora2').val();
-
-    if (data2Val && hora2Val) {
-      var dataHoraFim = new Date(`${data2Val}T${hora2Val}:00`);
-      var agora = new Date();
-
-      if (dataHoraFim > agora) {
-        alert('Atenção: A Data e Hora de término não podem ser no futuro!');
-        $tr.find('.input-hora2').val('');
-        fn03_avaliarStatusLinha($tr);
-      }
-    }
-  });
-
-  $('#incidentes').on('change', '.select-sitio', function() {
+    $('#incidentes').on('change', '.select-sitio', function() {
     var $tr = $(this).closest('tr');
     fn04_carregarTiposPorSitio($tr, $(this).val());
   });
