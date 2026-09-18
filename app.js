@@ -1009,7 +1009,7 @@ function fn_carregarLinksProcessos() {
    05. PASSAGEM DE TURNO & RELATÓRIOS (WHATSAPP / PDF)
    -------------------------------------------------------------------------- */
 function obterValorCampo($row, seletor) {
-  var $elem = $row.find(seletor);
+  var $elem =$row.find(seletor);
   if ($elem.length === 0) return '-';
   var val = $elem.val();
   return (val !== null && val !== undefined && val.trim() !== '') ? val.trim() : '-';
@@ -1019,12 +1019,10 @@ function gerarRelatorioWhatsApp() {
   var incidentesLaranja = [];
   var atividadesCinza = [];
   var normalizadosVerde = [];
-  
-  var hoje = new Date().toISOString().split('T')[0];
 
   $('#incidentes tbody tr').each(function() {
-    var $row = $(this);
-    var $tdSitio = $row.find('td').eq(1);
+    var $row =$(this);
+    var $tdSitio =$row.find('td').eq(1);
     var isChecked = $row.find('input[type="checkbox"]').is(':checked');
 
     var item = {
@@ -1038,20 +1036,32 @@ function gerarRelatorioWhatsApp() {
       opcom: obterValorCampo($row, '.select-opcom, select[name="opcom"]'),
       impacto: obterValorCampo($row, '.select-impacto, select[name="impacto"]'),
       parceiro: obterValorCampo($row, '.select-parceiro, select[name="parceiro"]'),
+      causa: obterValorCampo($row, '.select-causa, select[name="causa"]'),
       ticket: obterValorCampo($row, 'input[name="ticket"], .input-ticket'),
       status: obterValorCampo($row, 'input[name="status"], .input-status')
     };
 
-    if ($tdSitio.hasClass('sitio-laranja')) {
+    // Desconsidera linhas completamente vazias
+    if (item.sitio === '-' && item.dataIni === '-') return;
+
+    // Identificação de Estado
+     var causaLower = item.causa.toLowerCase();
+     var ehAtividade = causaLower.indexOf('atividade') !== -1 || $tdSitio.hasClass('sitio-cinza') || $row.find('.select-sitio').hasClass('bg-secondary');
+     var ehConcluido = $tdSitio.hasClass('sitio-verde') || $row.hasClass('table-success') || $row.find('.select-sitio').hasClass('bg-success');
+     var ehPendente = !ehConcluido && !ehAtividade;
+
+    // CATEGORIZAÇÃO:
+    // 1. Incidentes em Aberto (Laranja/Amarelo)
+    if (ehPendente) {
       incidentesLaranja.push(item);
-    } else if ($tdSitio.hasClass('sitio-cinza')) {
-      if (item.dataIni === hoje || item.dataFim === hoje || isChecked) {
-        atividadesCinza.push(item);
-      }
-    } else if ($tdSitio.hasClass('sitio-verde')) {
-      if (item.dataFim === hoje || isChecked) {
-        normalizadosVerde.push(item);
-      }
+    } 
+    // 2. Atividades Programadas (Cinza) - Carrega TODAS as ativas sem filtrar data
+    else if (ehAtividade && (!ehConcluido || isChecked)) {
+      atividadesCinza.push(item);
+    } 
+    // 3. Incidentes Normalizados (Verde)
+    else if (ehConcluido) {
+      normalizadosVerde.push(item);
     }
   });
 
