@@ -837,11 +837,12 @@ function fn11_gerarCheckPoint() {
     var $tdSitio =$tr.find('td.col-sitio');
 
     // Captura as classes de estilo para identificar Pendência e Atividade
-    var ehPendente = $tdSitio.hasClass('sitio-laranja') \vert{}\vert{}$tr.find('.select-sitio').hasClass('bg-warning');
-    var ehAtividade = $tdSitio.hasClass('sitio-cinza') \vert{}\vert{}$tr.find('.select-sitio').hasClass('bg-secondary');
+   // Captura as classes de estilo para identificar Pendência e Atividade
+    var ehPendente = $tdSitio.hasClass('sitio-laranja') || $tr.find('.select-sitio').hasClass('bg-warning');
+    var ehAtividade = $tdSitio.hasClass('sitio-cinza') || $tr.find('.select-sitio').hasClass('bg-secondary');
 
-    // Se NÃO for pendente E NÃO for atividade, ou se a linha já estiver verde (concluída), ignora
-    var ehConcluido = $tdSitio.hasClass('sitio-verde') \vert{}\vert{}$tr.hasClass('table-success');
+   // Se NÃO for pendente E NÃO for atividade, ou se a linha já estiver verde (concluída), ignora
+    var ehConcluido = $tdSitio.hasClass('sitio-verde') || $tr.hasClass('table-success');
 
     // Inclui qualquer item pendente ou atividade em andamento, sem filtrar por data de hoje
     if ((ehPendente || ehAtividade) && !ehConcluido) {
