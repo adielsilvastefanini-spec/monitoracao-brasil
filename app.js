@@ -417,7 +417,7 @@ function fn_validarDataFutura($tr, $inputElemento) {
   var valCausa = ($selectCausa.val() || '').toLowerCase().trim();
   var textoCausa = ($selectCausa.find('option:selected').text() || '').toLowerCase().trim();
 
-  // Libera se a Causa for "Atividade"
+  // Exceção: Se for "Atividade", libera qualquer data/hora futura
   if (valCausa.indexOf('atividade') !== -1 || textoCausa.indexOf('atividade') !== -1) {
     return true;
   }
@@ -426,11 +426,16 @@ function fn_validarDataFutura($tr, $inputElemento) {
   var dataValor = ehBloco2 ? $tr.find('.input-data2').val() : $tr.find('.input-data1').val();
   var horaValor = ehBloco2 ? $tr.find('.input-hora2').val() : $tr.find('.input-hora1').val();
 
-  if (!dataValor) return true;
+  // REGRA CHAVE: Só valida se a Data E a Hora estiverem preenchidas juntas.
+  // Se preencheu só a data, aguarda a hora ser digitada.
+  if (!dataValor || !horaValor) {
+    return true;
+  }
 
   var agora = new Date();
   var dataInserida = null;
 
+  // Trata formato DD/MM/YYYY ou YYYY-MM-DD
   if (dataValor.indexOf('/') !== -1) {
     var p = dataValor.split('/');
     if (p.length === 3) dataInserida = new Date(p[2], p[1] - 1, p[0]);
@@ -441,14 +446,16 @@ function fn_validarDataFutura($tr, $inputElemento) {
 
   if (!dataInserida) return true;
 
-  if (horaValor && horaValor.indexOf(':') !== -1) {
+  // Ajusta hora e minuto exatos digitados
+  if (horaValor.indexOf(':') !== -1) {
     var pHora = horaValor.split(':');
     dataInserida.setHours(parseInt(pHora[0], 10), parseInt(pHora[1], 10), 0, 0);
-  } else {
-    dataInserida.setHours(23, 59, 59, 999);
   }
 
-  if (dataInserida > agora) {
+  // Margem de tolerância de 2 minutos para segundos de diferença no relógio
+  var margemAgora = new Date(agora.getTime() + 2 * 60 * 1000);
+
+  if (dataInserida > margemAgora) {
     var msg = ehBloco2 ? 'A Data e Hora de término não podem ser no futuro (exceto para "Atividade").' : 'A Data e Hora de início não podem ser no futuro (exceto para "Atividade").';
     alert(msg);
     $inputElemento.val('');
