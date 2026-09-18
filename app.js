@@ -1045,10 +1045,10 @@ function gerarRelatorioWhatsApp() {
     if (item.sitio === '-' && item.dataIni === '-') return;
 
     // Identificação de Estado
-     var causaLower = item.causa.toLowerCase();
-     var ehAtividade = causaLower.indexOf('atividade') !== -1 || $tdSitio.hasClass('sitio-cinza') || $row.find('.select-sitio').hasClass('bg-secondary');
-     var ehConcluido = $tdSitio.hasClass('sitio-verde') || $row.hasClass('table-success') || $row.find('.select-sitio').hasClass('bg-success');
-     var ehPendente = !ehConcluido && !ehAtividade;
+    var causaLower = item.causa.toLowerCase();
+    var ehAtividade = causaLower.indexOf('atividade') !== -1 || $tdSitio.hasClass('sitio-cinza') || $row.find('.select-sitio').hasClass('bg-secondary');
+    var ehConcluido = $tdSitio.hasClass('sitio-verde') || $row.hasClass('table-success') || $row.find('.select-sitio').hasClass('bg-success');
+    var ehPendente = !ehConcluido && !ehAtividade;
 
     // CATEGORIZAÇÃO:
     // 1. Incidentes em Aberto (Laranja/Amarelo)
@@ -1059,9 +1059,43 @@ function gerarRelatorioWhatsApp() {
     else if (ehAtividade && (!ehConcluido || isChecked)) {
       atividadesCinza.push(item);
     } 
-    // 3. Incidentes Normalizados (Verde)
+    // 3. Incidentes Normalizados (Verde) - Filtro de 24 horas
     else if (ehConcluido) {
-      normalizadosVerde.push(item);
+      var incluirVerde = false;
+
+      if (isChecked) {
+        incluirVerde = true; // Se o operador marcou o checkbox na tabela, força a inclusão
+      } else if (item.dataFim && item.dataFim !== '-') {
+        var agora = new Date();
+        var limite24h = new Date(agora.getTime() - (24 * 60 * 60 * 1000));
+        var dataFimObj = null;
+
+        // Converte data final (DD/MM/YYYY ou YYYY-MM-DD)
+        if (item.dataFim.indexOf('/') !== -1) {
+          var p = item.dataFim.split('/');
+          if (p.length === 3) dataFimObj = new Date(p[2], p[1] - 1, p[0]);
+        } else if (item.dataFim.indexOf('-') !== -1) {
+          var pIso = item.dataFim.split('-');
+          if (pIso.length === 3) dataFimObj = new Date(pIso[0], pIso[1] - 1, pIso[2]);
+        }
+
+        if (dataFimObj) {
+          if (item.horaFim && item.horaFim !== '-' && item.horaFim.indexOf(':') !== -1) {
+            var pHora = item.horaFim.split(':');
+            dataFimObj.setHours(parseInt(pHora[0], 10), parseInt(pHora[1], 10), 0, 0);
+          } else {
+            dataFimObj.setHours(23, 59, 59, 999);
+          }
+
+          if (dataFimObj >= limite24h) {
+            incluirVerde = true;
+          }
+        }
+      }
+
+      if (incluirVerde) {
+        normalizadosVerde.push(item);
+      }
     }
   });
 
