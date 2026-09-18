@@ -827,42 +827,50 @@ function fn10_removerTipoSitio(codigo, tipo) {
    04. MÓDULOS DE CHECKPOINT & ESCALONAMENTO
    -------------------------------------------------------------------------- */
 function fn11_gerarCheckPoint() {
-  var $tbodyCP = $('#tbodyCheckPoint');
+  var $tbodyCP =$('#tbodyCheckPoint');
   $tbodyCP.empty();
 
-  var hoje = new Date().toISOString().split('T')[0];
   var totalItens = 0;
 
   $('#incidentes tbody tr').each(function() {
-    var $tr = $(this);
-    var $tdSitio = $tr.find('td.col-sitio');
+    var $tr =$(this);
+    var $tdSitio =$tr.find('td.col-sitio');
 
-    var ehPendente = $tdSitio.hasClass('sitio-laranja');
-    var ehAtividade = $tdSitio.hasClass('sitio-cinza');
-    var data1 = $tr.find('.input-data1').val();
+    // Captura as classes de estilo para identificar Pendência e Atividade
+    var ehPendente = $tdSitio.hasClass('sitio-laranja') \vert{}\vert{}$tr.find('.select-sitio').hasClass('bg-warning');
+    var ehAtividade = $tdSitio.hasClass('sitio-cinza') \vert{}\vert{}$tr.find('.select-sitio').hasClass('bg-secondary');
 
-    if (ehPendente || (ehAtividade && data1 === hoje)) {
+    // Se NÃO for pendente E NÃO for atividade, ou se a linha já estiver verde (concluída), ignora
+    var ehConcluido = $tdSitio.hasClass('sitio-verde') \vert{}\vert{}$tr.hasClass('table-success');
+
+    // Inclui qualquer item pendente ou atividade em andamento, sem filtrar por data de hoje
+    if ((ehPendente || ehAtividade) && !ehConcluido) {
       totalItens++;
+
+      var data1 = $tr.find('.input-data1').val() || '';
 
       var formatarDataBR = function(d) {
         if (!d) return '';
-        var p = d.split('-');
-        return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+        if (d.indexOf('-') !== -1) {
+          var p = d.split('-');
+          return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+        }
+        return d;
       };
 
-      var sitio = $tr.find('.select-sitio').val() || '';
-      var tipo = $tr.find('.select-tipo').val() || '';
+      var sitio       = $tr.find('.select-sitio').val() || '';
+      var tipo        = $tr.find('.select-tipo').val() || '';
       var d1Formatted = formatarDataBR(data1);
-      var h1 = $tr.find('.input-hora1').val() || '';
+      var h1          = $tr.find('.input-hora1').val() || '';
       var d2Formatted = formatarDataBR($tr.find('.input-data2').val());
-      var h2 = $tr.find('.input-hora2').val() || '';
-      var falha = $tr.find('.select-falha').val() || '';
-      var opcom = $tr.find('.select-opcom').val() || '';
-      var impacto = $tr.find('.select-impacto').val() || '';
-      var parceiro = $tr.find('.select-parceiro').val() || '';
-      var causa = $tr.find('.select-causa').val() || '';
-      var ticket = $tr.find('.input-ticket').val() || '';
-      var status = $tr.find('.input-status').val() || '';
+      var h2          = $tr.find('.input-hora2').val() || '';
+      var falha       = $tr.find('.select-falha').val() || '';
+      var opcom       = $tr.find('.select-opcom').val() || '';
+      var impacto     = $tr.find('.select-impacto').val() || '';
+      var parceiro    = $tr.find('.select-parceiro').val() || '';
+      var causa       = $tr.find('.select-causa').val() || '';
+      var ticket      = $tr.find('.input-ticket').val() || '';
+      var status      = $tr.find('.input-status').val() || '';
 
       var classeAtividade = ehAtividade ? ' cp-row-atividade' : '';
 
@@ -887,7 +895,7 @@ function fn11_gerarCheckPoint() {
   });
 
   if (totalItens === 0) {
-    alert("Não existem pendências ou atividades registradas para a data de hoje.");
+    alert("Não existem pendências ou atividades registradas no momento.");
     return;
   }
 
