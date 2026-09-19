@@ -54,7 +54,7 @@
   min-height: 50px; /* Garante altura suficiente para o avião proporcional */
 }
 
-/* 2. Container Transparente */
+/* 1. Container flexível ajustado para 50px */
 .header-logo-box {
   display: flex;
   align-items: center;
@@ -62,14 +62,16 @@
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+  height: 50px !important; /* Trava a caixa na altura desejada */
   padding: 0 !important;
   margin: 0 !important;
 }
 
-/* 3. Imagem da Aeronave Proporcional */
+/* 2. Imagem da aeronave travada em 50px */
 .img-header-aviao {
-  height: 85px; /* Tamanho proporcional para se destacar (pode testar entre 80px e 100px) */
-  width: auto;
+  height: 50px !important;  /* Mantém exatamente a altura que você quer */
+  width: auto !important;   /* Ajusta a largura proporcionalmente */
+  max-height: 50px !important;
   object-fit: contain;
   background: transparent !important;
   border: none !important;
@@ -78,7 +80,7 @@
   opacity: 1 !important;
   -webkit-mask-image: none !important;
   mask-image: none !important;
-  filter: drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.35)); /* Sombra suave acompanhando o desenho do avião */
+  filter: drop-shadow(0px 3px 6px rgba(0, 0, 0, 0.35));
 }
 
     .card-tabela {
