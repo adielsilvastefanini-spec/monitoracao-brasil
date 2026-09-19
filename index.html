@@ -53,28 +53,30 @@
   border-radius: 4px 4px 0 0;
 }
 
-/* 2. Container da Aeronave Transparente */
+/* 1. Remove qualquer fundo, caixa, gradiente ou sombra da caixa da imagem */
 .header-logo-box {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  background: transparent !important;
+  background: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
 }
 
-/* 3. Imagem do Avião (Totalmente integrada sem fundo branco) */
+/* 2. Garante que a imagem do avião não tem fundos nem sombras quadradas */
 .img-header-aviao {
-  height: 52px; /* Ajuste a altura se quiser o avião maior ou menor */
+  height: 50px;
   width: auto;
   object-fit: contain;
   background: transparent !important;
+  background-color: transparent !important;
   border: none !important;
   box-shadow: none !important;
   border-radius: 0 !important;
-  opacity: 1 !important;
+  outline: none !important;
   -webkit-mask-image: none !important;
   mask-image: none !important;
-  /* Cria um relevo/sombra leve acompanhando as asas e o corpo do avião */
-  filter: drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.4));
 }
 
     .card-tabela {
