@@ -51,21 +51,21 @@
     }
 
     /* Estilização da imagem com efeito suave nas laterais (máscara de gradiente) */
-    .img-header-aviao {
-      height: 48px;
-      width: auto;
-      object-fit: cover;
-      border-radius: 6px;
-      opacity: 0.92;
-      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
-      mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
+  .img-header-aviao {
+    height: 48px;
+    max-width: 220px;
+    object-fit: cover;
+    border-radius: 6px;
+    opacity: 0.92;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
 
-    .img-header-aviao:hover {
-      opacity: 1;
-      transform: scale(1.03);
-    }
+  .img-header-aviao:hover {
+    opacity: 1;
+    transform: scale(1.03);
+  }
 
     .container-passagem {
       padding: 0 15px 15px 15px;
