@@ -43,12 +43,11 @@
     }
 
     .header-logo-box {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      height: 100%;
-      overflow: hidden;
-    }
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: transparent;
+}
 
     /* Estilização da imagem com efeito suave nas laterais (máscara de gradiente) */
   .img-header-aviao {
@@ -62,10 +61,16 @@
     transition: opacity 0.3s ease, transform 0.3s ease;
   }
 
-  .img-header-aviao:hover {
-    opacity: 1;
-    transform: scale(1.03);
-  }
+  /* Estilização da aeronave com fundo transparente no cabeçalho */
+.img-header-aviao {
+  height: 48px;               /* Ajuste a altura conforme necessário */
+  width: auto;                /* Mantém a proporção exata da aeronave */
+  object-fit: contain;
+  background-color: transparent !important; /* Garante que nenhum fundo seja aplicado */
+  border: none !important;    /* Remove qualquer borda da imagem */
+  box-shadow: none !important;/* Remove sombras que possam revelar o contorno do quadrado */
+  filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.3)); /* (Opcional) Sombra suave apenas no contorno do avião */
+}
 
     .container-passagem {
       padding: 0 15px 15px 15px;
@@ -337,8 +342,8 @@ table.tabela-checkpoint td.cp-col-status {
       <p>Painel de Controle e Registro de Incidentes</p>
     </div>
     
-    <div class="header-logo-box">
-  <img src="latam_monitora_1.jpg" alt="Aeronave LATAM" class="img-header-aviao">
+   <div class="header-logo-box">
+  <img src="latam_monitora-cabecalho.jpg" alt="Aeronave LATAM" class="img-header-aviao">
 </div>
 </header>
 
