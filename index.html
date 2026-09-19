@@ -209,21 +209,13 @@
       text-align: left;
     }
 
-    /* ESTILOS DO CHECK POINT */
-   #containerCheckPointExport {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)), url('latam_monitora_1.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  padding: 0;
-  border: 1px solid #002699;
-  font-family: Arial, sans-serif;
-  display: inline-block;
-  width: 100%;
-}
-/* 1. Estilização do Container Principal (Fundo com Imagem) */
+ /* ==========================================================================
+   ESTILOS DO CHECK POINT (Com Imagem Discreta de Fundo e Alta Legibilidade)
+   ========================================================================== */
+
+/* 1. Container Principal com Imagem de Fundo Suavizada */
 #containerCheckPointExport {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('latam_monitora_1.jpg');
+  background-image: linear-gradient(rgba(10, 15, 30, 0.85), rgba(10, 15, 30, 0.85)), url('latam_monitora_1.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -234,65 +226,63 @@
   width: 100%;
 }
 
-/* 2. Remoção do fundo amarelo da tabela interna */
-#containerCheckPointExport table,
-#containerCheckPointExport th,
-#containerCheckPointExport td {
-  background-color: transparent !important;
-  color: #ffffff !important;
+/* 2. Banner do Topo */
+.cp-banner-topo {
+  background-color: rgba(13, 71, 161, 0.9);
+  color: #ffffff;
+  text-align: center;
+  font-weight: bold;
+  font-size: 15px;
+  padding: 6px 0;
+  letter-spacing: 0.5px;
 }
-    .cp-banner-topo {
-      background-color: #0d47a1;
-      color: #ffffff;
-      text-align: center;
-      font-weight: bold;
-      font-size: 15px;
-      padding: 6px 0;
-      letter-spacing: 0.5px;
-    }
 
-    table.tabela-checkpoint {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 11px;
-    }
+/* 3. Estrutura da Tabela */
+table.tabela-checkpoint {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
 
-    table.tabela-checkpoint th {
-      background-color: #cc0000;
-      color: #ffffff;
-      font-weight: bold;
-      text-align: center;
-      padding: 6px 8px;
-      border: 1px solid #b70000;
-      white-space: nowrap;
-    }
+/* 4. Cabeçalho da Tabela (Vermelho Sólido para Destaque) */
+table.tabela-checkpoint th {
+  background-color: rgba(204, 0, 0, 0.9) !important;
+  color: #ffffff !important;
+  font-weight: bold;
+  text-align: center;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+}
 
-    table.tabela-checkpoint td {
-      padding: 5px 8px;
-      text-align: center;
-      border: 1px solid #e2d3b4;
-      color: #000000;
-      background-color: #fef3c7;
-    }
+/* 5. Células de Dados (Fundo Semi-transparente Escuro para leitura perfeita) */
+table.tabela-checkpoint td {
+  padding: 5px 8px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff !important;
+  background-color: rgba(0, 0, 0, 0.45) !important;
+}
 
-    table.tabela-checkpoint td.cp-row-atividade {
-      background-color: #d1d5db !important;
-      border-color: #9ca3af !important;
-      color: #1f2937 !important;
-    }
+/* 6. Linhas de Atividade / Outros Status */
+table.tabela-checkpoint td.cp-row-atividade {
+  background-color: rgba(55, 65, 81, 0.7) !important;
+  border-color: rgba(156, 163, 175, 0.3) !important;
+  color: #f3f4f6 !important;
+}
 
-    table.tabela-checkpoint td.cp-col-ticket {
-      white-space: normal !important;
-      word-break: break-word;
-      min-width: 100px;
-    }
+table.tabela-checkpoint td.cp-col-ticket {
+  white-space: normal !important;
+  word-break: break-word;
+  min-width: 100px;
+}
 
-    table.tabela-checkpoint td.cp-col-status {
-      white-space: normal !important;
-      word-break: break-word;
-      text-align: left !important;
-      min-width: 250px;
-    }
+table.tabela-checkpoint td.cp-col-status {
+  white-space: normal !important;
+  word-break: break-word;
+  text-align: left !important;
+  min-width: 250px;
+}
 
     /* ESTILOS DA TABELA DE ESCALONAMENTO */
     table.tabela-escalonamento {
