@@ -213,9 +213,9 @@
    ESTILOS DO CHECK POINT (Com Imagem Discreta de Fundo e Alta Legibilidade)
    ========================================================================== */
 
-/* 1. Container Principal com Imagem de Fundo Suavizada */
+/* 1. Container Principal (Reduzido o escurecimento de 85% para 45%) */
 #containerCheckPointExport {
-  background-image: linear-gradient(rgba(10, 15, 30, 0.85), rgba(10, 15, 30, 0.85)), url('latam_monitora_1.jpg');
+  background-image: linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.45)), url('latam_monitora_1.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -255,13 +255,13 @@ table.tabela-checkpoint th {
   white-space: nowrap;
 }
 
-/* 5. Células de Dados (Fundo Semi-transparente Escuro para leitura perfeita) */
+/* 5. Células da Tabela (Fundo branco semi-transparente para dar contraste e destacar o avião) */
 table.tabela-checkpoint td {
   padding: 5px 8px;
   text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #ffffff !important;
-  background-color: rgba(0, 0, 0, 0.45) !important;
+  border: 1px solid rgba(0, 38, 153, 0.2);
+  color: #000000 !important; /* Texto em preto para perfeita leitura no fundo claro */
+  background-color: rgba(255, 255, 255, 0.65) !important; /* Permite ver o avião suavemente atrás das células */
 }
 
 /* 6. Linhas de Atividade / Outros Status */
