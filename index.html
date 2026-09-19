@@ -42,20 +42,28 @@
       opacity: 0.9;
     }
 
-/* Container transparente e alinhado */
+/* 1. Fundo do Cabeçalho com o Gradiente Azul -> Roxo -> Vermelho da LATAM */
+.header-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 24px;
+  background: linear-gradient(90deg, #001282 0%, #7a0050 50%, #d80032 100%) !important;
+  color: #ffffff;
+  border-radius: 4px 4px 0 0;
+}
+
+/* 2. Container da Aeronave Transparente */
 .header-logo-box {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   background: transparent !important;
-  border: none !important;
-  padding: 0;
-  margin: 0;
 }
 
- /* Imagem da aeronave integrada limpa */
+/* 3. Imagem do Avião (Totalmente integrada sem fundo branco) */
 .img-header-aviao {
-  height: 48px;
+  height: 52px; /* Ajuste a altura se quiser o avião maior ou menor */
   width: auto;
   object-fit: contain;
   background: transparent !important;
@@ -65,23 +73,8 @@
   opacity: 1 !important;
   -webkit-mask-image: none !important;
   mask-image: none !important;
-}
-
-  /* Estilização da aeronave com fundo transparente no cabeçalho */
-/* Exibe apenas a aeronave transparente sobre o fundo do cabeçalho */
-.img-header-aviao {
-  height: 45px;
-  width: auto;
-  object-fit: contain;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  opacity: 1 !important;
-  
-  /* Remove qualquer máscara de transparência antiga que desvanece a imagem */
-  -webkit-mask-image: none !important;
-  mask-image: none !important;
+  /* Cria um relevo/sombra leve acompanhando as asas e o corpo do avião */
+  filter: drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.4));
 }
 
     .card-tabela {
