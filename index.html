@@ -221,7 +221,26 @@
   display: inline-block;
   width: 100%;
 }
+/* 1. Estilização do Container Principal (Fundo com Imagem) */
+#containerCheckPointExport {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('latam_monitora_1.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 0;
+  border: 1px solid #002699;
+  font-family: Arial, sans-serif;
+  display: inline-block;
+  width: 100%;
+}
 
+/* 2. Remoção do fundo amarelo da tabela interna */
+#containerCheckPointExport table,
+#containerCheckPointExport th,
+#containerCheckPointExport td {
+  background-color: transparent !important;
+  color: #ffffff !important;
+}
     .cp-banner-topo {
       background-color: #0d47a1;
       color: #ffffff;
