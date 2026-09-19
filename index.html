@@ -141,16 +141,34 @@
       box-sizing: border-box;
     }
 
-    td.sitio-laranja { background-color: #ffaa00 !important; }
-    td.sitio-laranja select { background-color: #ffaa00 !important; color: #ffffff !important; font-weight: bold; }
+    /* ESTILIZAÇÃO DOS SÍTIOS (CORES APENAS NO QUADRADO/PÍLULA) */
+    td.sitio-laranja, td.sitio-verde, td.sitio-cinza, td.sitio-azul {
+      background-color: transparent !important; /* Célula externa fica neutra */
+    }
 
-    td.sitio-verde { background-color: #22c55e !important; }
-    td.sitio-verde select { background-color: #22c55e !important; color: #ffffff !important; font-weight: bold; }
+    .select-sitio { 
+      width: 85px !important; 
+      border-radius: 12px !important; /* Arredonda os cantos */
+      border: none !important;          /* Remove as bordas padrão */
+      font-weight: bold !important;
+      text-align: center !important;
+      padding: 2px 4px !important;
+      height: 24px !important;
+      cursor: pointer;
+    }
 
-    td.sitio-cinza { background-color: #6b7280 !important; }
-    td.sitio-cinza select { background-color: #6b7280 !important; color: #ffffff !important; font-weight: bold; }
+    /* Cores aplicadas ao elemento do sítio */
+    td.sitio-laranja select, select.bg-warning { background-color: #ffaa00 !important; color: #000000 !important; }
+    td.sitio-verde select, select.bg-success { background-color: #22c55e !important; color: #ffffff !important; }
+    td.sitio-cinza select, select.bg-secondary { background-color: #6b7280 !important; color: #ffffff !important; }
+    td.sitio-azul select, select.bg-info { background-color: #0ea5e9 !important; color: #ffffff !important; }
 
-    .select-sitio { width: 75px !important; }
+    .select-sitio option {
+      background-color: #ffffff;
+      color: #334155;
+      text-align: left;
+    }
+
     .select-tipo { width: 100px !important; }
     .select-parceiro { width: 110px !important; }
     .input-data { width: 98px !important; }
@@ -276,7 +294,7 @@
     .badge-nivel-4 { background-color: #fce7f3; color: #9d174d; }
     .badge-nivel-5 { background-color: #ffe4e6; color: #9f1239; }
     .badge-nivel-6 { background-color: #fee2e2; color: #991b1b; }
-  </style>
+</style>
 </head>
 <body>
 
