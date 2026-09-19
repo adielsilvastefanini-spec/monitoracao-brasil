@@ -697,6 +697,7 @@ function fn03_avaliarStatusLinha($tr) {
   var statusVal   = ($tr.find('.input-status').val() || '').toLowerCase().trim();
 
   var ehAtividade = causaVal.indexOf('atividade') !== -1 || causaText.indexOf('atividade') !== -1;
+  var causaNaoDefinida = causaVal === '' || causaText.indexOf('selecione') !== -1;
   var temDataFim = data2Val !== '' && hora2Val !== '';
 
   // Verifica se o término está no futuro
@@ -725,24 +726,43 @@ function fn03_avaliarStatusLinha($tr) {
   }
 
   var $selectSitio = $tr.find('.select-sitio');
+  var $tdSitio = $tr.find('td.col-sitio');
 
-  // REGRA PARA ATIVIDADE (Pinta de CINZA se o término for futuro)
-  if (ehAtividade && ehFimFuturo) {
-    $tr.removeClass('table-success table-warning table-danger').addClass('table-secondary');
-    $selectSitio.removeClass('bg-success bg-warning bg-danger').addClass('bg-secondary text-white');
-    return;
-  }
+  // Limpa classes anteriores de tabela e do sítio
+  $tr.removeClass('table-secondary table-success table-warning table-danger table-info');
+  $selectSitio.removeClass('bg-secondary bg-success bg-warning bg-danger bg-info text-white text-dark');
+  $tdSitio.removeClass('sitio-cinza sitio-verde sitio-laranja sitio-azul');
 
-  // CASO GERAL (Incidentes comuns ou atividades concluídas no passado)
+  // 1. CASO NORMALIZADO (Término preenchido no passado/presente ou status de fechamento) -> VERDE
   var ehNormalizado = temDataFim || statusVal.includes('norma') || statusVal.includes('fech') || statusVal.includes('ok');
 
   if (ehNormalizado) {
-    $tr.removeClass('table-secondary table-warning table-danger').addClass('table-success');
-    $selectSitio.removeClass('bg-secondary bg-warning bg-danger').addClass('bg-success text-white');
-  } else {
-    $tr.removeClass('table-secondary table-success table-danger');
-    $selectSitio.removeClass('bg-secondary bg-success bg-danger').addClass('bg-warning text-dark');
+    $tr.addClass('table-success');
+    $selectSitio.addClass('bg-success text-white');
+    $tdSitio.addClass('sitio-verde');
+    return;
   }
+
+  // 2. REGRA PARA ATIVIDADE -> CINZA (seja em andamento ou futura)
+  if (ehAtividade) {
+    $tr.addClass('table-secondary');
+    $selectSitio.addClass('bg-secondary text-white');
+    $tdSitio.addClass('sitio-cinza');
+    return;
+  }
+
+  // 3. REGRA PARA LINHA NOVA (Causa ainda não selecionada) -> AZUL CLARO
+  if (causaNaoDefinida) {
+    $tr.addClass('table-info');
+    $selectSitio.addClass('bg-info text-dark');
+    $tdSitio.addClass('sitio-azul');
+    return;
+  }
+
+  // 4. INCIDENTE EM ABERTO (Causa selecionada e diferente de Atividade) -> LARANJA
+  $tr.addClass('table-warning');
+  $selectSitio.addClass('bg-warning text-dark');
+  $tdSitio.addClass('sitio-laranja');
 }
 
 function fn04_carregarTiposPorSitio($tr, codigoSitio) {
@@ -1238,10 +1258,14 @@ function gerarTabelaAtividadesENormalizados(lista) {
    -------------------------------------------------------------------------- */
 function fn_configurarEventosDOM() {
 
-  $('#btnNovoItem').on('click', function() {
+ $('#btnNovoItem').on('click', function() {
     var novoId = Date.now().toString();
     var $tr = fn08_criarLinhaTabela(novoId);
-    fn02_reordenarTabela();
+    
+    // Insere no topo da tabela
+    $('#incidentes tbody').prepend($tr);
+    
+    // fn02_reordenarTabela(); // Comente ou remova esta linha se ela estiver a mandar o item para baixo
     fn06_salvarDadosStorage();
     $tr.find('.select-sitio').focus();
   });
