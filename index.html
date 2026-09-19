@@ -42,40 +42,47 @@
       opacity: 0.9;
     }
 
-    .header-logo-box {
+/* Container transparente e alinhado */
+.header-logo-box {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  background: transparent;
+  background: transparent !important;
+  border: none !important;
+  padding: 0;
+  margin: 0;
 }
 
-    /* Estilização da imagem com efeito suave nas laterais (máscara de gradiente) */
-  .img-header-aviao {
-    height: 48px;
-    max-width: 220px;
-    object-fit: cover;
-    border-radius: 6px;
-    opacity: 0.92;
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
+ /* Imagem da aeronave integrada limpa */
+.img-header-aviao {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  opacity: 1 !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
 
   /* Estilização da aeronave com fundo transparente no cabeçalho */
+/* Exibe apenas a aeronave transparente sobre o fundo do cabeçalho */
 .img-header-aviao {
-  height: 48px;               /* Ajuste a altura conforme necessário */
-  width: auto;                /* Mantém a proporção exata da aeronave */
+  height: 45px;
+  width: auto;
   object-fit: contain;
-  background-color: transparent !important; /* Garante que nenhum fundo seja aplicado */
-  border: none !important;    /* Remove qualquer borda da imagem */
-  box-shadow: none !important;/* Remove sombras que possam revelar o contorno do quadrado */
-  filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.3)); /* (Opcional) Sombra suave apenas no contorno do avião */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  opacity: 1 !important;
+  
+  /* Remove qualquer máscara de transparência antiga que desvanece a imagem */
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
 }
-
-    .container-passagem {
-      padding: 0 15px 15px 15px;
-      width: 100%;
-    }
 
     .card-tabela {
       background-color: #ffffff;
@@ -343,7 +350,7 @@ table.tabela-checkpoint td.cp-col-status {
     </div>
     
   <div class="header-logo-box">
-  <img src="latam_aviao1.png" alt="Aeronave LATAM" class="img-header-aviao">
+  <img src="latam_avião1.jpg" alt="Aeronave LATAM" class="img-header-aviao">
 </div>
 </header>
 
