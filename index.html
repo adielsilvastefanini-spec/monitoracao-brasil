@@ -687,16 +687,20 @@ table.tabela-checkpoint td.cp-col-status {
   </div>
 
  <!-- Modal Ferramentas -->
-<!-- Modal Ferramentas -->
 <div class="modal fade" id="modalFerramentas" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       
       <!-- Cabeçalho do Modal -->
       <div class="modal-header bg-dark text-white py-2">
-        <h5 class="modal-title fs-6">🛠 Ferramentas e Portais</h5>
-        <div class="d-flex align-items-center">
-          <button id="btn-modo-exclusao" onclick="alternarModoExclusao()" class="btn btn-sm btn-outline-light me-2">⚙️ Efetuar Exclusão</button>
+        <h5 class="modal-title fs-6 m-0">🛠 Ferramentas e Portais</h5>
+        <div class="d-flex align-items-center gap-2">
+          <button id="btn-toggle-add" onclick="alternarFormularioAdd()" class="btn btn-sm btn-outline-success">
+            ➕ Adicionar Item
+          </button>
+          <button id="btn-modo-exclusao" onclick="alternarModoExclusao()" class="btn btn-sm btn-outline-light">
+            ⚙️ Efetuar Exclusão
+          </button>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
       </div>
@@ -704,12 +708,10 @@ table.tabela-checkpoint td.cp-col-status {
       <!-- Corpo do Modal -->
       <div class="modal-body p-3">
         
-        <!-- Formulário para Adicionar Nova Ferramenta -->
-        <details class="mb-3 p-2 bg-light border rounded">
-          <summary class="fw-bold text-primary" style="cursor: pointer;">
-            ➕ Adicionar Nova Ferramenta
-          </summary>
-          <form id="form-add-ferramenta" class="mt-3">
+        <!-- Formulário Oculto por Padrão (Exibido ao clicar em + Adicionar Item) -->
+        <div id="painel-add-ferramenta" class="d-none mb-3 p-3 bg-light border rounded shadow-sm">
+          <h6 class="fw-bold text-success mb-2">Cadastrar Nova Ferramenta</h6>
+          <form id="form-add-ferramenta">
             <div class="row g-2">
               <div class="col-md-6">
                 <input type="text" id="tool-nome" class="form-control form-control-sm" placeholder="Nome do Portal / Ferramenta *" required>
@@ -724,14 +726,15 @@ table.tabela-checkpoint td.cp-col-status {
                 <input type="text" id="tool-senha" class="form-control form-control-sm" placeholder="Senha (Padrão: Individual)">
               </div>
               <div class="col-12">
-                <input type="text" id="tool-detalhes" class="form-control form-control-sm" placeholder="Detalhes / IPs / Observações (use quebras de linha ou '|' para separar)">
+                <input type="text" id="tool-detalhes" class="form-control form-control-sm" placeholder="Detalhes / IPs / Observações (use '|' ou quebra de linha para separar)">
               </div>
               <div class="col-12 text-end">
-                <button type="submit" class="btn btn-sm btn-success mt-1">💾 Salvar Ferramenta</button>
+                <button type="button" onclick="alternarFormularioAdd()" class="btn btn-sm btn-secondary me-1">Cancelar</button>
+                <button type="submit" class="btn btn-sm btn-success">💾 Salvar Ferramenta</button>
               </div>
             </div>
           </form>
-        </details>
+        </div>
 
         <!-- Container onde os cards serão renderizados dinamicamente -->
         <div id="lista-ferramentas" class="row g-3">
@@ -743,21 +746,6 @@ table.tabela-checkpoint td.cp-col-status {
     </div>
   </div>
 </div>
-
-  <!-- Modal Estrutura -->
-  <div class="modal fade" id="modalEstrutura" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-dark text-white py-2">
-          <h5 class="modal-title fs-6">🏢 Estrutura</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body p-3" id="bodyEstrutura">
-          <p class="text-muted text-center my-4">Módulo de Estrutura em desenvolvimento...</p>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- LIBRARIAS BASE (JQUERY / BOOTSTRAP) -->
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>

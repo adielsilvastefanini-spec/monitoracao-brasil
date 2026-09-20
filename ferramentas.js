@@ -24,10 +24,9 @@ const dadosFerramentasIniciais = [
   { nome: "SIGA", link: "https://siga-latam.com/fc/flight-control", usuario: "Individual", senha: "Individual", detalhes: "" }
 ];
 
-// Estado do modo de exclusão/gestão
 let modoExclusaoAtivo = false;
 
-// 1. Obtém dados do localStorage ou carrega os padrão
+// Obtém dados do localStorage ou inicializa
 function obterFerramentas() {
   const dadosSalvos = localStorage.getItem("ferramentas_latam");
   if (dadosSalvos) {
@@ -37,18 +36,36 @@ function obterFerramentas() {
   return dadosFerramentasIniciais;
 }
 
-// Alterna o modo de gestão/exclusão
+// Exibe/Oculta o formulário de cadastro no topo do modal
+function alternarFormularioAdd() {
+  const painel = document.getElementById("painel-add-ferramenta");
+  const btn = document.getElementById("btn-toggle-add");
+  if (!painel) return;
+
+  const estaOculto = painel.classList.contains("d-none");
+  if (estaOculto) {
+    painel.classList.remove("d-none");
+    btn.className = "btn btn-sm btn-success";
+    btn.innerHTML = "➖ Fechar Cadastro";
+  } else {
+    painel.classList.add("d-none");
+    btn.className = "btn btn-sm btn-outline-success";
+    btn.innerHTML = "➕ Adicionar Item";
+  }
+}
+
+// Alterna o modo de exclusão
 function alternarModoExclusao() {
   modoExclusaoAtivo = !modoExclusaoAtivo;
   const btn = document.getElementById("btn-modo-exclusao");
   if (btn) {
-    btn.className = modoExclusaoAtivo ? "btn btn-sm btn-danger me-2" : "btn btn-sm btn-outline-secondary me-2";
+    btn.className = modoExclusaoAtivo ? "btn btn-sm btn-danger" : "btn btn-sm btn-outline-light";
     btn.innerHTML = modoExclusaoAtivo ? "✕ Sair da Exclusão" : "⚙️ Efetuar Exclusão";
   }
   renderizarFerramentas();
 }
 
-// 2. Renderiza os cards dentro do Modal
+// Renderiza os cards dentro do Modal
 function renderizarFerramentas() {
   const lista = obterFerramentas();
   const container = document.getElementById("lista-ferramentas");
@@ -64,14 +81,12 @@ function renderizarFerramentas() {
       ? `<a href="${item.link}" target="_blank" class="btn btn-sm btn-outline-primary w-100 mt-2">Acessar Portal ↗</a>` 
       : `<span class="badge bg-secondary w-100 py-2 mt-2">Sem link direto</span>`;
 
-    // Formata os detalhes substituindo quebras de linha ou '|' por linhas separadas <br>
     let detalhesHtml = "";
     if (item.detalhes) {
       const detalhesFormatados = item.detalhes.replace(/\|/g, "<br>").replace(/\n/g, "<br>");
       detalhesHtml = `<div class="small text-muted mb-2 bg-light p-2 rounded border" style="line-height: 1.4;">${detalhesFormatados}</div>`;
     }
 
-    // Botão de exclusão visível apenas no modo de exclusão
     const btnExcluirHtml = modoExclusaoAtivo 
       ? `<button onclick="excluirFerramenta(${index})" class="btn btn-sm btn-danger px-2 py-0 fw-bold" title="Excluir Ferramenta">Apagar ✕</button>` 
       : "";
@@ -103,7 +118,7 @@ function renderizarFerramentas() {
   });
 }
 
-// 3. Adiciona nova ferramenta
+// Adiciona nova ferramenta
 function adicionarFerramenta(event) {
   event.preventDefault();
   
@@ -121,10 +136,11 @@ function adicionarFerramenta(event) {
   localStorage.setItem("ferramentas_latam", JSON.stringify(lista));
   
   document.getElementById("form-add-ferramenta").reset();
+  alternarFormularioAdd();
   renderizarFerramentas();
 }
 
-// 4. Exclui ferramenta da lista
+// Exclui ferramenta da lista
 function excluirFerramenta(index) {
   const lista = obterFerramentas();
   const item = lista[index];
@@ -136,7 +152,7 @@ function excluirFerramenta(index) {
   }
 }
 
-// 5. Inicialização automática ao carregar o DOM
+// Inicialização
 document.addEventListener("DOMContentLoaded", () => {
   renderizarFerramentas();
   
