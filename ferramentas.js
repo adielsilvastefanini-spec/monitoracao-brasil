@@ -26,7 +26,6 @@ const dadosFerramentasIniciais = [
 
 let modoExclusaoAtivo = false;
 
-// Obtém dados do localStorage ou inicializa
 function obterFerramentas() {
   const dadosSalvos = localStorage.getItem("ferramentas_latam");
   if (dadosSalvos) {
@@ -36,7 +35,6 @@ function obterFerramentas() {
   return dadosFerramentasIniciais;
 }
 
-// Exibe/Oculta o formulário de cadastro no topo do modal
 function alternarFormularioAdd() {
   const painel = document.getElementById("painel-add-ferramenta");
   const btn = document.getElementById("btn-toggle-add");
@@ -54,7 +52,6 @@ function alternarFormularioAdd() {
   }
 }
 
-// Alterna o modo de exclusão
 function alternarModoExclusao() {
   modoExclusaoAtivo = !modoExclusaoAtivo;
   const btn = document.getElementById("btn-modo-exclusao");
@@ -65,7 +62,6 @@ function alternarModoExclusao() {
   renderizarFerramentas();
 }
 
-// Renderiza os cards dentro do Modal
 function renderizarFerramentas() {
   const lista = obterFerramentas();
   const container = document.getElementById("lista-ferramentas");
@@ -78,36 +74,42 @@ function renderizarFerramentas() {
     col.className = "col-12 col-md-6 col-lg-4";
 
     const linkHtml = item.link 
-      ? `<a href="${item.link}" target="_blank" class="btn btn-sm btn-outline-primary w-100 mt-2">Acessar Portal ↗</a>` 
-      : `<span class="badge bg-secondary w-100 py-2 mt-2">Sem link direto</span>`;
+      ? `<a href="${item.link}" target="_blank" class="btn btn-sm btn-outline-primary w-100 mt-2 fw-semibold">Acessar Portal ↗</a>` 
+      : `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle w-100 py-2 mt-2">Sem link direto</span>`;
 
     let detalhesHtml = "";
     if (item.detalhes) {
       const detalhesFormatados = item.detalhes.replace(/\|/g, "<br>").replace(/\n/g, "<br>");
-      detalhesHtml = `<div class="small text-muted mb-2 bg-light p-2 rounded border" style="line-height: 1.4;">${detalhesFormatados}</div>`;
+      detalhesHtml = `<div class="small text-muted mb-2 bg-white p-2 rounded border border-light-subtle" style="line-height: 1.4;">${detalhesFormatados}</div>`;
     }
 
     const btnExcluirHtml = modoExclusaoAtivo 
       ? `<button onclick="excluirFerramenta(${index})" class="btn btn-sm btn-danger px-2 py-0 fw-bold" title="Excluir Ferramenta">Apagar ✕</button>` 
       : "";
 
+    // Card com cores suaves: fundo levemente acinzentado/azulado com borda delicada
+    const classeBordaCard = modoExclusaoAtivo ? 'border-danger shadow-sm' : 'border-primary-subtle shadow-sm';
+
     col.innerHTML = `
-      <div class="card h-100 shadow-sm border ${modoExclusaoAtivo ? 'border-danger' : 'border-0'} bg-light">
-        <div class="card-body d-flex flex-column justify-content-between">
+      <div class="card h-100 ${classeBordaCard} rounded-3 overflow-hidden" style="background-color: #f8fafc;">
+        <!-- Cabeçalho suave do Card -->
+        <div class="px-3 py-2 bg-light border-bottom border-light-subtle d-flex justify-content-between align-items-center">
+          <h6 class="card-title fw-bold text-primary-emphasis m-0" style="font-size: 0.9rem;">${item.nome}</h6>
+          ${btnExcluirHtml}
+        </div>
+        
+        <!-- Corpo do Card -->
+        <div class="card-body p-3 d-flex flex-column justify-content-between">
           <div>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h6 class="card-title fw-bold text-dark m-0">${item.nome}</h6>
-              ${btnExcluirHtml}
-            </div>
             ${detalhesHtml}
-            <div class="small mb-1">
-              <strong>Usuário:</strong> <code class="user-select-all">${item.usuario}</code>
+            <div class="small mb-1 text-secondary">
+              <strong class="text-dark">Usuário:</strong> <code class="user-select-all bg-white text-dark px-1 py-0.5 border rounded">${item.usuario}</code>
             </div>
-            <div class="small">
-              <strong>Senha:</strong> <code class="user-select-all">${item.senha}</code>
+            <div class="small text-secondary">
+              <strong class="text-dark">Senha:</strong> <code class="user-select-all bg-white text-dark px-1 py-0.5 border rounded">${item.senha}</code>
             </div>
           </div>
-          <div>
+          <div class="pt-2">
             ${linkHtml}
           </div>
         </div>
@@ -118,7 +120,6 @@ function renderizarFerramentas() {
   });
 }
 
-// Adiciona nova ferramenta
 function adicionarFerramenta(event) {
   event.preventDefault();
   
@@ -140,7 +141,6 @@ function adicionarFerramenta(event) {
   renderizarFerramentas();
 }
 
-// Exclui ferramenta da lista
 function excluirFerramenta(index) {
   const lista = obterFerramentas();
   const item = lista[index];
@@ -152,12 +152,18 @@ function excluirFerramenta(index) {
   }
 }
 
-// Inicialização
 document.addEventListener("DOMContentLoaded", () => {
   renderizarFerramentas();
-  
+
   const form = document.getElementById("form-add-ferramenta");
   if (form) {
     form.addEventListener("submit", adicionarFerramenta);
+  }
+
+  const modalElem = document.getElementById("modalFerramentas");
+  if (modalElem) {
+    modalElem.addEventListener("show.bs.modal", () => {
+      renderizarFerramentas();
+    });
   }
 });
