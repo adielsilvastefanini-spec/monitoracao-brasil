@@ -1,6 +1,12 @@
 // Array inicial com os dados fornecidos
 const dadosFerramentasIniciais = [
-  { nome: "CASTLE ROCK", link: "", usuario: "monitora", senha: "monitora15", detalhes: "IP: 10.130.144.35 BR | IP: 10.130.144.34 BR | IP: 10.80.34.57 CL" },
+  { 
+    nome: "CASTLE ROCK", 
+    link: "", 
+    usuario: "monitora", 
+    senha: "monitora15", 
+    detalhes: "IP: 10.130.144.35 BR\nIP: 10.130.144.34 BR\nIP: 10.80.34.57 CL" 
+  },
   { nome: "PRTG", link: "https://10.8.16.127/public/login.htm?loginurl=%2Fmap.htm%3Fid%3D28549%26tabid%3D1&errorid=0", usuario: "latam", senha: "Latam@123", detalhes: "" },
   { nome: "PORTAL OI", link: "https://portaloisolucoes.oi.com.br/login", usuario: "monitora.infra@latam.com", senha: "Monitora21", detalhes: "" },
   { nome: "VMANAGER", link: "https://vmanage-2128301.sdwan.cisco.com/", usuario: "latam", senha: "8R~WJj%Q`u8%Rm#)", detalhes: "" },
@@ -18,7 +24,10 @@ const dadosFerramentasIniciais = [
   { nome: "SIGA", link: "https://siga-latam.com/fc/flight-control", usuario: "Individual", senha: "Individual", detalhes: "" }
 ];
 
-// 1. Obtém dados do localStorage ou inicia com os padrões
+// Estado do modo de exclusão/gestão
+let modoExclusaoAtivo = false;
+
+// 1. Obtém dados do localStorage ou carrega os padrão
 function obterFerramentas() {
   const dadosSalvos = localStorage.getItem("ferramentas_latam");
   if (dadosSalvos) {
@@ -28,7 +37,18 @@ function obterFerramentas() {
   return dadosFerramentasIniciais;
 }
 
-// 2. Renderiza os cards dentro do Modal no padrão Bootstrap
+// Alterna o modo de gestão/exclusão
+function alternarModoExclusao() {
+  modoExclusaoAtivo = !modoExclusaoAtivo;
+  const btn = document.getElementById("btn-modo-exclusao");
+  if (btn) {
+    btn.className = modoExclusaoAtivo ? "btn btn-sm btn-danger me-2" : "btn btn-sm btn-outline-secondary me-2";
+    btn.innerHTML = modoExclusaoAtivo ? "✕ Sair da Exclusão" : "⚙️ Efetuar Exclusão";
+  }
+  renderizarFerramentas();
+}
+
+// 2. Renderiza os cards dentro do Modal
 function renderizarFerramentas() {
   const lista = obterFerramentas();
   const container = document.getElementById("lista-ferramentas");
@@ -44,17 +64,25 @@ function renderizarFerramentas() {
       ? `<a href="${item.link}" target="_blank" class="btn btn-sm btn-outline-primary w-100 mt-2">Acessar Portal ↗</a>` 
       : `<span class="badge bg-secondary w-100 py-2 mt-2">Sem link direto</span>`;
 
-    const detalhesHtml = item.detalhes 
-      ? `<div class="small text-muted mb-2 bg-light p-2 rounded border">${item.detalhes}</div>` 
+    // Formata os detalhes substituindo quebras de linha ou '|' por linhas separadas <br>
+    let detalhesHtml = "";
+    if (item.detalhes) {
+      const detalhesFormatados = item.detalhes.replace(/\|/g, "<br>").replace(/\n/g, "<br>");
+      detalhesHtml = `<div class="small text-muted mb-2 bg-light p-2 rounded border" style="line-height: 1.4;">${detalhesFormatados}</div>`;
+    }
+
+    // Botão de exclusão visível apenas no modo de exclusão
+    const btnExcluirHtml = modoExclusaoAtivo 
+      ? `<button onclick="excluirFerramenta(${index})" class="btn btn-sm btn-danger px-2 py-0 fw-bold" title="Excluir Ferramenta">Apagar ✕</button>` 
       : "";
 
     col.innerHTML = `
-      <div class="card h-100 shadow-sm border-0 bg-light">
+      <div class="card h-100 shadow-sm border ${modoExclusaoAtivo ? 'border-danger' : 'border-0'} bg-light">
         <div class="card-body d-flex flex-column justify-content-between">
           <div>
-            <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
               <h6 class="card-title fw-bold text-dark m-0">${item.nome}</h6>
-              <button onclick="excluirFerramenta(${index})" class="btn btn-sm btn-link text-danger p-0 text-decoration-none fw-bold" title="Excluir">✕</button>
+              ${btnExcluirHtml}
             </div>
             ${detalhesHtml}
             <div class="small mb-1">
@@ -98,8 +126,10 @@ function adicionarFerramenta(event) {
 
 // 4. Exclui ferramenta da lista
 function excluirFerramenta(index) {
-  if (confirm("Deseja realmente remover esta ferramenta?")) {
-    const lista = obterFerramentas();
+  const lista = obterFerramentas();
+  const item = lista[index];
+  
+  if (confirm(`Tem certeza que deseja excluir "${item.nome}"?`)) {
     lista.splice(index, 1);
     localStorage.setItem("ferramentas_latam", JSON.stringify(lista));
     renderizarFerramentas();
