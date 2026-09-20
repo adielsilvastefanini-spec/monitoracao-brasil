@@ -1614,6 +1614,8 @@ function fn_configurarEventosDOM() {
   });
 
   // Salva automaticamente no Firebase ao alterar qualquer input ou select da tabela
-  $('#incidentes').on('change input', 'input, select', function() {
-    fn06_salvarDadosStorage();
-  });
+$('#incidentes').on('change input', 'input, select', function() {
+  fn06_salvarDadosStorage();
+});
+
+});
