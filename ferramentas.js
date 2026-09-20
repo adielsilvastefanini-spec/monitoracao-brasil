@@ -1,16 +1,28 @@
-// CONFIGURAÇÃO DA SENHA DE ACESSO AO MODAL DE FERRAMENTAS
-// Altere a senha abaixo para a senha desejada:
-const SENHA_ACESSO_FERRAMENTAS = "Latam@2026"; 
+// CONFIGURAÇÃO DO EMAILJS (Substitua pelas suas chaves reais)
+const EMAILJS_PUBLIC_KEY = "SUA_PUBLIC_KEY";
+const EMAILJS_SERVICE_ID = "SEU_SERVICE_ID";
+const EMAILJS_TEMPLATE_ID = "SEU_TEMPLATE_ID";
 
-// Array inicial com os dados fornecidos
+const SENHA_PRIMEIRO_ACESSO = "Latam@2026"; 
+
+// Lista padrão de analistas da equipe
+const ANALISTAS_PADRAO = [
+  "ADIEL",
+  "BRUNO",
+  "FRANCISCO",
+  "MATHEUS",
+  "RODRIGO",
+  "VALDEQUE",
+  "WENDELL"
+];
+
+// Inicializa o EmailJS
+if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== "SUA_PUBLIC_KEY") {
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+}
+
 const dadosFerramentasIniciais = [
-  { 
-    nome: "CASTLE ROCK", 
-    link: "", 
-    usuario: "monitora", 
-    senha: "monitora15", 
-    detalhes: "IP: 10.130.144.35 BR\nIP: 10.130.144.34 BR\nIP: 10.80.34.57 CL" 
-  },
+  { nome: "CASTLE ROCK", link: "", usuario: "monitora", senha: "monitora15", detalhes: "IP: 10.130.144.35 BR\nIP: 10.130.144.34 BR\nIP: 10.80.34.57 CL" },
   { nome: "PRTG", link: "https://10.8.16.127/public/login.htm?loginurl=%2Fmap.htm%3Fid%3D28549%26tabid%3D1&errorid=0", usuario: "latam", senha: "Latam@123", detalhes: "" },
   { nome: "PORTAL OI", link: "https://portaloisolucoes.oi.com.br/login", usuario: "monitora.infra@latam.com", senha: "Monitora21", detalhes: "" },
   { nome: "VMANAGER", link: "https://vmanage-2128301.sdwan.cisco.com/", usuario: "latam", senha: "8R~WJj%Q`u8%Rm#)", detalhes: "" },
@@ -29,39 +41,194 @@ const dadosFerramentasIniciais = [
 ];
 
 let modoExclusaoAtivo = false;
+let statusAuthLocal = "LOGIN"; 
+let codigoGeradoTemp = null;
+let usuarioEmRecuperacao = null;
+let analistaSelecionadoTemp = "";
 
 function obterFerramentas() {
   const dadosSalvos = localStorage.getItem("ferramentas_latam");
-  if (dadosSalvos) {
-    return JSON.parse(dadosSalvos);
-  }
+  if (dadosSalvos) return JSON.parse(dadosSalvos);
   localStorage.setItem("ferramentas_latam", JSON.stringify(dadosFerramentasIniciais));
   return dadosFerramentasIniciais;
+}
+
+function obterUsuariosCadastrados() {
+  const users = localStorage.getItem("ferramentas_usuarios");
+  return users ? JSON.parse(users) : [];
+}
+
+function salvarUsuario(nome, email, senha) {
+  const users = obterUsuariosCadastrados();
+  const index = users.findIndex(u => u.nome.toUpperCase() === nome.toUpperCase());
+  if (index !== -1) {
+    users[index] = { nome, email, senha };
+  } else {
+    users.push({ nome, email, senha });
+  }
+  localStorage.setItem("ferramentas_usuarios", JSON.stringify(users));
+}
+
+function atualizarSenhaUsuario(nome, novaSenha) {
+  const users = obterUsuariosCadastrados();
+  const index = users.findIndex(u => u.nome.toUpperCase() === nome.toUpperCase());
+  if (index !== -1) {
+    users[index].senha = novaSenha;
+    localStorage.setItem("ferramentas_usuarios", JSON.stringify(users));
+  }
 }
 
 function verificarAutenticacao() {
   return sessionStorage.getItem("ferramentas_autenticado") === "true";
 }
 
-function autenticarFerramentas(event) {
+function mudarStatusAuth(novoStatus) {
+  statusAuthLocal = novoStatus;
+  renderizarFerramentas();
+}
+
+function autenticarOuTrocarForm(event) {
   if (event) event.preventDefault();
-  const inputSenha = document.getElementById("senha-acesso-input");
-  const msgErro = document.getElementById("erro-senha-ferramentas");
   
-  if (inputSenha && inputSenha.value === SENHA_ACESSO_FERRAMENTAS) {
+  const msgErro = document.getElementById("erro-senha-ferramentas");
+  if (msgErro) msgErro.classList.add("d-none");
+
+  if (statusAuthLocal === "LOGIN") {
+    const selectNome = document.getElementById("auth-nome-select");
+    const nomeInput = selectNome ? selectNome.value.trim().toUpperCase() : "";
+    const senhaInput = document.getElementById("auth-senha-input") ? document.getElementById("auth-senha-input").value : "";
+
+    if (!nomeInput) {
+      if (msgErro) {
+        msgErro.classList.remove("d-none");
+        msgErro.innerText = "Por favor, selecione o seu nome de analista.";
+      }
+      return;
+    }
+
+    if (senhaInput === SENHA_PRIMEIRO_ACESSO) {
+      analistaSelecionadoTemp = nomeInput;
+      statusAuthLocal = "CADASTRO";
+      renderizarFerramentas();
+      return;
+    }
+
+    const usuarios = obterUsuariosCadastrados();
+    const usuarioEncontrado = usuarios.find(u => u.nome.toUpperCase() === nomeInput && u.senha === senhaInput);
+
+    if (usuarioEncontrado) {
+      sessionStorage.setItem("ferramentas_autenticado", "true");
+      sessionStorage.setItem("ferramentas_analista_ativo", usuarioEncontrado.nome);
+      renderizarFerramentas();
+    } else {
+      if (msgErro) {
+        msgErro.classList.remove("d-none");
+        msgErro.innerText = "Senha incorreta! Se é o seu 1º acesso, use a senha padrão 'Latam@2026'.";
+      }
+    }
+
+  } else if (statusAuthLocal === "CADASTRO") {
+    const nome = analistaSelecionadoTemp;
+    const novoEmail = document.getElementById("novo-email-input").value.trim();
+    const novaSenha = document.getElementById("nova-senha-input").value;
+    const confirmaSenha = document.getElementById("confirma-senha-input").value;
+
+    if (!novoEmail || !novaSenha) {
+      if (msgErro) {
+        msgErro.classList.remove("d-none");
+        msgErro.innerText = "Preencha todos os campos!";
+      }
+      return;
+    }
+
+    if (novaSenha !== confirmaSenha) {
+      if (msgErro) {
+        msgErro.classList.remove("d-none");
+        msgErro.innerText = "As senhas não coincidem!";
+      }
+      return;
+    }
+
+    if (novaSenha === SENHA_PRIMEIRO_ACESSO) {
+      if (msgErro) {
+        msgErro.classList.remove("d-none");
+        msgErro.innerText = "A sua nova senha deve ser diferente da senha temporária!";
+      }
+      return;
+    }
+
+    salvarUsuario(nome, novoEmail, novaSenha);
     sessionStorage.setItem("ferramentas_autenticado", "true");
-    if (msgErro) msgErro.classList.add("d-none");
+    sessionStorage.setItem("ferramentas_analista_ativo", nome);
+    statusAuthLocal = "LOGIN";
     renderizarFerramentas();
-  } else {
+  }
+}
+
+function enviarCodigoEmail(event) {
+  event.preventDefault();
+  const selectNome = document.getElementById("rec-nome-select");
+  const nome = selectNome ? selectNome.value.trim().toUpperCase() : "";
+  const email = document.getElementById("rec-email-input").value.trim();
+  const msgErro = document.getElementById("erro-senha-ferramentas");
+
+  const usuarios = obterUsuariosCadastrados();
+  const user = usuarios.find(u => u.nome.toUpperCase() === nome && u.email && u.email.toLowerCase() === email.toLowerCase());
+
+  if (!user) {
     if (msgErro) {
       msgErro.classList.remove("d-none");
-      msgErro.innerText = "Senha incorreta! Tente novamente.";
+      msgErro.innerText = "Analista ou E-mail não coincidem com o registro!";
     }
-    if (inputSenha) {
-      inputSenha.value = "";
-      inputSenha.focus();
-    }
+    return;
   }
+
+  codigoGeradoTemp = Math.floor(100000 + Math.random() * 900000).toString();
+  usuarioEmRecuperacao = user;
+
+  const templateParams = {
+    to_name: user.nome,
+    to_email: user.email,
+    code: codigoGeradoTemp
+  };
+
+  if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== "SUA_PUBLIC_KEY") {
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+      .then(() => {
+        mudarStatusAuth("RECUPERAR_CODIGO");
+      }, () => {
+        if (msgErro) {
+          msgErro.classList.remove("d-none");
+          msgErro.innerText = "Erro ao enviar e-mail. Verifique as chaves do EmailJS.";
+        }
+      });
+  } else {
+    alert(`[Simulação] Código enviado para ${user.email}: ${codigoGeradoTemp}`);
+    mudarStatusAuth("RECUPERAR_CODIGO");
+  }
+}
+
+function validarCodigoERedefinir(event) {
+  event.preventDefault();
+  const codigoInput = document.getElementById("codigo-input").value.trim();
+  const novaSenha = document.getElementById("rec-nova-senha-input").value;
+  const msgErro = document.getElementById("erro-senha-ferramentas");
+
+  if (codigoInput !== codigoGeradoTemp) {
+    if (msgErro) {
+      msgErro.classList.remove("d-none");
+      msgErro.innerText = "Código de verificação incorreto!";
+    }
+    return;
+  }
+
+  atualizarSenhaUsuario(usuarioEmRecuperacao.nome, novaSenha);
+  sessionStorage.setItem("ferramentas_autenticado", "true");
+  sessionStorage.setItem("ferramentas_analista_ativo", usuarioEmRecuperacao.nome);
+  codigoGeradoTemp = null;
+  usuarioEmRecuperacao = null;
+  statusAuthLocal = "LOGIN";
+  renderizarFerramentas();
 }
 
 function alternarFormularioAdd() {
@@ -98,41 +265,133 @@ function renderizarFerramentas() {
   
   if (!container) return;
 
-  // Se o usuário ainda não digitou a senha de acesso
   if (!verificarAutenticacao()) {
     if (btnToggleAdd) btnToggleAdd.classList.add("d-none");
     if (btnModoExclusao) btnModoExclusao.classList.add("d-none");
 
-    container.innerHTML = `
-      <div class="col-12 col-md-6 offset-md-3 py-4">
-        <div class="card border-0 shadow-sm rounded-3">
-          <div class="card-body p-4 text-center">
-            <div class="mb-3 text-warning">
-              <i class="fas fa-lock fa-3x"></i>
+    const opcoesAnalistas = ANALISTAS_PADRAO.map(a => `<option value="${a}">${a}</option>`).join("");
+
+    if (statusAuthLocal === "LOGIN") {
+      container.innerHTML = `
+        <div class="col-12 col-md-6 offset-md-3 py-3">
+          <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-4 text-center">
+              <div class="mb-3 text-primary"><i class="fas fa-user-lock fa-3x"></i></div>
+              <h5 class="fw-bold text-dark mb-1">Acesso ao Módulo Ferramentas</h5>
+              <p class="small text-muted mb-3">Selecione o seu nome e informe a sua senha.</p>
+              
+              <form onsubmit="autenticarOuTrocarForm(event)">
+                <div class="mb-2">
+                  <select id="auth-nome-select" class="form-select text-center shadow-none" required>
+                    <option value="" disabled selected>-- Selecione o Analista --</option>
+                    ${opcoesAnalistas}
+                  </select>
+                </div>
+                <div class="mb-2">
+                  <input type="password" id="auth-senha-input" class="form-control text-center shadow-none" placeholder="Senha (ou 'Latam@2026' no 1º acesso)" required>
+                  <div id="erro-senha-ferramentas" class="text-danger small mt-2 d-none fw-semibold"></div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 fw-semibold mb-2">🔓 Entrar no Painel</button>
+              </form>
+              <button onclick="mudarStatusAuth('RECUPERAR_EMAIL')" class="btn btn-link btn-sm text-secondary p-0 text-decoration-none small">Esqueceu a senha?</button>
             </div>
-            <h5 class="fw-bold text-dark mb-1">Acesso Restrito</h5>
-            <p class="small text-muted mb-3">Digite a senha do módulo para visualizar os portais e senhas.</p>
-            
-            <form onsubmit="autenticarFerramentas(event)">
-              <div class="mb-3">
-                <input type="password" id="senha-acesso-input" class="form-control text-center shadow-none" placeholder="Senha de Acesso" required autofocus>
-                <div id="erro-senha-ferramentas" class="text-danger small mt-2 d-none fw-semibold"></div>
-              </div>
-              <button type="submit" class="btn btn-primary w-100 fw-semibold">🔓 Desbloquear Acesso</button>
-            </form>
           </div>
         </div>
-      </div>
-    `;
+      `;
+    } else if (statusAuthLocal === "CADASTRO") {
+      container.innerHTML = `
+        <div class="col-12 col-md-6 offset-md-3 py-3">
+          <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-4 text-center">
+              <div class="mb-3 text-warning"><i class="fas fa-key fa-3x"></i></div>
+              <h5 class="fw-bold text-dark mb-1">Primeiro Acesso: ${analistaSelecionadoTemp}</h5>
+              <p class="small text-muted mb-3">Cadastre o seu e-mail corporativo e a sua nova senha pessoal.</p>
+              
+              <form onsubmit="autenticarOuTrocarForm(event)">
+                <div class="mb-2">
+                  <input type="email" id="novo-email-input" class="form-control text-center shadow-none" placeholder="Seu E-mail Corporativo" required autofocus>
+                </div>
+                <div class="mb-2">
+                  <input type="password" id="nova-senha-input" class="form-control text-center shadow-none" placeholder="Nova Senha Pessoal" required>
+                </div>
+                <div class="mb-3">
+                  <input type="password" id="confirma-senha-input" class="form-control text-center shadow-none" placeholder="Confirme a Nova Senha" required>
+                  <div id="erro-senha-ferramentas" class="text-danger small mt-2 d-none fw-semibold"></div>
+                </div>
+                <button type="submit" class="btn btn-success w-100 fw-semibold">💾 Salvar e Acessar</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (statusAuthLocal === "RECUPERAR_EMAIL") {
+      container.innerHTML = `
+        <div class="col-12 col-md-6 offset-md-3 py-3">
+          <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-4 text-center">
+              <div class="mb-3 text-info"><i class="fas fa-envelope fa-3x"></i></div>
+              <h5 class="fw-bold text-dark mb-1">Recuperar Senha</h5>
+              <p class="small text-muted mb-3">Selecione o seu nome e informe o e-mail cadastrado.</p>
+              
+              <form onsubmit="enviarCodigoEmail(event)">
+                <div class="mb-2">
+                  <select id="rec-nome-select" class="form-select text-center shadow-none" required>
+                    <option value="" disabled selected>-- Selecione o Analista --</option>
+                    ${opcoesAnalistas}
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <input type="email" id="rec-email-input" class="form-control text-center shadow-none" placeholder="E-mail Cadastrado" required>
+                  <div id="erro-senha-ferramentas" class="text-danger small mt-2 d-none fw-semibold"></div>
+                </div>
+                <button type="submit" class="btn btn-info text-white w-100 fw-semibold mb-2">📩 Enviar Código de Validação</button>
+              </form>
+              <button onclick="mudarStatusAuth('LOGIN')" class="btn btn-link btn-sm text-secondary p-0 text-decoration-none small">Voltar ao Login</button>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (statusAuthLocal === "RECUPERAR_CODIGO") {
+      container.innerHTML = `
+        <div class="col-12 col-md-6 offset-md-3 py-3">
+          <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-4 text-center">
+              <div class="mb-3 text-success"><i class="fas fa-shield-alt fa-3x"></i></div>
+              <h5 class="fw-bold text-dark mb-1">Código de Segurança</h5>
+              <p class="small text-muted mb-3">Insira o código de 6 dígitos e a nova senha pessoal.</p>
+              
+              <form onsubmit="validarCodigoERedefinir(event)">
+                <div class="mb-2">
+                  <input type="text" id="codigo-input" class="form-control text-center shadow-none fw-bold" placeholder="Código (6 dígitos)" maxlength="6" required autofocus>
+                </div>
+                <div class="mb-3">
+                  <input type="password" id="rec-nova-senha-input" class="form-control text-center shadow-none" placeholder="Nova Senha Pessoal" required>
+                  <div id="erro-senha-ferramentas" class="text-danger small mt-2 d-none fw-semibold"></div>
+                </div>
+                <button type="submit" class="btn btn-success w-100 fw-semibold mb-2">✅ Redefinir e Entrar</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+    }
     return;
   }
 
-  // Se autenticado, exibe os botões do cabeçalho
   if (btnToggleAdd) btnToggleAdd.classList.remove("d-none");
   if (btnModoExclusao) btnModoExclusao.classList.remove("d-none");
 
+  const analistaAtivo = sessionStorage.getItem("ferramentas_analista_ativo") || "Analista";
   const lista = obterFerramentas();
   container.innerHTML = "";
+
+  const bannerUser = document.createElement("div");
+  bannerUser.className = "col-12 mb-2 d-flex justify-content-between align-items-center bg-light p-2 rounded border border-light-subtle";
+  bannerUser.innerHTML = `
+    <small class="text-muted">Conectado como: <strong class="text-primary">${analistaAtivo}</strong></small>
+    <button onclick="fazerLogout()" class="btn btn-sm btn-link text-danger p-0 text-decoration-none small">Sair / Bloquear 🔒</button>
+  `;
+  container.appendChild(bannerUser);
 
   lista.forEach((item, index) => {
     const col = document.createElement("div");
@@ -181,9 +440,15 @@ function renderizarFerramentas() {
   });
 }
 
+function fazerLogout() {
+  sessionStorage.removeItem("ferramentas_autenticado");
+  sessionStorage.removeItem("ferramentas_analista_ativo");
+  statusAuthLocal = "LOGIN";
+  renderizarFerramentas();
+}
+
 function adicionarFerramenta(event) {
   event.preventDefault();
-  
   if (!verificarAutenticacao()) return;
 
   const nome = document.getElementById("tool-nome").value.trim();
