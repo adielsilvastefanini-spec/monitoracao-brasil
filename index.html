@@ -687,6 +687,7 @@ table.tabela-checkpoint td.cp-col-status {
   </div>
 
  <!-- Modal Ferramentas -->
+<!-- Modal Ferramentas -->
 <div class="modal fade" id="modalFerramentas" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
@@ -694,7 +695,10 @@ table.tabela-checkpoint td.cp-col-status {
       <!-- Cabeçalho do Modal -->
       <div class="modal-header bg-dark text-white py-2">
         <h5 class="modal-title fs-6">🛠 Ferramentas e Portais</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="d-flex align-items-center">
+          <button id="btn-modo-exclusao" onclick="alternarModoExclusao()" class="btn btn-sm btn-outline-light me-2">⚙️ Efetuar Exclusão</button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
       </div>
 
       <!-- Corpo do Modal -->
@@ -720,7 +724,7 @@ table.tabela-checkpoint td.cp-col-status {
                 <input type="text" id="tool-senha" class="form-control form-control-sm" placeholder="Senha (Padrão: Individual)">
               </div>
               <div class="col-12">
-                <input type="text" id="tool-detalhes" class="form-control form-control-sm" placeholder="Detalhes / IPs / Observações adicionais">
+                <input type="text" id="tool-detalhes" class="form-control form-control-sm" placeholder="Detalhes / IPs / Observações (use quebras de linha ou '|' para separar)">
               </div>
               <div class="col-12 text-end">
                 <button type="submit" class="btn btn-sm btn-success mt-1">💾 Salvar Ferramenta</button>
