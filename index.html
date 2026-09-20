@@ -188,8 +188,8 @@
       cursor: pointer;
     }
 
-    /* Cores aplicadas ao elemento do sítio */
-td.sitio-laranja select, select.bg-warning { background-color: #0ea5e9 !important; color: #ffffff !important; }
+/* Cores aplicadas ao elemento do sítio */
+td.sitio-laranja select, select.bg-warning { background-color: #ffaa00 !important; color: #000000 !important; }
 td.sitio-verde select, select.bg-success { background-color: #22c55e !important; color: #ffffff !important; }
 td.sitio-cinza select, select.bg-secondary { background-color: #6b7280 !important; color: #ffffff !important; }
 td.sitio-azul select, select.bg-info { background-color: #0ea5e9 !important; color: #ffffff !important; }
@@ -199,7 +199,12 @@ td.sitio-azul select, select.bg-info { background-color: #0ea5e9 !important; col
       color: #334155;
       text-align: left;
     }
-
+/* Cor azul claro APENAS quando a opção "Selecione..." estiver ativa */
+    .select-sitio option[value=""]:checked,
+     select.select-sitio:has(option[value=""]:checked) {
+      background-color: #0ea5e9 !important;
+      color: #ffffff !important;
+}
     .select-tipo { width: 100px !important; }
     .select-parceiro { width: 110px !important; }
     .input-data { width: 98px !important; }
