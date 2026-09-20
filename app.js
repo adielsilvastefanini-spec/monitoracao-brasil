@@ -1618,4 +1618,4 @@ $('#incidentes').on('change input', 'input, select', function() {
   fn06_salvarDadosStorage();
 });
 
-});
+};
