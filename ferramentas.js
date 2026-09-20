@@ -1,3 +1,7 @@
+// CONFIGURAÇÃO DA SENHA DE ACESSO AO MODAL DE FERRAMENTAS
+// Altere a senha abaixo para a senha desejada:
+const SENHA_ACESSO_FERRAMENTAS = "Latam@2026"; 
+
 // Array inicial com os dados fornecidos
 const dadosFerramentasIniciais = [
   { 
@@ -35,6 +39,31 @@ function obterFerramentas() {
   return dadosFerramentasIniciais;
 }
 
+function verificarAutenticacao() {
+  return sessionStorage.getItem("ferramentas_autenticado") === "true";
+}
+
+function autenticarFerramentas(event) {
+  if (event) event.preventDefault();
+  const inputSenha = document.getElementById("senha-acesso-input");
+  const msgErro = document.getElementById("erro-senha-ferramentas");
+  
+  if (inputSenha && inputSenha.value === SENHA_ACESSO_FERRAMENTAS) {
+    sessionStorage.setItem("ferramentas_autenticado", "true");
+    if (msgErro) msgErro.classList.add("d-none");
+    renderizarFerramentas();
+  } else {
+    if (msgErro) {
+      msgErro.classList.remove("d-none");
+      msgErro.innerText = "Senha incorreta! Tente novamente.";
+    }
+    if (inputSenha) {
+      inputSenha.value = "";
+      inputSenha.focus();
+    }
+  }
+}
+
 function alternarFormularioAdd() {
   const painel = document.getElementById("painel-add-ferramenta");
   const btn = document.getElementById("btn-toggle-add");
@@ -63,10 +92,46 @@ function alternarModoExclusao() {
 }
 
 function renderizarFerramentas() {
-  const lista = obterFerramentas();
   const container = document.getElementById("lista-ferramentas");
+  const btnToggleAdd = document.getElementById("btn-toggle-add");
+  const btnModoExclusao = document.getElementById("btn-modo-exclusao");
+  
   if (!container) return;
 
+  // Se o usuário ainda não digitou a senha de acesso
+  if (!verificarAutenticacao()) {
+    if (btnToggleAdd) btnToggleAdd.classList.add("d-none");
+    if (btnModoExclusao) btnModoExclusao.classList.add("d-none");
+
+    container.innerHTML = `
+      <div class="col-12 col-md-6 offset-md-3 py-4">
+        <div class="card border-0 shadow-sm rounded-3">
+          <div class="card-body p-4 text-center">
+            <div class="mb-3 text-warning">
+              <i class="fas fa-lock fa-3x"></i>
+            </div>
+            <h5 class="fw-bold text-dark mb-1">Acesso Restrito</h5>
+            <p class="small text-muted mb-3">Digite a senha do módulo para visualizar os portais e senhas.</p>
+            
+            <form onsubmit="autenticarFerramentas(event)">
+              <div class="mb-3">
+                <input type="password" id="senha-acesso-input" class="form-control text-center shadow-none" placeholder="Senha de Acesso" required autofocus>
+                <div id="erro-senha-ferramentas" class="text-danger small mt-2 d-none fw-semibold"></div>
+              </div>
+              <button type="submit" class="btn btn-primary w-100 fw-semibold">🔓 Desbloquear Acesso</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // Se autenticado, exibe os botões do cabeçalho
+  if (btnToggleAdd) btnToggleAdd.classList.remove("d-none");
+  if (btnModoExclusao) btnModoExclusao.classList.remove("d-none");
+
+  const lista = obterFerramentas();
   container.innerHTML = "";
 
   lista.forEach((item, index) => {
@@ -87,18 +152,14 @@ function renderizarFerramentas() {
       ? `<button onclick="excluirFerramenta(${index})" class="btn btn-sm btn-danger px-2 py-0 fw-bold" title="Excluir Ferramenta">Apagar ✕</button>` 
       : "";
 
-    // Card com cores suaves: fundo levemente acinzentado/azulado com borda delicada
     const classeBordaCard = modoExclusaoAtivo ? 'border-danger shadow-sm' : 'border-primary-subtle shadow-sm';
 
     col.innerHTML = `
       <div class="card h-100 ${classeBordaCard} rounded-3 overflow-hidden" style="background-color: #f8fafc;">
-        <!-- Cabeçalho suave do Card -->
         <div class="px-3 py-2 bg-light border-bottom border-light-subtle d-flex justify-content-between align-items-center">
           <h6 class="card-title fw-bold text-primary-emphasis m-0" style="font-size: 0.9rem;">${item.nome}</h6>
           ${btnExcluirHtml}
         </div>
-        
-        <!-- Corpo do Card -->
         <div class="card-body p-3 d-flex flex-column justify-content-between">
           <div>
             ${detalhesHtml}
@@ -123,6 +184,8 @@ function renderizarFerramentas() {
 function adicionarFerramenta(event) {
   event.preventDefault();
   
+  if (!verificarAutenticacao()) return;
+
   const nome = document.getElementById("tool-nome").value.trim();
   const link = document.getElementById("tool-link").value.trim();
   const usuario = document.getElementById("tool-usuario").value.trim() || "Individual";
@@ -142,6 +205,8 @@ function adicionarFerramenta(event) {
 }
 
 function excluirFerramenta(index) {
+  if (!verificarAutenticacao()) return;
+
   const lista = obterFerramentas();
   const item = lista[index];
   
