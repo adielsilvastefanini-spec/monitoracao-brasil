@@ -1572,8 +1572,8 @@ function fn_configurarEventosDOM() {
     });
   });
 
-  // Módulos em Construção (Processos, Ferramentas, Estrutura, Plantão)
-  $(d$(document).on('click', '#btnProcessos, #btnPlantao, #btnEstrutura', function(e) {
+  // Módulos em Construção (Processos, Estrutura, Plantão)
+  $(document).on('click', '#btnProcessos, #btnPlantao, #btnEstrutura', function(e) {
     e.preventDefault();
 
     var nomeModulo = $(this).text().trim();
@@ -1603,20 +1603,17 @@ function fn_configurarEventosDOM() {
 
     $('body').append(htmlModal);
 
-    var $modalEl = $('#modalEmDesenvolvimento');
+    var $modalEl =$('#modalEmDesenvolvimento');
     var modalInstance = new bootstrap.Modal($modalEl[0]);
 
-    $modalEl.on('hidden.bs.modal', function () {
-      $modalEl.remove();
-      $('.modal-backdrop').remove();
-      $('body').removeClass('modal-open').css('overflow', 'auto');
+    $modalEl.on('hidden.bs.modal', function () {$modalEl.remove();
+      $('.modal-backdrop').remove();$('body').removeClass('modal-open').css('overflow', 'auto');
     });
 
     modalInstance.show();
   });
-  // Salva automaticamente no Firebase ao alterar qualquer input ou select da tabela
-$('#incidentes').on('change input', 'input, select', function() {
-  fn06_salvarDadosStorage();
-});
 
-}
+  // Salva automaticamente no Firebase ao alterar qualquer input ou select da tabela
+  $('#incidentes').on('change input', 'input, select', function() {
+    fn06_salvarDadosStorage();
+  });
