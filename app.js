@@ -660,26 +660,41 @@ function fn02_reordenarTabela() {
   var $linhas = $tbody.find('tr').get();
 
   $linhas.sort(function(a, b) {
-    var $tdA = $(a).find('td.col-sitio');
-    var $tdB = $(b).find('td.col-sitio');
+    var $selectA = $(a).find('.select-sitio');
+    var $selectB = $(b).find('.select-sitio');
 
-    var getPrioridade = function($td) {
-      if ($td.hasClass('sitio-laranja')) return 1;
-      if ($td.hasClass('sitio-cinza')) return 2;
-      if ($td.hasClass('sitio-verde')) return 3;
-      return 4;
+    // Função que identifica a prioridade da cor/status
+    var getPrioridade = function($select) {
+      if ($select.hasClass('bg-info') || $select.hasClass('sitio-azul') || !$select.val()) return 0; // Novas linhas (Azul) no TOPO ABSOLUTO
+      if ($select.hasClass('bg-warning') || $select.hasClass('sitio-laranja')) return 1;           // Laranja (Pendentes)
+      if ($select.hasClass('bg-secondary') || $select.hasClass('sitio-cinza')) return 2;          // Cinza (Atividades Futuras)
+      if ($select.hasClass('bg-success') || $select.hasClass('sitio-verde')) return 3;            // Verde (Concluídos)
+      return 1; // Padrão
     };
 
-    var pA = getPrioridade($tdA);
-    var pB = getPrioridade($tdB);
+    var pA = getPrioridade($selectA);
+    var pB = getPrioridade($selectB);
 
+    // Se forem de grupos de prioridade/status diferentes, ordena pelo grupo
     if (pA !== pB) return pA - pB;
 
-    var dataA = $(a).find('.input-data1').val() + ' ' + $(a).find('.input-hora1').val();
-    var dataB = $(b).find('.input-data1').val() + ' ' + $(b).find('.input-hora1').val();
+    // --- Ordenação dentro do mesmo grupo ---
+    var valDataA = $(a).find('.input-data1').val() || '';
+    var valHoraA = $(a).find('.input-hora1').val() || '';
+    var valDataB = $(b).find('.input-data1').val() || '';
+    var valHoraB = $(b).find('.input-hora2').val() || $(b).find('.input-hora1').val() || '';
+
+    // Linhas sem data de início ganham prioridade máxima dentro do grupo (ficam no topo)
+    if (!valDataA && valDataB) return -1;
+    if (valDataA && !valDataB) return 1;
+
+    // Se ambas têm data, ordena da mais recente para a mais antiga
+    var dataA = valDataA + ' ' + valHoraA;
+    var dataB = valDataB + ' ' + valHoraB;
     return dataB.localeCompare(dataA);
   });
 
+  // Reorganiza no DOM
   $.each($linhas, function(index, row) {
     $tbody.append(row);
   });
