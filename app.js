@@ -1033,7 +1033,7 @@ function obterValorCampo($row, seletor) {
 function gerarRelatorioWhatsApp() {
   var incidentesLaranja = [];
   var atividadesCinza = [];
-  var normalizadosVerde = [];
+  var encerradosVerde = [];
 
   $('#incidentes tbody tr').each(function() {
     var $row =$(this);
@@ -1109,7 +1109,7 @@ function gerarRelatorioWhatsApp() {
       }
 
       if (incluirVerde) {
-        normalizadosVerde.push(item);
+        encerradosVerde.push(item);
       }
     }
   });
@@ -1157,7 +1157,7 @@ function gerarRelatorioWhatsApp() {
       </div>
 
       <h4 style="color: #15803d; background-color: #dcfce7; padding: 6px; border-left: 4px solid #22c55e; margin-bottom: 6px; margin-top: 15px;">4 - Incidentes Normalizados</h4>
-      ${gerarTabelaAtividadesENormalizados(normalizadosVerde)}
+      ${gerarTabelaAtividadesENormalizados(encerradosVerde)}
     </div>
   `;
 
