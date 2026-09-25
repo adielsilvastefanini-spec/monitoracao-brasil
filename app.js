@@ -608,7 +608,7 @@ function fn08_criarLinhaTabela(id) {
           <option value="TELEFONIA">Telefonia</option>
           <option value="SETORES">Setores</option>
           <option value="REDE INTERNA">Rede Interna</option>
-          <option value="SWITCHES / ACCESS POINT">Switches / Access Point</option>
+          <option value="SW / AP">Switches / Access Point</option>
         </select>
       </td>
       <td class="align-middle">
