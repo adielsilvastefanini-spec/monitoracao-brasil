@@ -687,54 +687,51 @@ table.tabela-checkpoint td.cp-col-status {
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        
-        <!-- Bloco do Plantão Ativo -->
-        <div class="card border-primary mb-3">
-          <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-clock-history me-1"></i> Plantão Ativo</span>
-            <small id="plantao-periodo-atual" class="badge bg-light text-primary">Carregando...</small>
-          </div>
-          <div class="card-body">
-            <div class="row text-center g-3">
-              <!-- N1 - Analista 1 -->
-              <div class="col-md-4">
-                <div class="p-3 border rounded bg-light shadow-sm">
-                  <small class="text-muted d-block fw-bold mb-1">N1 - Suporte 1</small>
-                  <h6 id="plantao-n1-a" class="fw-bold text-dark mb-1">-</h6>
-                  <small id="contato-n1-a" class="text-secondary d-block">-</small>
-                </div>
-              </div>
-              <!-- N1 - Analista 2 -->
-              <div class="col-md-4">
-                <div class="p-3 border rounded bg-light shadow-sm">
-                  <small class="text-muted d-block fw-bold mb-1">N1 - Suporte 2</small>
-                  <h6 id="plantao-n1-b" class="fw-bold text-dark mb-1">-</h6>
-                  <small id="contato-n1-b" class="text-secondary d-block">-</small>
-                </div>
-              </div>
-              <!-- N2 - Especialista -->
-              <div class="col-md-4">
-                <div class="p-3 border rounded bg-primary bg-opacity-10 shadow-sm border-primary">
-                  <small class="text-primary d-block fw-bold mb-1">N2 - Especialista</small>
-                  <h6 id="plantao-n2" class="fw-bold text-primary mb-1">-</h6>
-                  <small id="contato-n2" class="text-secondary d-block">-</small>
-                </div>
-              </div>
-            </div>
+  
+  <!-- Bloco do Plantonista Ativo -->
+  <div class="card border-primary mb-3">
+    <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-clock-history me-1"></i> Plantonista Ativo</span>
+      <small id="plantao-periodo-atual" class="badge bg-light text-primary">Carregando...</small>
+    </div>
+    <div class="card-body">
+      <div class="row text-center g-3">
+        <!-- Plantão 1 -->
+        <div class="col-md-4">
+          <div class="p-3 border rounded bg-light shadow-sm">
+            <small class="text-muted d-block fw-bold mb-1">Plantão 1</small>
+            <h6 id="plantao-n1-a" class="fw-bold text-dark mb-1">-</h6>
+            <small id="contato-n1-a" class="text-secondary d-block">-</small>
           </div>
         </div>
-
-        <!-- Rodapé do Modal com Acesso Restrito -->
-        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-          <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Troca de escala todas as segundas-feiras.</small>
-          <button id="btn-gestao-plantao" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-shield-lock me-1"></i> Área do Responsável
-          </button>
+        <!-- Plantão 2 -->
+        <div class="col-md-4">
+          <div class="p-3 border rounded bg-light shadow-sm">
+            <small class="text-muted d-block fw-bold mb-1">Plantão 2</small>
+            <h6 id="plantao-n1-b" class="fw-bold text-dark mb-1">-</h6>
+            <small id="contato-n1-b" class="text-secondary d-block">-</small>
+          </div>
         </div>
-
+        <!-- Especialista -->
+        <div class="col-md-4">
+          <div class="p-3 border rounded bg-primary bg-opacity-10 shadow-sm border-primary">
+            <small class="text-primary d-block fw-bold mb-1">Especialista</small>
+            <h6 id="plantao-n2" class="fw-bold text-primary mb-1">-</h6>
+            <small id="contato-n2" class="text-secondary d-block">-</small>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- Rodapé do Modal com Acesso Restrito -->
+  <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+    <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Troca de escala todas as segundas-feiras.</small>
+    <button id="btn-gestao-plantao" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-shield-lock me-1"></i> Área do Responsável
+    </button>
+  </div>
+
 </div>
 
  <!-- Modal Ferramentas -->
