@@ -1589,7 +1589,7 @@ function fn_configurarEventosDOM() {
   });
 
   // Módulos em Construção (Processos, Estrutura, Plantão)
-  $(document).on('click', '#btnProcessos, #btnPlantao, #btnEstrutura', function(e) {
+  $(document).on('click', '#btnProcessos, #btnEstrutura', function(e) {
     e.preventDefault();
 
     var nomeModulo = $(this).text().trim();
