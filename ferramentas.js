@@ -497,3 +497,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+// Garante o destravamento da tela caso o modal de Ferramentas trave
+$(document).ready(function() {
+  $('.modal').on('hidden.bs.modal', function () {
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open').css('padding-right', '');
+  });
+});
