@@ -1,4 +1,4 @@
-// CONFIGURAÇÃO DO EMAILJS (Substitua pelas suas chaves reais)
+// CONFIGURAÇÃO DO EMAILJS
 const EMAILJS_PUBLIC_KEY = "SUA_PUBLIC_KEY";
 const EMAILJS_SERVICE_ID = "SEU_SERVICE_ID";
 const EMAILJS_TEMPLATE_ID = "SEU_TEMPLATE_ID";
@@ -276,7 +276,7 @@ function renderizarFerramentas() {
         <div class="col-12 col-md-6 offset-md-3 py-3">
           <div class="card border-0 shadow-sm rounded-3">
             <div class="card-body p-4 text-center">
-              <div class="mb-3 text-primary"><i class="fas fa-user-lock fa-3x"></i></div>
+              <div class="mb-3 text-primary"><i class="bi bi-shield-lock-fill display-4"></i></div>
               <h5 class="fw-bold text-dark mb-1">Acesso ao Módulo Ferramentas</h5>
               <p class="small text-muted mb-3">Selecione o seu nome e informe a sua senha.</p>
               
@@ -303,7 +303,7 @@ function renderizarFerramentas() {
         <div class="col-12 col-md-6 offset-md-3 py-3">
           <div class="card border-0 shadow-sm rounded-3">
             <div class="card-body p-4 text-center">
-              <div class="mb-3 text-warning"><i class="fas fa-key fa-3x"></i></div>
+              <div class="mb-3 text-warning"><i class="bi bi-key-fill display-4"></i></div>
               <h5 class="fw-bold text-dark mb-1">Primeiro Acesso: ${analistaSelecionadoTemp}</h5>
               <p class="small text-muted mb-3">Cadastre o seu e-mail corporativo e a sua nova senha pessoal.</p>
               
@@ -329,7 +329,7 @@ function renderizarFerramentas() {
         <div class="col-12 col-md-6 offset-md-3 py-3">
           <div class="card border-0 shadow-sm rounded-3">
             <div class="card-body p-4 text-center">
-              <div class="mb-3 text-info"><i class="fas fa-envelope fa-3x"></i></div>
+              <div class="mb-3 text-info"><i class="bi bi-envelope-fill display-4"></i></div>
               <h5 class="fw-bold text-dark mb-1">Recuperar Senha</h5>
               <p class="small text-muted mb-3">Selecione o seu nome e informe o e-mail cadastrado.</p>
               
@@ -356,7 +356,7 @@ function renderizarFerramentas() {
         <div class="col-12 col-md-6 offset-md-3 py-3">
           <div class="card border-0 shadow-sm rounded-3">
             <div class="card-body p-4 text-center">
-              <div class="mb-3 text-success"><i class="fas fa-shield-alt fa-3x"></i></div>
+              <div class="mb-3 text-success"><i class="bi bi-shield-check display-4"></i></div>
               <h5 class="fw-bold text-dark mb-1">Código de Segurança</h5>
               <p class="small text-muted mb-3">Insira o código de 6 dígitos e a nova senha pessoal.</p>
               
@@ -482,25 +482,22 @@ function excluirFerramenta(index) {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  renderizarFerramentas();
-
+// INICIALIZAÇÃO SEGURA
+$(document).ready(function() {
   const form = document.getElementById("form-add-ferramenta");
   if (form) {
     form.addEventListener("submit", adicionarFerramenta);
   }
 
-  const modalElem = document.getElementById("modalFerramentas");
-  if (modalElem) {
-    modalElem.addEventListener("show.bs.modal", () => {
+  // Evento ao abrir o modal
+  $(document).on('show.bs.modal', '#modalFerramentas', function () {
+    setTimeout(() => {
       renderizarFerramentas();
-    });
-  }
-});
-// Garante o destravamento da tela caso o modal de Ferramentas trave
-$(document).ready(function() {
-  $('.modal').on('hidden.bs.modal', function () {
-    $('.modal-backdrop').remove();
-    $('body').removeClass('modal-open').css('padding-right', '');
+    }, 150);
+  });
+
+  // Limpeza de sombras presas
+  $(document).on('hidden.bs.modal', '#modalFerramentas', function () {
+    $('.modal-backdrop').remove();$('body').removeClass('modal-open').css('padding-right', '');
   });
 });
