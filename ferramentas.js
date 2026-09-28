@@ -502,3 +502,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+// Limpeza automática universal de modais do Bootstrap
+document.addEventListener('hidden.bs.modal', function (event) {
+  // Se não houver nenhum outro modal aberto na tela, remove todas as sombras
+  if (document.querySelectorAll('.modal.show').length === 0) {
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('padding-right');
+    document.body.style.removeProperty('overflow');
+  }
+});

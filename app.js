@@ -1588,7 +1588,7 @@ function fn_configurarEventosDOM() {
     });
   });
 
-  // Módulos em Construção (Processos, Estrutura, Plantão)
+  // Módulos em Construção (Processos, Estrutura)
   $(document).on('click', '#btnProcessos, #btnEstrutura', function(e) {
     e.preventDefault();
 

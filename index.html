@@ -550,76 +550,76 @@ table.tabela-checkpoint td.cp-col-status {
   </div>
 
   <!-- Modal Formulário: Cadastrar / Editar Contato no Escalonamento -->
-  <div class="modal fade" id="modalFormEscalonamento" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-dark text-white py-2">
-          <h5 class="modal-title fs-6" id="tituloFormEscalonamento">Cadastrar Contato</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body p-3">
-          <form id="formEscalonamento">
-            <input type="hidden" id="esc_empresa_origem">
-            <input type="hidden" id="esc_index">
+<div class="modal fade" id="modalFormEscalonamento" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-dark text-white py-2">
+        <h5 class="modal-title fs-6" id="tituloFormEscalonamento">Cadastrar Contato</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-3">
+        <form id="formEscalonamento">
+          <input type="hidden" id="esc_empresa_origem">
+          <input type="hidden" id="esc_index">
 
-            <div class="mb-2">
-              <label class="form-label mb-1 fs-6 fw-semibold">Empresa</label>
-              <select class="form-select form-select-sm" id="esc_empresa" required>
-                <option value="EBT">EBT</option>
-                <option value="OI">OI</option>
-                <option value="VIVO">VIVO</option>
-                <option value="CIRION">CIRION</option>
-                <option value="SITA">SITA</option>
-              </select>
-            </div>
+          <div class="mb-2">
+            <label class="form-label mb-1 fs-6 fw-semibold">Empresa</label>
+            <select class="form-select form-select-sm" id="esc_empresa" required>
+              <option value="EBT">EBT</option>
+              <option value="OI">OI</option>
+              <option value="VIVO">VIVO</option>
+              <option value="CIRION">CIRION</option>
+              <option value="SITA">SITA</option>
+            </select>
+          </div>
 
-            <div class="row g-2 mb-2">
-              <div class="col-md-6">
-                <label class="form-label mb-1 fs-6 fw-semibold">Nível / Turno</label>
-                <input type="text" class="form-control form-control-sm" id="esc_nivel" placeholder="Ex: 0, 1, 2, Plantão" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label mb-1 fs-6 fw-semibold">Gestor / Responsável</label>
-                <input type="text" class="form-control form-control-sm" id="esc_gestor" placeholder="Nome do Gestor">
-              </div>
+          <div class="row g-2 mb-2">
+            <div class="col-md-6">
+              <label class="form-label mb-1 fs-6 fw-semibold">Nível / Turno</label>
+              <input type="text" class="form-control form-control-sm" id="esc_nivel" placeholder="Ex: 0, 1, 2, Plantão" required>
             </div>
+            <div class="col-md-6">
+              <label class="form-label mb-1 fs-6 fw-semibold">Gestor / Responsável</label>
+              <input type="text" class="form-control form-control-sm" id="esc_gestor" placeholder="Nome do Gestor">
+            </div>
+          </div>
 
-            <div class="row g-2 mb-2">
-              <div class="col-md-6">
-                <label class="form-label mb-1 fs-6 fw-semibold">Cargo / Função</label>
-                <input type="text" class="form-control form-control-sm" id="esc_cargo" placeholder="Ex: Supervisor, Analista">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label mb-1 fs-6 fw-semibold">Horário / Atendimento</label>
-                <input type="text" class="form-control form-control-sm" id="esc_atendimento" placeholder="Ex: 24h, 08h às 17h">
-              </div>
+          <div class="row g-2 mb-2">
+            <div class="col-md-6">
+              <label class="form-label mb-1 fs-6 fw-semibold">Cargo / Função</label>
+              <input type="text" class="form-control form-control-sm" id="esc_cargo" placeholder="Ex: Supervisor, Analista">
             </div>
+            <div class="col-md-6">
+              <label class="form-label mb-1 fs-6 fw-semibold">Horário / Atendimento</label>
+              <input type="text" class="form-control form-control-sm" id="esc_atendimento" placeholder="Ex: 24h, 08h às 17h">
+            </div>
+          </div>
 
-            <div class="row g-2 mb-2">
-              <div class="col-md-6">
-                <label class="form-label mb-1 fs-6 fw-semibold">Telefone Fixo</label>
-                <input type="text" class="form-control form-control-sm" id="esc_telefone" placeholder="0800 / Fixo">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label mb-1 fs-6 fw-semibold">Celular</label>
-                <input type="text" class="form-control form-control-sm" id="esc_celular" placeholder="(00) 00000-0000">
-              </div>
+          <div class="row g-2 mb-2">
+            <div class="col-md-6">
+              <label class="form-label mb-1 fs-6 fw-semibold">Telefone Fixo</label>
+              <input type="text" class="form-control form-control-sm" id="esc_telefone" placeholder="0800 / Fixo">
             </div>
+            <div class="col-md-6">
+              <label class="form-label mb-1 fs-6 fw-semibold">Celular</label>
+              <input type="text" class="form-control form-control-sm" id="esc_celular" placeholder="(00) 00000-0000">
+            </div>
+          </div>
 
-            <div class="mb-3">
-              <label class="form-label mb-1 fs-6 fw-semibold">E-mail ou Link do Portal</label>
-              <input type="text" class="form-control form-control-sm" id="esc_email" placeholder="Email ou URL do portal">
-            </div>
+          <div class="mb-3">
+            <label class="form-label mb-1 fs-6 fw-semibold">E-mail ou Link do Portal</label>
+            <input type="text" class="form-control form-control-sm" id="esc_email" placeholder="Email ou URL do portal">
+          </div>
 
-            <div class="text-end">
-              <button type="button" class="btn btn-sm btn-secondary me-1" data-bs-dismiss="modal">Cancelar</button>
-              <button type="submit" class="btn btn-sm btn-primary fw-bold">Salvar no Firebase</button>
-            </div>
-          </form>
-        </div>
+          <div class="text-end">
+            <button type="button" class="btn btn-sm btn-secondary me-1" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-sm btn-primary fw-bold">Salvar no Firebase</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
+</div>
 
   <!-- Modal de Relatório para WhatsApp -->
   <div class="modal fade" id="modalEmail" tabindex="-1" aria-hidden="true">
