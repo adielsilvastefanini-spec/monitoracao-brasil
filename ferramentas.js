@@ -123,7 +123,7 @@ function autenticarOuTrocarForm(event) {
     } else {
       if (msgErro) {
         msgErro.classList.remove("d-none");
-        msgErro.innerText = "Senha incorreta! Se é o seu 1º acesso, use a senha padrão 'Latam@2026'.";
+        msgErro.innerText = "Senha incorreta! Para 1º acesso, utilize 'Latam@2026'.";
       }
     }
 
@@ -152,7 +152,7 @@ function autenticarOuTrocarForm(event) {
     if (novaSenha === SENHA_PRIMEIRO_ACESSO) {
       if (msgErro) {
         msgErro.classList.remove("d-none");
-        msgErro.innerText = "A sua nova senha deve ser diferente da senha temporária!";
+        msgErro.innerText = "Sua nova senha deve ser diferente da senha temporária!";
       }
       return;
     }
@@ -273,12 +273,11 @@ function renderizarFerramentas() {
 
     if (statusAuthLocal === "LOGIN") {
       container.innerHTML = `
-        <div class="col-12 col-md-6 offset-md-3 py-3">
+        <div class="col-12 col-md-8 offset-md-2 py-3">
           <div class="card border-0 shadow-sm rounded-3">
             <div class="card-body p-4 text-center">
-              <div class="mb-3 text-primary"><i class="bi bi-shield-lock-fill display-4"></i></div>
-              <h5 class="fw-bold text-dark mb-1">Acesso ao Módulo Ferramentas</h5>
-              <p class="small text-muted mb-3">Selecione o seu nome e informe a sua senha.</p>
+              <h5 class="fw-bold text-dark mb-1">🔐 Acesso ao Módulo Ferramentas</h5>
+              <p class="small text-muted mb-3">Selecione seu nome e informe sua senha pessoal.</p>
               
               <form onsubmit="autenticarOuTrocarForm(event)">
                 <div class="mb-2">
@@ -300,12 +299,11 @@ function renderizarFerramentas() {
       `;
     } else if (statusAuthLocal === "CADASTRO") {
       container.innerHTML = `
-        <div class="col-12 col-md-6 offset-md-3 py-3">
+        <div class="col-12 col-md-8 offset-md-2 py-3">
           <div class="card border-0 shadow-sm rounded-3">
             <div class="card-body p-4 text-center">
-              <div class="mb-3 text-warning"><i class="bi bi-key-fill display-4"></i></div>
-              <h5 class="fw-bold text-dark mb-1">Primeiro Acesso: ${analistaSelecionadoTemp}</h5>
-              <p class="small text-muted mb-3">Cadastre o seu e-mail corporativo e a sua nova senha pessoal.</p>
+              <h5 class="fw-bold text-dark mb-1">🔑 Primeiro Acesso: ${analistaSelecionadoTemp}</h5>
+              <p class="small text-muted mb-3">Cadastre seu e-mail corporativo e crie sua nova senha.</p>
               
               <form onsubmit="autenticarOuTrocarForm(event)">
                 <div class="mb-2">
@@ -326,12 +324,11 @@ function renderizarFerramentas() {
       `;
     } else if (statusAuthLocal === "RECUPERAR_EMAIL") {
       container.innerHTML = `
-        <div class="col-12 col-md-6 offset-md-3 py-3">
+        <div class="col-12 col-md-8 offset-md-2 py-3">
           <div class="card border-0 shadow-sm rounded-3">
             <div class="card-body p-4 text-center">
-              <div class="mb-3 text-info"><i class="bi bi-envelope-fill display-4"></i></div>
-              <h5 class="fw-bold text-dark mb-1">Recuperar Senha</h5>
-              <p class="small text-muted mb-3">Selecione o seu nome e informe o e-mail cadastrado.</p>
+              <h5 class="fw-bold text-dark mb-1">📩 Recuperar Senha</h5>
+              <p class="small text-muted mb-3">Selecione seu nome e digite o e-mail cadastrado.</p>
               
               <form onsubmit="enviarCodigoEmail(event)">
                 <div class="mb-2">
@@ -344,7 +341,7 @@ function renderizarFerramentas() {
                   <input type="email" id="rec-email-input" class="form-control text-center shadow-none" placeholder="E-mail Cadastrado" required>
                   <div id="erro-senha-ferramentas" class="text-danger small mt-2 d-none fw-semibold"></div>
                 </div>
-                <button type="submit" class="btn btn-info text-white w-100 fw-semibold mb-2">📩 Enviar Código de Validação</button>
+                <button type="submit" class="btn btn-info text-white w-100 fw-semibold mb-2">📩 Enviar Código</button>
               </form>
               <button onclick="mudarStatusAuth('LOGIN')" class="btn btn-link btn-sm text-secondary p-0 text-decoration-none small">Voltar ao Login</button>
             </div>
@@ -353,12 +350,11 @@ function renderizarFerramentas() {
       `;
     } else if (statusAuthLocal === "RECUPERAR_CODIGO") {
       container.innerHTML = `
-        <div class="col-12 col-md-6 offset-md-3 py-3">
+        <div class="col-12 col-md-8 offset-md-2 py-3">
           <div class="card border-0 shadow-sm rounded-3">
             <div class="card-body p-4 text-center">
-              <div class="mb-3 text-success"><i class="bi bi-shield-check display-4"></i></div>
-              <h5 class="fw-bold text-dark mb-1">Código de Segurança</h5>
-              <p class="small text-muted mb-3">Insira o código de 6 dígitos e a nova senha pessoal.</p>
+              <h5 class="fw-bold text-dark mb-1">✅ Validação de Segurança</h5>
+              <p class="small text-muted mb-3">Insira o código enviado por e-mail e redefina sua senha.</p>
               
               <form onsubmit="validarCodigoERedefinir(event)">
                 <div class="mb-2">
@@ -368,7 +364,7 @@ function renderizarFerramentas() {
                   <input type="password" id="rec-nova-senha-input" class="form-control text-center shadow-none" placeholder="Nova Senha Pessoal" required>
                   <div id="erro-senha-ferramentas" class="text-danger small mt-2 d-none fw-semibold"></div>
                 </div>
-                <button type="submit" class="btn btn-success w-100 fw-semibold mb-2">✅ Redefinir e Entrar</button>
+                <button type="submit" class="btn btn-success w-100 fw-semibold mb-2">✅ Redefinir Senha e Entrar</button>
               </form>
             </div>
           </div>
@@ -482,33 +478,31 @@ function excluirFerramenta(index) {
   }
 }
 
-// INICIALIZAÇÃO SEGURA
+// REMOÇÃO FORÇADA DE SOMBRAS FANTASMAS
+function limparSombrasDeTela() {
+  document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+  document.body.classList.remove('modal-open');
+  document.body.style.removeProperty('padding-right');
+  document.body.style.removeProperty('overflow');
+}
+
+// INICIALIZAÇÃO
 document.addEventListener("DOMContentLoaded", () => {
+  limparSombrasDeTela();
+
   const form = document.getElementById("form-add-ferramenta");
   if (form) {
     form.addEventListener("submit", adicionarFerramenta);
   }
 
-  // Garante a renderização ao abrir o modal sem conflito com animações do Bootstrap
+  // Renderiza imediatamente e desvincula da transição travada do modal
   const modalElem = document.getElementById("modalFerramentas");
   if (modalElem) {
-    modalElem.addEventListener("shown.bs.modal", () => {
+    modalElem.addEventListener("show.bs.modal", () => {
       renderizarFerramentas();
     });
     modalElem.addEventListener("hidden.bs.modal", () => {
-      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-      document.body.classList.remove('modal-open');
-      document.body.style.paddingRight = '';
+      limparSombrasDeTela();
     });
-  }
-});
-// Limpeza automática universal de modais do Bootstrap
-document.addEventListener('hidden.bs.modal', function (event) {
-  // Se não houver nenhum outro modal aberto na tela, remove todas as sombras
-  if (document.querySelectorAll('.modal.show').length === 0) {
-    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
-    document.body.classList.remove('modal-open');
-    document.body.style.removeProperty('padding-right');
-    document.body.style.removeProperty('overflow');
   }
 });
