@@ -549,7 +549,7 @@ table.tabela-checkpoint td.cp-col-status {
     </div>
   </div>
 
-  <!-- Modal Formulário: Cadastrar / Editar Contato no Escalonamento -->
+<!-- Modal Formulário: Cadastrar / Editar Contato no Escalonamento -->
 <div class="modal fade" id="modalFormEscalonamento" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content shadow-lg border-0">
@@ -573,6 +573,7 @@ table.tabela-checkpoint td.cp-col-status {
             </select>
           </div>
 
+          <!-- Linha 1: Nível / Turno + Gestor / Responsável (Corrigido) -->
           <div class="row g-2 mb-2">
             <div class="col-md-6">
               <label class="form-label mb-1 fs-6 fw-semibold">Nível / Turno</label>
@@ -584,6 +585,7 @@ table.tabela-checkpoint td.cp-col-status {
             </div>
           </div>
 
+          <!-- Linha 2: Cargo / Função + Horário / Atendimento -->
           <div class="row g-2 mb-2">
             <div class="col-md-6">
               <label class="form-label mb-1 fs-6 fw-semibold">Cargo / Função</label>
@@ -595,6 +597,7 @@ table.tabela-checkpoint td.cp-col-status {
             </div>
           </div>
 
+          <!-- Linha 3: Telefone Fixo + Celular -->
           <div class="row g-2 mb-2">
             <div class="col-md-6">
               <label class="form-label mb-1 fs-6 fw-semibold">Telefone Fixo</label>
@@ -621,62 +624,62 @@ table.tabela-checkpoint td.cp-col-status {
   </div>
 </div>
 
-  <!-- Modal de Relatório para WhatsApp -->
-  <div class="modal fade" id="modalEmail" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header text-white py-2" style="background-color: #25D366;">
-          <h5 class="modal-title fs-6 fw-bold"><i class="fab fa-whatsapp me-2"></i> Relatório de Passagem de Turno - WhatsApp</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Modal de Relatório para WhatsApp -->
+<div class="modal fade" id="modalEmail" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header text-white py-2" style="background-color: #25D366;">
+        <h5 class="modal-title fs-6 fw-bold"><i class="fab fa-whatsapp me-2"></i> Relatório de Passagem de Turno - WhatsApp</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-3" style="max-height: 80vh; overflow-y: auto;">
+        <div class="mb-3">
+          <label for="inputPontoAtencao" class="form-label fw-bold mb-1 fs-6 text-warning-emphasis">3 - Pontos de Atenção (Texto Livre):</label>
+          <textarea class="form-control form-control-sm" id="inputPontoAtencao" rows="2" placeholder="Digite aqui alertas para o próximo turno, pendências urgentes ou riscos observados..."></textarea>
         </div>
-        <div class="modal-body p-3" style="max-height: 80vh; overflow-y: auto;">
-          <div class="mb-3">
-            <label for="inputPontoAtencao" class="form-label fw-bold mb-1 fs-6 text-warning-emphasis">3 - Pontos de Atenção (Texto Livre):</label>
-            <textarea class="form-control form-control-sm" id="inputPontoAtencao" rows="2" placeholder="Digite aqui alertas para o próximo turno, pendências urgentes ou riscos observados..."></textarea>
-          </div>
 
-          <div class="mb-2">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <label class="form-label fw-bold mb-0 fs-6">Prévia do Relatório:</label>
-              <button class="btn btn-sm btn-outline-primary py-0" id="btnAtualizarPrevia">Recarregar Prévia</button>
-            </div>
-            <div id="emailCorpoContainer" class="p-3 border rounded bg-white" style="font-family: Arial, sans-serif; font-size: 12px; color: #000;">
-              <!-- Conteúdo gerado dinamicamente via JS -->
-            </div>
+        <div class="mb-2">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <label class="form-label fw-bold mb-0 fs-6">Prévia do Relatório:</label>
+            <button class="btn btn-sm btn-outline-primary py-0" id="btnAtualizarPrevia">Recarregar Prévia</button>
+          </div>
+          <div id="emailCorpoContainer" class="p-3 border rounded bg-white" style="font-family: Arial, sans-serif; font-size: 12px; color: #000;">
+            <!-- Conteúdo gerado dinamicamente via JS -->
           </div>
         </div>
-        <div class="modal-footer py-2 justify-content-between">
-          <span class="text-muted" style="font-size: 11px;">* Use o botão "Troca Turno" para colar a imagem direto no WhatsApp.</span>
-          <div>
-            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
-            <button type="button" class="btn btn-sm btn-success fw-bold ms-1" id="btnCopiarImagemWhatsApp">
-              <i class="fab fa-whatsapp me-1"></i> Troca Turno
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-danger fw-bold ms-1" id="btnGerarPDFWhatsApp">
-              <i class="fas fa-file-pdf me-1"></i> Baixar PDF
-            </button>
-          </div>
+      </div>
+      <div class="modal-footer py-2 justify-content-between">
+        <span class="text-muted" style="font-size: 11px;">* Use o botão "Troca Turno" para colar a imagem direto no WhatsApp.</span>
+        <div>
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
+          <button type="button" class="btn btn-sm btn-success fw-bold ms-1" id="btnCopiarImagemWhatsApp">
+            <i class="fab fa-whatsapp me-1"></i> Troca Turno
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-danger fw-bold ms-1" id="btnGerarPDFWhatsApp">
+            <i class="fas fa-file-pdf me-1"></i> Baixar PDF
+          </button>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Modal Processos -->
-  <div class="modal fade" id="modalProcessos" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-dark text-white py-2">
-          <h5 class="modal-title fs-6">⚙ Processos</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body p-3" id="bodyProcessos">
-          <p class="text-muted text-center my-4">Módulo de Processos em desenvolvimento...</p>
-        </div>
+<!-- Modal Processos -->
+<div class="modal fade" id="modalProcessos" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white py-2">
+        <h5 class="modal-title fs-6">⚙ Processos</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-3" id="bodyProcessos">
+        <p class="text-muted text-center my-4">Módulo de Processos em desenvolvimento...</p>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Modal Plantão -->
+<!-- Modal Plantão -->
 <div class="modal fade" id="modalPlantao" tabindex="-1" aria-labelledby="modalPlantaoLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
@@ -686,47 +689,48 @@ table.tabela-checkpoint td.cp-col-status {
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-     <div class="modal-body">
-  
-  <!-- Bloco do Plantonista Ativo -->
-  <div class="card border-success mb-3">
-    <div class="card-header bg-success text-white fw-bold d-flex justify-content-between align-items-center">
-      <span><i class="bi bi-clock-history me-1"></i> Plantonista Ativo</span>
-      <small id="plantao-periodo-atual" class="badge bg-light text-success">Carregando...</small>
-    </div>
-    <div class="card-body">
-      <div class="row text-center g-3">
-        <!-- Plantão 1 -->
-        <div class="col-md-6">
-          <div class="p-3 border border-success rounded bg-success bg-opacity-10 shadow-sm">
-            <small class="text-success d-block fw-bold mb-1">Plantão 1</small>
-            <h6 id="plantao-n1-a" class="fw-bold text-dark mb-1">-</h6>
-            <small id="contato-n1-a" class="text-secondary d-block">-</small>
+      <div class="modal-body">
+        <!-- Bloco do Plantonista Ativo -->
+        <div class="card border-success mb-3">
+          <div class="card-header bg-success text-white fw-bold d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-clock-history me-1"></i> Plantonista Ativo</span>
+            <small id="plantao-periodo-atual" class="badge bg-light text-success">Carregando...</small>
+          </div>
+          <div class="card-body">
+            <div class="row text-center g-3">
+              <!-- Plantão 1 -->
+              <div class="col-md-6">
+                <div class="p-3 border border-success rounded bg-success bg-opacity-10 shadow-sm">
+                  <small class="text-success d-block fw-bold mb-1">Plantão 1</small>
+                  <h6 id="plantao-n1-a" class="fw-bold text-dark mb-1">-</h6>
+                  <small id="contato-n1-a" class="text-secondary d-block">-</small>
+                </div>
+              </div>
+              <!-- Especialista -->
+              <div class="col-md-6">
+                <div class="p-3 border border-success rounded bg-success bg-opacity-10 shadow-sm">
+                  <small class="text-success d-block fw-bold mb-1">Especialista</small>
+                  <h6 id="plantao-n2" class="fw-bold text-dark mb-1">-</h6>
+                  <small id="contato-n2" class="text-secondary d-block">-</small>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <!-- Especialista -->
-        <div class="col-md-6">
-          <div class="p-3 border border-success rounded bg-success bg-opacity-10 shadow-sm">
-            <small class="text-success d-block fw-bold mb-1">Especialista</small>
-            <h6 id="plantao-n2" class="fw-bold text-dark mb-1">-</h6>
-            <small id="contato-n2" class="text-secondary d-block">-</small>
-          </div>
+
+        <!-- Rodapé do Modal com Acesso Restrito -->
+        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+          <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Troca de escala todas as segundas-feiras.</small>
+          <button id="btn-gestao-plantao" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-shield-lock me-1"></i> Área do Responsável
+          </button>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- Rodapé do Modal com Acesso Restrito -->
-  <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-    <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Troca de escala todas as segundas-feiras.</small>
-    <button id="btn-gestao-plantao" class="btn btn-sm btn-outline-secondary">
-      <i class="bi bi-shield-lock me-1"></i> Área do Responsável
-    </button>
-  </div>
-
 </div>
 
- <!-- Modal Ferramentas -->
+<!-- Modal Ferramentas -->
 <div class="modal fade" id="modalFerramentas" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
@@ -747,8 +751,7 @@ table.tabela-checkpoint td.cp-col-status {
 
       <!-- Corpo do Modal -->
       <div class="modal-body p-3">
-        
-        <!-- Formulário Oculto por Padrão (Exibido ao clicar em + Adicionar Item) -->
+        <!-- Formulário Oculto por Padrão -->
         <div id="painel-add-ferramenta" class="d-none mb-3 p-3 bg-light border rounded shadow-sm">
           <h6 class="fw-bold text-success mb-2">Cadastrar Nova Ferramenta</h6>
           <form id="form-add-ferramenta">
@@ -776,22 +779,21 @@ table.tabela-checkpoint td.cp-col-status {
           </form>
         </div>
 
-        <!-- Container onde os cards serão renderizados dinamicamente -->
+        <!-- Container de Cards -->
         <div id="lista-ferramentas" class="row g-3">
           <!-- O JavaScript inserirá os cards aqui -->
         </div>
-
       </div>
 
     </div>
   </div>
 </div>
 
-  <!-- LIBRARIAS BASE (JQUERY / BOOTSTRAP) -->
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- LIBRARIES BASE (JQUERY / BOOTSTRAP) -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
- <!-- BIBLIOTECAS PARA PDF E CAPTURA -->
+<!-- BIBLIOTECAS PARA PDF E CAPTURA DE TELA -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -805,5 +807,6 @@ table.tabela-checkpoint td.cp-col-status {
 <script src="ferramentas.js"></script>
 <script src="plantao.js"></script>
 <script src="app.js"></script>
+
 </body>
 </html>
