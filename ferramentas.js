@@ -483,21 +483,22 @@ function excluirFerramenta(index) {
 }
 
 // INICIALIZAÇÃO SEGURA
-$(document).ready(function() {
+document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("form-add-ferramenta");
   if (form) {
     form.addEventListener("submit", adicionarFerramenta);
   }
 
-  // Evento ao abrir o modal
-  $(document).on('show.bs.modal', '#modalFerramentas', function () {
-    setTimeout(() => {
+  // Garante a renderização ao abrir o modal sem conflito com animações do Bootstrap
+  const modalElem = document.getElementById("modalFerramentas");
+  if (modalElem) {
+    modalElem.addEventListener("shown.bs.modal", () => {
       renderizarFerramentas();
-    }, 150);
-  });
-
-  // Limpeza de sombras presas
-  $(document).on('hidden.bs.modal', '#modalFerramentas', function () {
-    $('.modal-backdrop').remove();$('body').removeClass('modal-open').css('padding-right', '');
-  });
+    });
+    modalElem.addEventListener("hidden.bs.modal", () => {
+      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+      document.body.classList.remove('modal-open');
+      document.body.style.paddingRight = '';
+    });
+  }
 });
