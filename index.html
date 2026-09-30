@@ -679,52 +679,83 @@ table.tabela-checkpoint td.cp-col-status {
   </div>
 </div>
 
-<!-- Modal Plantão -->
-<div class="modal fade" id="modalPlantao" tabindex="-1" aria-labelledby="modalPlantaoLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
+<!-- Modal Escala de Suporte da Operação -->
+<div class="modal fade" id="modalPlantao" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="modalPlantaoLabel">
-          <i class="bi bi-people-fill me-2"></i>Escala de Plantão Semanal
-        </h5>
+        <h5 class="modal-title">Escala de Suporte da Operação Semanal</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <!-- Bloco do Plantonista Ativo -->
         <div class="card border-success mb-3">
-          <div class="card-header bg-success text-white fw-bold d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-clock-history me-1"></i> Plantonista Ativo</span>
-            <small id="plantao-periodo-atual" class="badge bg-light text-success">Carregando...</small>
+          <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <span class="fw-bold">Responsável Ativo</span>
+            <!-- ITEM 1: Data atual no lugar do intervalo estático -->
+            <span class="badge bg-light text-dark" id="badgeDataAtual"></span>
           </div>
           <div class="card-body">
-            <div class="row text-center g-3">
-              <!-- Plantão 1 -->
+            <div class="row g-3">
+              <!-- ITEM 2: Alterado de 'Plantão 1' para 'Suporte da Operação' -->
               <div class="col-md-6">
-                <div class="p-3 border border-success rounded bg-success bg-opacity-10 shadow-sm">
-                  <small class="text-success d-block fw-bold mb-1">Plantão 1</small>
-                  <h6 id="plantao-n1-a" class="fw-bold text-dark mb-1">-</h6>
-                  <small id="contato-n1-a" class="text-secondary d-block">-</small>
+                <div class="p-3 border rounded text-center bg-light">
+                  <h6 class="text-success fw-bold">Suporte da Operação</h6>
+                  <h5 class="fw-bold mb-1" id="lblSuporteNome">Carlos Silva</h5>
+                  <small class="text-muted" id="lblSuporteContato">Ramal 4001 / Teams</small>
                 </div>
               </div>
-              <!-- Especialista -->
               <div class="col-md-6">
-                <div class="p-3 border border-success rounded bg-success bg-opacity-10 shadow-sm">
-                  <small class="text-success d-block fw-bold mb-1">Especialista</small>
-                  <h6 id="plantao-n2" class="fw-bold text-dark mb-1">-</h6>
-                  <small id="contato-n2" class="text-secondary d-block">-</small>
+                <div class="p-3 border rounded text-center bg-light">
+                  <h6 class="text-success fw-bold">Especialista</h6>
+                  <h5 class="fw-bold mb-1" id="lblEspecialistaNome">Roberto Alves</h5>
+                  <small class="text-muted" id="lblEspecialistaContato">Ramal 4099 / (11) 99999-0000</small>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Rodapé do Modal com Acesso Restrito -->
-        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-          <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Troca de escala todas as segundas-feiras.</small>
-          <button id="btn-gestao-plantao" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-shield-lock me-1"></i> Área do Responsável
+        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+          <small class="text-muted">Troca de escala todas as segundas-feiras.</small>
+          
+          <!-- ITEM 3: Botão 'Área do Responsável' para abrir o painel de alterações -->
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#areaResponsavelCollapse">
+            Área do Responsável
           </button>
         </div>
+
+        <!-- ITEM 3: Painel expansível para editar Nome e Telefone/Contato -->
+        <div class="collapse mt-3" id="areaResponsavelCollapse">
+          <div class="card card-body bg-light border">
+            <h6 class="fw-bold text-dark mb-3">Alterar Responsáveis do Suporte</h6>
+            <form id="formAlterarPlantao">
+              <div class="row g-2 mb-2">
+                <div class="col-md-6">
+                  <label class="form-label form-label-sm fw-bold">Nome - Suporte da Operação</label>
+                  <input type="text" class="form-control form-control-sm" id="inputSuporteNome" placeholder="Ex: Carlos Silva">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label form-label-sm fw-bold">Contato / Telefone - Suporte</label>
+                  <input type="text" class="form-control form-control-sm" id="inputSuporteContato" placeholder="Ex: Ramal 4001 / (11) 98888-7777">
+                </div>
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label form-label-sm fw-bold">Nome - Especialista</label>
+                  <input type="text" class="form-control form-control-sm" id="inputEspecialistaNome" placeholder="Ex: Roberto Alves">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label form-label-sm fw-bold">Contato / Telefone - Especialista</label>
+                  <input type="text" class="form-control form-control-sm" id="inputEspecialistaContato" placeholder="Ex: Ramal 4099 / (11) 99999-0000">
+                </div>
+              </div>
+              <div class="text-end">
+                <button type="button" class="btn btn-primary btn-sm" onclick="salvarAlteracoesPlantao()">Salvar Alterações</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
