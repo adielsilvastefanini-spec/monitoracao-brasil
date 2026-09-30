@@ -842,106 +842,44 @@ function fn10_removerTipoSitio(codigo, tipo) {
 /* --------------------------------------------------------------------------
    04. MÓDULOS DE CHECKPOINT & ESCALONAMENTO
    -------------------------------------------------------------------------- */
-
-// Função auxiliar para calcular o ponto de corte das 24h (referência 08:30)
-function obterDataCorte24h() {
-  var agora = new Date();
-  var corteHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 8, 30, 0, 0);
-
-  // Se for gerado antes das 08:30 de hoje, considera a referência como ontem às 08:30
-  if (agora < corteHoje) {
-    corteHoje.setDate(corteHoje.getDate() - 1);
-  }
-
-  // O limite das 24h passadas é exatamente 24 horas antes do corte
-  var limite24h = new Date(corteHoje.getTime() - (24 * 60 * 60 * 1000));
-
-  return {
-    inicioJanela: limite24h,
-    fimJanela: corteHoje
-  };
-}
-
-// Função auxiliar para converter strings de data (BR ou ISO) e hora em objeto Date
-function parseDataHoraCompletos(strData, strHora) {
-  if (!strData) return null;
-
-  var dObj = null;
-  if (strData.indexOf('/') !== -1) {
-    var p = strData.split('/');
-    if (p.length === 3) dObj = new Date(p[2], p[1] - 1, p[0]);
-  } else if (strData.indexOf('-') !== -1) {
-    var pIso = strData.split('-');
-    if (pIso.length === 3) dObj = new Date(pIso[0], pIso[1] - 1, pIso[2]);
-  }
-
-  if (!dObj) return null;
-
-  if (strHora && strHora.indexOf(':') !== -1) {
-    var pH = strHora.split(':');
-    dObj.setHours(parseInt(pH[0], 10), parseInt(pH[1], 10), 0, 0);
-  } else {
-    dObj.setHours(0, 0, 0, 0);
-  }
-
-  return dObj;
-}
-
 function fn11_gerarCheckPoint() {
-  var $tbodyCP =$('#tbodyCheckPoint');
+  var $tbodyCP = $('#tbodyCheckPoint');
   $tbodyCP.empty();
 
   var totalItens = 0;
-  var janela24h = obterDataCorte24h();
 
   $('#incidentes tbody tr').each(function() {
-    var $tr =$(this);
-    var $tdSitio =$tr.find('td.col-sitio');
+    var $tr = $(this);
+    var $tdSitio = $tr.find('td.col-sitio');
 
-    // Captura o checkbox da linha (seleção manual do analista)
-    var isChecked = $tr.find('.check-item, input[type="checkbox"]').is(':checked');
+    // Captura as classes de estilo para identificar Pendência e Atividade
+    var ehPendente = $tdSitio.hasClass('sitio-laranja') || $tr.find('.select-sitio').hasClass('bg-warning');
+    var ehAtividade = $tdSitio.hasClass('sitio-cinza') || $tr.find('.select-sitio').hasClass('bg-secondary');
 
-    // Captura as classes de estilo para identificar Pendência, Atividade e Concluído
-    var ehPendente = $tdSitio.hasClass('sitio-laranja') \vert{}\vert{}$tr.find('.select-sitio').hasClass('bg-warning');
-    var ehAtividade = $tdSitio.hasClass('sitio-cinza') \vert{}\vert{}$tr.find('.select-sitio').hasClass('bg-secondary');
-    var ehConcluido = $tdSitio.hasClass('sitio-verde') \vert{}\vert{}$tr.hasClass('table-success');
+    // Se NÃO for pendente E NÃO for atividade, ou se a linha já estiver verde (concluída), ignora
+    var ehConcluido = $tdSitio.hasClass('sitio-verde') || $tr.hasClass('table-success');
 
-    // Lê as datas e horas de início e fim da linha
-    var data1Raw = $tr.find('.input-data1').val() || '';
-    var hora1Raw = $tr.find('.input-hora1').val() || '';
-    var data2Raw = $tr.find('.input-data2').val() || '';
-    var hora2Raw = $tr.find('.input-hora2').val() || '';
-
-    // Avalia se o registro está dentro da janela de 24h (08:30 a 08:30)
-    var dtInicioObj = parseDataHoraCompletos(data1Raw, hora1Raw);
-    var dtFimObj = parseDataHoraCompletos(data2Raw, hora2Raw);
-
-    var inicioEm24h = dtInicioObj && (dtInicioObj >= janela24h.inicioJanela && dtInicioObj <= janela24h.fimJanela);
-    var fimEm24h = dtFimObj && (dtFimObj >= janela24h.inicioJanela && dtFimObj <= janela24h.fimJanela);
-    var dentroDaJanela24h = inicioEm24h || fimEm24h;
-
-    // REGRA DE EXIBIÇÃO:
-    // Deve ser pendente/atividade (não concluído) E (estar dentro das 24h OU ter sido selecionado manualmente via checkbox)
-    var deveExibir = (ehPendente || ehAtividade) && !ehConcluido && (dentroDaJanela24h || isChecked);
-
-    if (deveExibir) {
+    // Inclui qualquer item pendente ou atividade em andamento, sem filtrar por data de hoje
+    if ((ehPendente || ehAtividade) && !ehConcluido) {
       totalItens++;
+
+      var data1 = $tr.find('.input-data1').val() || '';
 
       var formatarDataBR = function(d) {
         if (!d) return '';
         if (d.indexOf('-') !== -1) {
           var p = d.split('-');
-          return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+          return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : d;
         }
         return d;
       };
 
       var sitio       = $tr.find('.select-sitio').val() || '';
       var tipo        = $tr.find('.select-tipo').val() || '';
-      var d1Formatted = formatarDataBR(data1Raw);
-      var h1          = hora1Raw;
-      var d2Formatted = formatarDataBR(data2Raw);
-      var h2          = hora2Raw;
+      var d1Formatted = formatarDataBR(data1);
+      var h1          = $tr.find('.input-hora1').val() || '';
+      var d2Formatted = formatarDataBR($tr.find('.input-data2').val());
+      var h2          = $tr.find('.input-hora2').val() || '';
       var falha       = $tr.find('.select-falha').val() || '';
       var opcom       = $tr.find('.select-opcom').val() || '';
       var impacto     = $tr.find('.select-impacto').val() || '';
@@ -952,28 +890,28 @@ function fn11_gerarCheckPoint() {
 
       var classeAtividade = ehAtividade ? ' cp-row-atividade' : '';
 
-      var trHTML = `<tr>
-        <td class="${classeAtividade}"><b>${sitio}</b></td>
-        <td class="${classeAtividade}">${tipo}</td>
-        <td class="${classeAtividade}">${d1Formatted}</td>
-        <td class="${classeAtividade}">${h1}</td>
-        <td class="${classeAtividade}">${d2Formatted}</td>
-        <td class="${classeAtividade}">${h2}</td>
-        <td class="${classeAtividade}">${falha}</td>
-        <td class="${classeAtividade}">${opcom}</td>
-        <td class="${classeAtividade}">${impacto}</td>
-        <td class="${classeAtividade}">${parceiro}</td>
-        <td class="${classeAtividade}">${causa}</td>
-        <td class="cp-col-ticket${classeAtividade}">${ticket}</td>
-        <td class="cp-col-status${classeAtividade}">${status}</td>
-      </tr>`;
+      var trHTML = '<tr>' +
+        '<td class="' + classeAtividade + '"><b>' + sitio + '</b></td>' +
+        '<td class="' + classeAtividade + '">' + tipo + '</td>' +
+        '<td class="' + classeAtividade + '">' + d1Formatted + '</td>' +
+        '<td class="' + classeAtividade + '">' + h1 + '</td>' +
+        '<td class="' + classeAtividade + '">' + d2Formatted + '</td>' +
+        '<td class="' + classeAtividade + '">' + h2 + '</td>' +
+        '<td class="' + classeAtividade + '">' + falha + '</td>' +
+        '<td class="' + classeAtividade + '">' + opcom + '</td>' +
+        '<td class="' + classeAtividade + '">' + impacto + '</td>' +
+        '<td class="' + classeAtividade + '">' + parceiro + '</td>' +
+        '<td class="' + classeAtividade + '">' + causa + '</td>' +
+        '<td class="cp-col-ticket' + classeAtividade + '">' + ticket + '</td>' +
+        '<td class="cp-col-status' + classeAtividade + '">' + status + '</td>' +
+      '</tr>';
 
       $tbodyCP.append(trHTML);
     }
   });
 
   if (totalItens === 0) {
-    alert("Não existem pendências ou atividades registradas dentro do período de 24h ou selecionadas.");
+    alert("Não existem pendências ou atividades registradas no momento.");
     return;
   }
 
@@ -981,7 +919,6 @@ function fn11_gerarCheckPoint() {
   var modalInstance = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
   modalInstance.show();
 }
-
 function fn12_renderizarTabelaEscalonamento(dados, filtroEmpresa, termoBusca) {
   var $tbody = $('#tbodyEscalonamento');
   if ($tbody.length === 0) return;
