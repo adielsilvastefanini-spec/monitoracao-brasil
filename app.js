@@ -844,21 +844,22 @@ function fn10_removerTipoSitio(codigo, tipo) {
    -------------------------------------------------------------------------- */
 
 // Helper 1: Calcula a janela de 24h com ponto de corte fixo às 08:30
+// Helper 1: Calcula a janela a partir do último corte das 08:30 até o momento atual
 function obterDataCorte24h() {
   var agora = new Date();
-  var corteHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 8, 30, 0, 0);
+  var corteReferencia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 8, 30, 0, 0);
 
-  // Se o relatório for gerado antes das 08:30 de hoje, o corte de referência é 08:30 de ontem
-  if (agora < corteHoje) {
-    corteHoje.setDate(corteHoje.getDate() - 1);
+  // Se o CheckPoint for gerado antes das 08:30 de hoje, a referência das 08:30 passa a ser a de ontem
+  if (agora < corteReferencia) {
+    corteReferencia.setDate(corteReferencia.getDate() - 1);
   }
 
-  // O limite das 24h é exatamente 24h antes da referência de corte
-  var limite24h = new Date(corteHoje.getTime() - (24 * 60 * 60 * 1000));
+  // A janela vai do último ponto de corte (08:30) até o momento em que o relatório é gerado (agora + 1 min para margem)
+  var limiteFuturo = new Date(agora.getTime() + (60 * 1000));
 
   return {
-    inicioJanela: limite24h, // Ex: Ontem 08:30
-    fimJanela: corteHoje     // Ex: Hoje 08:30
+    inicioJanela: corteReferencia, // Ex: 29/09 às 08:30
+    fimJanela: limiteFuturo        // Ex: Momento atual (29/09 às 22:44)
   };
 }
 
