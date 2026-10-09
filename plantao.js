@@ -1,8 +1,8 @@
 /* --------------------------------------------------------------------------
-   MÓDULO DE ESCALA DE SUPORTE DA OPERAÇÃO (plantao.js)
+   MÓDULO DE ESCALA DE SUPORTE DA OPERAÇÃO (plantao.js) - COM FIREBASE
    -------------------------------------------------------------------------- */
 
-// Exibe a data atual (DD/MM/AAAA) no badge
+// 1. Exibe a data atual (DD/MM/AAAA) no badge
 function atualizarDataAtualPlantao() {
   var hoje = new Date();
   var dia = String(hoje.getDate()).padStart(2, '0');
@@ -13,82 +13,73 @@ function atualizarDataAtualPlantao() {
   $('#badgeDataAtual').text(dataFormatada);
 }
 
-// Carrega e aplica os dados salvos nos elementos da tela de QUALQUER página
-function carregarDadosPlantao() {
+// 2. Ouve alterações em TEMPO REAL no Firebase Realtime Database
+function escutarDadosPlantaoFirebase() {
   atualizarDataAtualPlantao();
 
-  var salvos = localStorage.getItem('dadosPlantaoSuporte');
-  if (salvos) {
-    try {
-      var dados = JSON.parse(salvos);
-      
-      if (dados.suporteNome) $('#lblSuporteNome').text(dados.suporteNome);
-      if (dados.suporteContato) $('#lblSuporteContato').text(dados.suporteContato);
-      if (dados.especialistaNome) $('#lblEspecialistaNome').text(dados.especialistaNome);
-      if (dados.especialistaContato) $('#lblEspecialistaContato').text(dados.especialistaContato);
+  // Garante que o Firebase está inicializado
+  if (typeof firebase !== 'undefined' && firebase.database) {
+    var plantaoRef = firebase.database().ref('configuracoes/suporte_operacao');
 
-      // Atualiza também os campos de input do formulário para manter coerência
-      if (dados.suporteNome) $('#inputSuporteNome').val(dados.suporteNome);
-      if (dados.suporteContato) $('#inputSuporteContato').val(dados.suporteContato);
-      if (dados.especialistaNome) $('#inputEspecialistaNome').val(dados.especialistaNome);
-      if (dados.especialistaContato) $('#inputEspecialistaContato').val(dados.especialistaContato);
+    // Listener '.on()' aciona sempre que qualquer usuário/navegador altera o banco
+    plantaoRef.on('value', function(snapshot) {
+      var dados = snapshot.val();
+      if (dados) {
+        if (dados.suporteNome) $('#lblSuporteNome').text(dados.suporteNome);
+        if (dados.suporteContato) $('#lblSuporteContato').text(dados.suporteContato);
+        if (dados.especialistaNome) $('#lblEspecialistaNome').text(dados.especialistaNome);
+        if (dados.especialistaContato) $('#lblEspecialistaContato').text(dados.especialistaContato);
 
-    } catch (e) {
-      console.error("Erro ao carregar dados do plantão:", e);
-    }
+        // Preenche também o formulário da Área do Responsável
+        if (dados.suporteNome) $('#inputSuporteNome').val(dados.suporteNome);
+        if (dados.suporteContato) $('#inputSuporteContato').val(dados.suporteContato);
+        if (dados.especialistaNome) $('#inputEspecialistaNome').val(dados.especialistaNome);
+        if (dados.especialistaContato) $('#inputEspecialistaContato').val(dados.especialistaContato);
+      }
+    }, function(error) {
+      console.error("Erro ao ler dados do plantão no Firebase:", error);
+    });
+  } else {
+    console.warn("Firebase não carregado nesta página.");
   }
 }
 
-// Salva as alterações feitas na Área do Responsável
+// 3. Salva os novos dados diretamente no Firebase
 function salvarAlteracoesPlantao() {
   var supNome = $('#inputSuporteNome').val().trim();
   var supContato = $('#inputSuporteContato').val().trim();
   var espNome = $('#inputEspecialistaNome').val().trim();
   var espContato = $('#inputEspecialistaContato').val().trim();
 
-  if (supNome) $('#lblSuporteNome').text(supNome);
-  if (supContato) $('#lblSuporteContato').text(supContato);
-  if (espNome) $('#lblEspecialistaNome').text(espNome);
-  if (espContato) $('#lblEspecialistaContato').text(espContato);
-
   var dadosPlantao = {
-    suporteNome: $('#lblSuporteNome').text(),
-    suporteContato: $('#lblSuporteContato').text(),
-    especialistaNome: $('#lblEspecialistaNome').text(),
-    especialistaContato: $('#lblEspecialistaContato').text(),
-    ultimaAtualizacao: new Date().getTime() // Força atualização de timestamp
+    suporteNome: supNome || $('#lblSuporteNome').text(),
+    suporteContato: supContato || $('#lblSuporteContato').text(),
+    especialistaNome: espNome || $('#lblEspecialistaNome').text(),
+    especialistaContato: espContato || $('#lblEspecialistaContato').text(),
+    ultimaAtualizacao: firebase.database.ServerValue.TIMESTAMP
   };
 
-  // Salva no localStorage
-  localStorage.setItem('dadosPlantaoSuporte', JSON.stringify(dadosPlantao));
-
-  // Fecha o formulário de edição
-  if ($.fn.collapse) {
-    $('#areaResponsavelCollapse').collapse('hide');
-  }
-  
-  alert('Escala do Suporte da Operação atualizada com sucesso!');
+  // Grava no nó 'configuracoes/suporte_operacao' do Firebase
+  firebase.database().ref('configuracoes/suporte_operacao').set(dadosPlantao)
+    .then(function() {
+      if ($.fn.collapse) {
+        $('#areaResponsavelCollapse').collapse('hide');
+      }
+      alert('Escala do Suporte da Operação atualizada e sincronizada com sucesso!');
+    })
+    .catch(function(error) {
+      console.error("Erro ao salvar no Firebase:", error);
+      alert('Erro ao salvar no Firebase: ' + error.message);
+    });
 }
 
-// Inicialização e Sincronização Global
+// 4. Inicialização do script
 $(document).ready(function() {
-  // 1. Carrega os dados na abertura da página
-  carregarDadosPlantao();
+  // Inicia o listener em tempo real
+  escutarDadosPlantaoFirebase();
 
-  // 2. Recarrega os dados SEMPRE que o modal for aberto em qualquer página
+  // Garante atualização da data e leitura ao abrir o modal
   $(document).on('show.bs.modal', '#modalPlantao', function() {
-    carregarDadosPlantao();
+    atualizarDataAtualPlantao();
   });
-
-  // 3. Sincronização via evento nativo de Storage (entre abas)
-  window.addEventListener('storage', function(event) {
-    if (event.key === 'dadosPlantaoSuporte') {
-      carregarDadosPlantao();
-    }
-  });
-
-  // 4. Verificação contínua (Polling a cada 2 segundos) para garantir atualização em páginas secundárias
-  setInterval(function() {
-    carregarDadosPlantao();
-  }, 2000);
 });
