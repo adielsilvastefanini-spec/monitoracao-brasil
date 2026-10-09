@@ -609,6 +609,8 @@ function fn08_criarLinhaTabela(id) {
           <option value="SETORES">Setores</option>
           <option value="REDE INTERNA">Rede Interna</option>
           <option value="SWITCHES / ACCESS POINT">SW / AP</option>
+          <option value="L2L 10GBPS">L2L 10Gbps</option>
+          <option value="LINK INTERNET 1GBPS">Link Internet 1Gbps</option>
         </select>
       </td>
       <td class="align-middle">
