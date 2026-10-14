@@ -46,35 +46,80 @@ let codigoGeradoTemp = null;
 let usuarioEmRecuperacao = null;
 let analistaSelecionadoTemp = "";
 
+// Caches locais sincronizados em tempo real com o Firebase
+let listaFerramentasCache = [];
+let usuariosCadastradosCache = [];
+
+// ============================================================================
+// 1. SINCRONIZAÇÃO EM TEMPO REAL COM FIREBASE REALTIME DATABASE
+// ============================================================================
+function iniciarSincronizacaoFirebase() {
+  if (typeof firebase !== 'undefined' && firebase.database) {
+    // Sincroniza a lista de ferramentas
+    firebase.database().ref("ferramentas_latam").on("value", (snapshot) => {
+      const dados = snapshot.val();
+      if (dados && Array.isArray(dados)) {
+        listaFerramentasCache = dados;
+      } else {
+        // Se a base no Firebase estiver vazia, grava a lista padrão inicial
+        firebase.database().ref("ferramentas_latam").set(dadosFerramentasIniciais);
+        listaFerramentasCache = dadosFerramentasIniciais;
+      }
+      renderizarFerramentas();
+    }, (error) => {
+      console.error("Erro na leitura das ferramentas no Firebase:", error);
+    });
+
+    // Sincroniza a lista de usuários cadastrados
+    firebase.database().ref("ferramentas_usuarios").on("value", (snapshot) => {
+      const users = snapshot.val();
+      usuariosCadastradosCache = users && Array.isArray(users) ? users : [];
+    }, (error) => {
+      console.error("Erro na leitura dos usuários no Firebase:", error);
+    });
+  } else {
+    console.warn("Firebase Realtime Database não está acessível no momento.");
+  }
+}
+
+// ============================================================================
+// 2. FUNÇÕES DE ACESSO E PERSISTÊNCIA DE DADOS
+// ============================================================================
 function obterFerramentas() {
-  const dadosSalvos = localStorage.getItem("ferramentas_latam");
-  if (dadosSalvos) return JSON.parse(dadosSalvos);
-  localStorage.setItem("ferramentas_latam", JSON.stringify(dadosFerramentasIniciais));
-  return dadosFerramentasIniciais;
+  return listaFerramentasCache.length > 0 ? listaFerramentasCache : dadosFerramentasIniciais;
 }
 
 function obterUsuariosCadastrados() {
-  const users = localStorage.getItem("ferramentas_usuarios");
-  return users ? JSON.parse(users) : [];
+  return usuariosCadastradosCache;
 }
 
 function salvarUsuario(nome, email, senha) {
-  const users = obterUsuariosCadastrados();
+  const users = [...obterUsuariosCadastrados()];
   const index = users.findIndex(u => u.nome.toUpperCase() === nome.toUpperCase());
+  
   if (index !== -1) {
     users[index] = { nome, email, senha };
   } else {
     users.push({ nome, email, senha });
   }
-  localStorage.setItem("ferramentas_usuarios", JSON.stringify(users));
+
+  // Gravação sincronizada no Firebase
+  if (typeof firebase !== 'undefined' && firebase.database) {
+    firebase.database().ref("ferramentas_usuarios").set(users)
+      .catch(err => console.error("Erro ao salvar usuário no Firebase:", err));
+  }
 }
 
 function atualizarSenhaUsuario(nome, novaSenha) {
-  const users = obterUsuariosCadastrados();
+  const users = [...obterUsuariosCadastrados()];
   const index = users.findIndex(u => u.nome.toUpperCase() === nome.toUpperCase());
+  
   if (index !== -1) {
     users[index].senha = novaSenha;
-    localStorage.setItem("ferramentas_usuarios", JSON.stringify(users));
+    if (typeof firebase !== 'undefined' && firebase.database) {
+      firebase.database().ref("ferramentas_usuarios").set(users)
+        .catch(err => console.error("Erro ao atualizar senha no Firebase:", err));
+    }
   }
 }
 
@@ -87,6 +132,9 @@ function mudarStatusAuth(novoStatus) {
   renderizarFerramentas();
 }
 
+// ============================================================================
+// 3. AUTENTICAÇÃO E CADASTRO DE ANALISTAS
+// ============================================================================
 function autenticarOuTrocarForm(event) {
   if (event) event.preventDefault();
   
@@ -165,6 +213,9 @@ function autenticarOuTrocarForm(event) {
   }
 }
 
+// ============================================================================
+// 4. RECUPERAÇÃO DE SENHA VIA EMAILJS
+// ============================================================================
 function enviarCodigoEmail(event) {
   event.preventDefault();
   const selectNome = document.getElementById("rec-nome-select");
@@ -231,6 +282,9 @@ function validarCodigoERedefinir(event) {
   renderizarFerramentas();
 }
 
+// ============================================================================
+// 5. NAVEGAÇÃO E CONTROLES DA INTERFACE
+// ============================================================================
 function alternarFormularioAdd() {
   const painel = document.getElementById("painel-add-ferramenta");
   const btn = document.getElementById("btn-toggle-add");
@@ -258,6 +312,9 @@ function alternarModoExclusao() {
   renderizarFerramentas();
 }
 
+// ============================================================================
+// 6. RENDERIZAÇÃO DOS CARDS E FORMULÁRIOS
+// ============================================================================
 function renderizarFerramentas() {
   const container = document.getElementById("lista-ferramentas");
   const btnToggleAdd = document.getElementById("btn-toggle-add");
@@ -436,6 +493,9 @@ function renderizarFerramentas() {
   });
 }
 
+// ============================================================================
+// 7. OPERAÇÕES DE ADIÇÃO, EXCLUSÃO E LOGOUT
+// ============================================================================
 function fazerLogout() {
   sessionStorage.removeItem("ferramentas_autenticado");
   sessionStorage.removeItem("ferramentas_analista_ativo");
@@ -455,30 +515,39 @@ function adicionarFerramenta(event) {
 
   if (!nome) return;
 
-  const lista = obterFerramentas();
+  const lista = [...obterFerramentas()];
   lista.push({ nome, link, usuario, senha, detalhes });
 
-  localStorage.setItem("ferramentas_latam", JSON.stringify(lista));
+  // Grava diretamente no Firebase Realtime Database
+  if (typeof firebase !== 'undefined' && firebase.database) {
+    firebase.database().ref("ferramentas_latam").set(lista)
+      .catch(err => console.error("Erro ao adicionar ferramenta no Firebase:", err));
+  }
   
   document.getElementById("form-add-ferramenta").reset();
   alternarFormularioAdd();
-  renderizarFerramentas();
 }
 
 function excluirFerramenta(index) {
   if (!verificarAutenticacao()) return;
 
-  const lista = obterFerramentas();
+  const lista = [...obterFerramentas()];
   const item = lista[index];
   
   if (confirm(`Tem certeza que deseja excluir "${item.nome}"?`)) {
     lista.splice(index, 1);
-    localStorage.setItem("ferramentas_latam", JSON.stringify(lista));
-    renderizarFerramentas();
+    
+    // Atualiza o Firebase Realtime Database
+    if (typeof firebase !== 'undefined' && firebase.database) {
+      firebase.database().ref("ferramentas_latam").set(lista)
+        .catch(err => console.error("Erro ao excluir ferramenta no Firebase:", err));
+    }
   }
 }
 
-// REMOÇÃO FORÇADA DE SOMBRAS FANTASMAS
+// ============================================================================
+// 8. TRATAMENTO DE INTERFACE E EVENTOS DO MODAL
+// ============================================================================
 function limparSombrasDeTela() {
   document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
   document.body.classList.remove('modal-open');
@@ -486,16 +555,19 @@ function limparSombrasDeTela() {
   document.body.style.removeProperty('overflow');
 }
 
-// INICIALIZAÇÃO
+// Inicialização e vinculação de eventos após o carregamento da página
 document.addEventListener("DOMContentLoaded", () => {
   limparSombrasDeTela();
+
+  // Inicia a escuta contínua do Firebase
+  iniciarSincronizacaoFirebase();
 
   const form = document.getElementById("form-add-ferramenta");
   if (form) {
     form.addEventListener("submit", adicionarFerramenta);
   }
 
-  // Renderiza imediatamente e desvincula da transição travada do modal
+  // Previne encrave de tela na transição do modal Bootstrap
   const modalElem = document.getElementById("modalFerramentas");
   if (modalElem) {
     modalElem.addEventListener("show.bs.modal", () => {
