@@ -326,22 +326,17 @@ function renderizarFerramentas() {
     if (btnToggleAdd) btnToggleAdd.classList.add("d-none");
     if (btnModoExclusao) btnModoExclusao.classList.add("d-none");
 
-    const opcoesAnalistas = ANALISTAS_PADRAO.map(a => `<option value="${a}">${a}</option>`).join("");
-
     if (statusAuthLocal === "LOGIN") {
       container.innerHTML = `
         <div class="col-12 col-md-8 offset-md-2 py-3">
           <div class="card border-0 shadow-sm rounded-3">
             <div class="card-body p-4 text-center">
               <h5 class="fw-bold text-dark mb-1">🔐 Acesso ao Módulo Ferramentas</h5>
-              <p class="small text-muted mb-3">Selecione seu nome e informe sua senha pessoal.</p>
+              <p class="small text-muted mb-3">Digite o seu nome e informe a sua senha pessoal.</p>
               
               <form onsubmit="autenticarOuTrocarForm(event)">
                 <div class="mb-2">
-                  <select id="auth-nome-select" class="form-select text-center shadow-none" required>
-                    <option value="" disabled selected>-- Selecione o Analista --</option>
-                    ${opcoesAnalistas}
-                  </select>
+                  <input type="text" id="auth-nome-select" class="form-control text-center shadow-none text-uppercase" placeholder="Digite o seu nome" required autofocus autocomplete="off">
                 </div>
                 <div class="mb-2">
                   <input type="password" id="auth-senha-input" class="form-control text-center shadow-none" placeholder="Senha (ou 'Latam@2026' no 1º acesso)" required>
@@ -360,7 +355,7 @@ function renderizarFerramentas() {
           <div class="card border-0 shadow-sm rounded-3">
             <div class="card-body p-4 text-center">
               <h5 class="fw-bold text-dark mb-1">🔑 Primeiro Acesso: ${analistaSelecionadoTemp}</h5>
-              <p class="small text-muted mb-3">Cadastre seu e-mail corporativo e crie sua nova senha.</p>
+              <p class="small text-muted mb-3">Cadastre o seu e-mail corporativo e crie a sua nova senha.</p>
               
               <form onsubmit="autenticarOuTrocarForm(event)">
                 <div class="mb-2">
@@ -385,14 +380,11 @@ function renderizarFerramentas() {
           <div class="card border-0 shadow-sm rounded-3">
             <div class="card-body p-4 text-center">
               <h5 class="fw-bold text-dark mb-1">📩 Recuperar Senha</h5>
-              <p class="small text-muted mb-3">Selecione seu nome e digite o e-mail cadastrado.</p>
+              <p class="small text-muted mb-3">Digite o seu nome e o e-mail cadastrado.</p>
               
               <form onsubmit="enviarCodigoEmail(event)">
                 <div class="mb-2">
-                  <select id="rec-nome-select" class="form-select text-center shadow-none" required>
-                    <option value="" disabled selected>-- Selecione o Analista --</option>
-                    ${opcoesAnalistas}
-                  </select>
+                  <input type="text" id="rec-nome-select" class="form-control text-center shadow-none text-uppercase" placeholder="Digite o seu nome" required autofocus autocomplete="off">
                 </div>
                 <div class="mb-3">
                   <input type="email" id="rec-email-input" class="form-control text-center shadow-none" placeholder="E-mail Cadastrado" required>
@@ -411,7 +403,7 @@ function renderizarFerramentas() {
           <div class="card border-0 shadow-sm rounded-3">
             <div class="card-body p-4 text-center">
               <h5 class="fw-bold text-dark mb-1">✅ Validação de Segurança</h5>
-              <p class="small text-muted mb-3">Insira o código enviado por e-mail e redefina sua senha.</p>
+              <p class="small text-muted mb-3">Insira o código enviado por e-mail e redefina a sua senha.</p>
               
               <form onsubmit="validarCodigoERedefinir(event)">
                 <div class="mb-2">
