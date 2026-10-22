@@ -1314,18 +1314,58 @@ function gerarTabelaAtividadesENormalizados(lista) {
 }
 
 /* --------------------------------------------------------------------------
+   SINCRONIZAÇÃO EM TEMPO REAL DOS SÍTIOS COM O FIREBASE
+   -------------------------------------------------------------------------- */
+function iniciarSincronizacaoSitiosFirebase() {
+  // 1. Tenta carregar do localStorage como backup imediato
+  var dadosLocais = localStorage.getItem('dadosSitios');
+  if (dadosLocais) {
+    try {
+      dadosSitios = JSON.parse(dadosLocais);
+      if (typeof fn09_atualizarDropdownsExistentes === 'function') {
+        fn09_atualizarDropdownsExistentes();
+      }
+    } catch(e) {
+      console.error("Erro ao ler dadosSitios do localStorage:", e);
+    }
+  }
+
+  // 2. Escuta contínua no Firebase
+  var refDb = (typeof database !== 'undefined') ? database : (typeof firebase !== 'undefined' && firebase.database ? firebase.database() : null);
+
+  if (refDb) {
+    refDb.ref('config/dadosSitios').on('value', function(snapshot) {
+      var dados = snapshot.val();
+      if (dados) {
+        dadosSitios = dados;
+        localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
+        if (typeof fn09_atualizarDropdownsExistentes === 'function') {
+          fn09_atualizarDropdownsExistentes();
+        }
+      }
+    }, function(error) {
+      console.error("Erro na sincronização de Sítios do Firebase:", error);
+    });
+  }
+}
+
+// Inicia a escuta contínua ao carregar o documento
+$(document).ready(function() {
+  iniciarSincronizacaoSitiosFirebase();
+});
+
+/* --------------------------------------------------------------------------
    06. CONFIGURAÇÃO DE EVENTOS DOM (JQUERY)
    -------------------------------------------------------------------------- */
 function fn_configurarEventosDOM() {
 
- $('#btnNovoItem').on('click', function() {
+  $('#btnNovoItem').on('click', function() {
     var novoId = Date.now().toString();
     var $tr = fn08_criarLinhaTabela(novoId);
     
     // Insere no topo da tabela
     $('#incidentes tbody').prepend($tr);
     
-    // fn02_reordenarTabela(); // Comente ou remova esta linha se ela estiver a mandar o item para baixo
     fn06_salvarDadosStorage();
     $tr.find('.select-sitio').focus();
   });
@@ -1347,7 +1387,7 @@ function fn_configurarEventosDOM() {
     fn06_salvarDadosStorage();
   });
 
-    $('#incidentes').on('change', '.select-sitio', function() {
+  $('#incidentes').on('change', '.select-sitio', function() {
     var $tr = $(this).closest('tr');
     fn04_carregarTiposPorSitio($tr, $(this).val());
   });
@@ -1358,6 +1398,7 @@ function fn_configurarEventosDOM() {
     fn05_carregarParceirosPorTipo($tr, sitio, $(this).val());
   });
 
+  // SALVAR NOVO SÍTIO / PARCEIROS COM FIREBASE
   $('#btnSalvarNovoSitio').on('click', function() {
     var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
     var tipo = $('#inputNovoTipo').val().trim();
@@ -1378,22 +1419,34 @@ function fn_configurarEventosDOM() {
     });
 
     localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
-    fn09_atualizarDropdownsExistentes();
+    if (typeof fn09_atualizarDropdownsExistentes === 'function') {
+      fn09_atualizarDropdownsExistentes();
+    }
 
-    try {
-      if (typeof database !== 'undefined') {
-        database.ref('config/dadosSitios/' + codigo + '/' + tipo).set(dadosSitios[codigo][tipo]);
-      }
-    } catch(e) {}
+    // Grava e sincroniza diretamente no Firebase Realtime Database
+    var refDb = (typeof database !== 'undefined') ? database : (typeof firebase !== 'undefined' && firebase.database ? firebase.database() : null);
+
+    if (refDb) {
+      refDb.ref('config/dadosSitios/' + codigo + '/' + tipo).set(dadosSitios[codigo][tipo])
+        .then(function() {
+          console.log("Sítio salvo e sincronizado com sucesso no Firebase!");
+        })
+        .catch(function(e) {
+          console.error("Erro ao salvar sítio no Firebase:", e);
+        });
+    }
 
     $('#formNovoSitio')[0].reset();
     var modalElem = document.getElementById('modalNovoSitio');
-    var modalInstance = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
-    modalInstance.hide();
+    if (modalElem) {
+      var modalInstance = bootstrap.Modal.getInstance(modalElem) || new bootstrap.Modal(modalElem);
+      modalInstance.hide();
+    }
 
     alert(`Dados do sítio "${codigo}" gravados com sucesso!`);
   });
 
+  // EXCLUIR TIPO DE SÍTIO COM SINCRONIZAÇÃO NO FIREBASE
   $('#btnExcluirTipoModal').on('click', function() {
     var codigo = $('#inputNovoSitio').val().trim().toUpperCase();
     var tipo = $('#inputNovoTipo').val().trim();
@@ -1404,9 +1457,40 @@ function fn_configurarEventosDOM() {
     }
 
     if (confirm(`Tem certeza que deseja apagar o tipo "${tipo}" do sítio "${codigo}"?`)) {
-      fn10_removerTipoSitio(codigo, tipo);
+      if (dadosSitios[codigo] && dadosSitios[codigo][tipo]) {
+        delete dadosSitios[codigo][tipo];
+
+        // Se o sítio ficou sem nenhum tipo registrado, limpa o nó do sítio
+        if (Object.keys(dadosSitios[codigo]).length === 0) {
+          delete dadosSitios[codigo];
+        }
+
+        localStorage.setItem('dadosSitios', JSON.stringify(dadosSitios));
+        if (typeof fn09_atualizarDropdownsExistentes === 'function') {
+          fn09_atualizarDropdownsExistentes();
+        }
+
+        // Remove do Firebase Realtime Database
+        var refDb = (typeof database !== 'undefined') ? database : (typeof firebase !== 'undefined' && firebase.database ? firebase.database() : null);
+
+        if (refDb) {
+          refDb.ref('config/dadosSitios/' + codigo + '/' + tipo).remove()
+            .then(function() {
+              console.log("Tipo do sítio removido e sincronizado no Firebase!");
+            })
+            .catch(function(e) {
+              console.error("Erro ao remover tipo do sítio no Firebase:", e);
+            });
+        }
+      }
+
+      // Executa a função auxiliar de remoção caso ela possua lógicas adicionais de interface
+      if (typeof fn10_removerTipoSitio === 'function') {
+        fn10_removerTipoSitio(codigo, tipo);
+      }
     }
   });
+}
 
   $('#btnCheckPoint').on('click', function() {
     fn11_gerarCheckPoint();
