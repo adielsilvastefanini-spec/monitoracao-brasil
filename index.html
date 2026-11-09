@@ -493,61 +493,64 @@ table.tabela-checkpoint td.cp-col-status {
     </div>
   </div>
 
-  <!-- Modal de Escalonamento -->
-  <div class="modal fade" id="modalEscalonamento" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-dark text-white py-2">
-          <h5 class="modal-title fs-6 d-flex align-items-center gap-2">
-            <span>★ Matriz de Escalonamento de Parceiros</span>
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body p-3">
-          <div class="row g-2 mb-3 align-items-center">
-            <div class="col-md-4">
-              <input type="search" id="inputSearchEscalonamento" class="form-control form-control-sm" placeholder="🔍 Buscar por Nome, Empresa, Telefone...">
-            </div>
-            <div class="col-md-8 d-flex justify-content-end gap-1 flex-wrap align-items-center" id="filtrosEmpresaEscalonamento">
-              <button class="btn btn-sm btn-outline-dark active" data-emp="TODAS">Todas</button>
-              <button class="btn btn-sm btn-outline-primary" data-emp="EBT">EBT</button>
-              <button class="btn btn-sm btn-outline-warning" data-emp="Oi">Oi</button>
-              <button class="btn btn-sm btn-outline-purple" style="border-color:#8b5cf6; color:#8b5cf6;" data-emp="Vivo">Vivo</button>
-              <button class="btn btn-sm btn-outline-success" data-emp="Cirion">Cirion</button>
-              <button class="btn btn-sm btn-outline-danger" data-emp="SITA">SITA</button>
-              <button class="btn btn-sm btn-success fw-bold ms-2" type="button" onclick="abrirModalFormEscalonamento()">
-                <i class="fas fa-plus-circle me-1"></i> + Contato
-              </button>
-            </div>
+ <!-- Modal de Escalonamento -->
+<div class="modal fade" id="modalEscalonamento" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white py-2">
+        <h5 class="modal-title fs-6 d-flex align-items-center gap-2">
+          <span>★ Matriz de Escalonamento de Parceiros</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-3">
+        <div class="row g-2 mb-3 align-items-center">
+          <div class="col-md-4">
+            <input type="search" id="inputSearchEscalonamento" class="form-control form-control-sm" placeholder="🔍 Buscar por Nome, Empresa, Telefone...">
           </div>
+          <div class="col-md-8 d-flex justify-content-end gap-1 flex-wrap align-items-center" id="filtrosEmpresaEscalonamento">
+            <button class="btn btn-sm btn-outline-dark active" data-emp="TODAS">Todas</button>
+            <button class="btn btn-sm btn-outline-primary" data-emp="EBT">EBT</button>
+            <button class="btn btn-sm btn-outline-warning" data-emp="Oi">Oi</button>
+            <button class="btn btn-sm btn-outline-purple" style="border-color:#8b5cf6; color:#8b5cf6;" data-emp="Vivo">Vivo</button>
+            <button class="btn btn-sm btn-outline-success" data-emp="Cirion">Cirion</button>
+            <button class="btn btn-sm btn-outline-danger" data-emp="SITA">SITA</button>
+            <!-- BOTÃO DA VTAL ADICIONADO ABAIXO -->
+            <button class="btn btn-sm btn-outline-info" data-emp="VTAL">Vtal</button>
+            
+            <button class="btn btn-sm btn-success fw-bold ms-2" type="button" onclick="abrirModalFormEscalonamento()">
+              <i class="fas fa-plus-circle me-1"></i> + Contato
+            </button>
+          </div>
+        </div>
 
-          <div class="table-responsive overflow-auto" style="max-height: 65vh;">
-            <table class="tabela-escalonamento table table-hover align-middle mb-0">
-              <thead>
-                <tr>
-                  <th>Empresa</th>
-                  <th class="text-center">Nível</th>
-                  <th>Gestor</th>
-                  <th>Cargo</th>
-                  <th>Time / Atendimento</th>
-                  <th>Telefone</th>
-                  <th>Celular</th>
-                  <th>Email / Link</th>
-                  <th class="text-center">Ações</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyEscalonamento">
-              </tbody>
-            </table>
-          </div>
+        <div class="table-responsive overflow-auto" style="max-height: 65vh;">
+          <table class="tabela-escalonamento table table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th class="text-center">Nível</th>
+                <th>Gestor</th>
+                <th>Cargo</th>
+                <th>Time / Atendimento</th>
+                <th>Telefone</th>
+                <th>Celular</th>
+                <th>Email / Link</th>
+                <th class="text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyEscalonamento">
+            </tbody>
+          </table>
         </div>
-        <div class="modal-footer py-2 justify-content-between">
-          <span class="text-muted" style="font-size: 11px;">* Utilize o campo de busca ou os filtros de empresa para localização rápida.</span>
-          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
-        </div>
+      </div>
+      <div class="modal-footer py-2 justify-content-between">
+        <span class="text-muted" style="font-size: 11px;">Utilize o campo de busca ou os filtros de empresa para localização rápida.</span>
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
       </div>
     </div>
   </div>
+</div>
 
 <!-- Modal Formulário: Cadastrar / Editar Contato no Escalonamento -->
 <div class="modal fade" id="modalFormEscalonamento" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
@@ -570,10 +573,12 @@ table.tabela-checkpoint td.cp-col-status {
               <option value="VIVO">VIVO</option>
               <option value="CIRION">CIRION</option>
               <option value="SITA">SITA</option>
+              <!-- OPÇÃO DA VTAL ADICIONADA ABAIXO -->
+              <option value="VTAL">VTAL</option>
             </select>
           </div>
 
-          <!-- Linha 1: Nível / Turno + Gestor / Responsável (Corrigido) -->
+          <!-- Linha 1: Nível / Turno + Gestor / Responsável -->
           <div class="row g-2 mb-2">
             <div class="col-md-6">
               <label class="form-label mb-1 fs-6 fw-semibold">Nível / Turno</label>
