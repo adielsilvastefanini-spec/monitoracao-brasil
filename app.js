@@ -373,18 +373,6 @@ var dadosEscalonamentoPadrao = {
       { "atendimento": "24h", "cargo": "Gerente SE CS", "celular": "(11) 99551-6968", "email": "douglas.santana@telefonica.com", "gestor": "Douglas Santana", "nivel": "3", "telefone": "-" }
     ]
   }
-  "VTAL": {
-  "empresa": "VTAL",
-  "niveis": [
-    { "atendimento": "24h", "cargo": "Abertura e Posicionamento de Reparo", "celular": "-", "email": "https://jornadadigital.vtal.com.br", "gestor": "Chamado", "nivel": "0", "telefone": "0800 125 5060 (opção 1 ou 2)" },
-    { "atendimento": "24h", "cargo": "Gestão Técnica", "celular": "-", "email": "-", "gestor": "Chamado", "nivel": "0", "telefone": "0800 125 5060 (opção 3 ou 4)" },
-    { "atendimento": "Horário Comercial", "cargo": "Supervisão Operacional", "celular": "+55 21 99635-9041", "email": "janaina.machado.ext@vtal.com", "gestor": "Janaina Campelo Machado", "nivel": "1", "telefone": "-" },
-    { "atendimento": "24h", "cargo": "Gerente Executivo Operacional", "celular": "+55 21 98667-0429", "email": "rodrigo.b.b.oliveira@accenture.com", "gestor": "Rodrigo Bufoni", "nivel": "2", "telefone": "-" },
-    { "atendimento": "24h", "cargo": "Gerente Executivo", "celular": "+55 21 98853-0134", "email": "edivonaldo.b.santos@accenture.com", "gestor": "Edivonaldo Brito", "nivel": "3", "telefone": "-" },
-    { "atendimento": "24h", "cargo": "Gerente Executivo Qualidade", "celular": "+55 21 98440-9434", "email": "luizmartins@vtal.com", "gestor": "Luiz Eduardo", "nivel": "4", "telefone": "-" },
-    { "atendimento": "24h", "cargo": "Diretora Executiva", "celular": "+55 41 98731-3864", "email": "melissa.haas@vtal.com", "gestor": "Melissa Haas", "nivel": "5", "telefone": "-" }
-  ]
-}
 };
 
 // Carregamento síncrono inicial do Cache Local ou Fallback
