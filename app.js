@@ -295,6 +295,15 @@ var dadosSitiosPadrao = {
     "ATO": ["SOCICAM", "CIRION BRASIL", "OI"],
     "Teca": ["LATAM", "VIVO", "CIRION BRASIL", "OI"]
   }
+  "ROO": {
+    "ATO": ["LATAM", "CIRION BRASIL", "EMBRATEL"]
+  }
+  "JPR": {
+    "ATO": ["LATAM", "CIRION BRASIL"]
+  }
+  "CFB": {
+    "ATO": ["LATAM", "CIRION BRASIL"]
+  }
 };
 // Configuração do Firebase
 const firebaseConfig = {
